@@ -13,6 +13,6 @@
     "connect-flash": "~0.1.1",
     "bcrypt-nodejs": "latest",
     "tunnel": "0.0.3",
-    "url": "^0.7.9"
+    "socket.io": "^0.9.16"
   }
 }
