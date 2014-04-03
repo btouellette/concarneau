@@ -9,6 +9,11 @@ if(process.env.HTTP_PROXY) {
 	require('./config/proxy.js')(host, port);
 }
 
+// if this is a c9 project configure appropriately
+if(process.env.C9_PROJECT) {
+    require('./config/c9.js');
+}
+
 // get all the tools we need
 var express  = require('express');
 var app      = express();
