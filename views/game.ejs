@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+	<title>Concarneau</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+	<style>
+		body 		{ padding-top:80px; }
+	</style>
+</head>
+<body>
+<div class="container">
+	<div class="page-header text-center">
+		<h1>Games</h1>
+		<a href="/logout" class="btn btn-default btn-sm">Logout</a>
+	</div>
+	<div>
+	<%= JSON.stringify(user) %>
+	<h3>Active games:</h3>
+	<ul id="active-game-list">
+		<% for (var i = 0; i < user.activeGames.length; i++) { %>
+		<li><%= user.activeGames[i].name + ' (id: ' + user.activeGames[i]._id + ')' %></li>
+		<% } %>
+	</ul>
+	<button class="btn btn-default btn-sm" onclick="socket.emit('new game')">New Game</button>
+	</div>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
+	<script>
+	  var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
+	  socket.on('all users', function (data) { console.log(JSON.stringify(data)); });
+    </script>
+</div>
+</body>
+</html>

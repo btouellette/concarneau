@@ -1,4 +1,4 @@
-module.exports = function(app, passport) {
+module.exports = function(app, passport, mongoose) {
 
 // normal routes ===============================================================
 
@@ -18,6 +18,12 @@ module.exports = function(app, passport) {
 	app.get('/logout', function(req, res) {
 		req.logout();
 		res.redirect('/');
+	});
+	
+	app.get('/game', isLoggedIn, function(req, res) {
+		res.render('game.ejs', {
+			user : req.user
+		});
 	});
 
 // =============================================================================

@@ -1,13 +1,14 @@
 // load the things we need
 var mongoose = require('mongoose');
 var bcrypt   = require('bcrypt-nodejs');
+var Gamestate = require('./gamestate.js');
 
 // define the schema for our user model
 var userSchema = mongoose.Schema({
 
     local            : {
         email        : String,
-        password     : String,
+        password     : String
     },
     facebook         : {
         id           : String,
@@ -26,7 +27,8 @@ var userSchema = mongoose.Schema({
         token        : String,
         email        : String,
         name         : String
-    }
+    },
+    activeGames  : [mongoose.Schema.Types.ObjectId] // external reference to gamestate objects
 
 });
 

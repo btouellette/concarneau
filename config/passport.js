@@ -26,7 +26,9 @@ module.exports = function(passport) {
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
         User.findById(id, function(err, user) {
-            done(err, user);
+        	User.populate(user, { path: 'activeGames', model: 'Gamestate' }, function(err, user) {
+            	done(err, user);
+        	});
         });
     });
 
