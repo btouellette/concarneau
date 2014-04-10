@@ -1,12 +1,13 @@
 <!doctype html>
 <html>
 <head>
-	<title>Concarneau</title>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
-	<style>
-		body 		{ padding-top:80px; }
-	</style>
+    <script type="text/javascript"> var idx=window.location.toString().indexOf("#_=_"); if (idx>0) { window.location = window.location.toString().substring(0, idx); } </script>
+    <title>Concarneau</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+    <style>
+    	body 		{ padding-top:80px; }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -15,19 +16,113 @@
 		<a href="/logout" class="btn btn-default btn-sm">Logout</a>
 	</div>
 	<div>
-	<%= JSON.stringify(user) %>
-	<h3>Active games:</h3>
-	<ul id="active-game-list">
-		<% for (var i = 0; i < user.activeGames.length; i++) { %>
-		<li><%= user.activeGames[i].name + ' (id: ' + user.activeGames[i]._id + ')' %></li>
-		<% } %>
-	</ul>
-	<button class="btn btn-default btn-sm" onclick="socket.emit('new game')">New Game</button>
+		<div><span>Your user ID: <%= user._id %></span></div>
+		<div><span>Your friends' IDs: <%= user.friends.join(', ') %></span></div>
+		<h3>Active games:</h3>
+		<ul id="active-game-list">
+			<% for (var i = 0; i < user.activeGames.length; i++) { %>
+			<li onclick="socket.emit('load game', '<%= user.activeGames[i]._id %>')"><%= user.activeGames[i].name + ' (id: ' + user.activeGames[i]._id + ') ' + user.activeGames[i].placedTiles.length + ' tiles placed' %></li>
+			<% } %>
+		</ul>
+		<div class="col-lg-4">
+			<button class="btn btn-default btn-sm" onclick="socket.emit('new game')">New game</button>
+			<div class="input-group">
+				<input type="text" class="form-control" placeholder="User ID" id="add-friend-input">
+				<span class="input-group-btn">
+					<button class="btn btn-default" type="button" onclick="socket.emit('add friend', $('#add-friend-input').val())">Add friend</button>
+				</span>
+			</div>
+			<div class="input-group">
+				<input type="text" class="form-control" placeholder="User ID" id="remove-friend-input">
+				<span class="input-group-btn">
+					<button class="btn btn-default" type="button" onclick="socket.emit('remove friend', $('#remove-friend-input').val())">Remove friend</button>
+				</span>
+			</div>
+			<div class="input-group">
+				<input type="text" class="form-control" placeholder="User ID" id="add-to-game-input">
+				<span class="input-group-btn">
+					<button class="btn btn-default" type="button" onclick="socket.emit('add user to game', currentGameID, $('#add-to-game-input').val())">Add to game</button>
+				</span>
+			</div>
+		</div>
 	</div>
+	<svg id="game-container" width="1000" height="600">
+	<rect x="0" y="0" width="1000" height="600" fill="lightblue"></rect>
+	</svg>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.4/d3.min.js"></script>
 	<script>
-	  var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
-	  socket.on('all users', function (data) { console.log(JSON.stringify(data)); });
+		//TODO: keep all this out of the global namespace
+        var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
+        var currentGameID;
+        socket.on('sending gamestate', function(gamestate) {
+        	console.log(JSON.stringify(gamestate));
+        	currentGameID = gamestate._id;
+        	draw(gamestate);
+    	});
+
+        var tileSize = 100;
+        var svg = d3.select('#game-container');
+        var svgHeight = $('#game-container').height();
+        var svgWidth = $('#game-container').width();
+        svg.append('g').attr({ id: 'placed-tiles' });
+        var activeTileContainer = svg.append('g').attr({ id: 'active-tile-container' });
+        activeTileContainer.append('rect').attr({
+            x: 0,
+            y: 0,
+            width: tileSize + 10,
+            height: tileSize + 10,
+            fill: 'white'
+        });
+
+        function draw(gamestate) {
+            // assign positions to all the placed tiles
+            gamestate.placedTiles[0].x = 0;
+            gamestate.placedTiles[0].y = 0;
+            var tileAssignations = {};
+            function assignNeighbors(tile) {
+            	tileAssignations[tile.x + ' ' + tile.y] = tile;
+                if(tile.northTile && !tile.northTile.hasOwnProperty('x')) {
+                    tile.northTile.x = tile.x;
+                    tile.northTile.y = tile.y - 1;
+                    assignNeighbors(tile.northTile);
+                }
+                if(tile.southTile && !tile.southTile.hasOwnProperty('x')) {
+                    tile.southTile.x = tile.x;
+                    tile.southTile.y = tile.y + 1;
+                    assignNeighbors(tile.southTile);
+                }
+                if(tile.westTile && !tile.westTile.hasOwnProperty('x')) {
+                    tile.westTile.x = tile.x - 1;
+                    tile.westTile.y = tile.y;
+                    assignNeighbors(tile.westTile);
+                }
+                if(tile.eastTile && !tile.eastTile.hasOwnProperty('x')) {
+                    tile.eastTile.x = tile.x + 1;
+                    tile.eastTile.y = tile.y;
+                    assignNeighbors(tile.eastTile);
+                }
+            }(gamestate.placedTiles[0]);
+            // now draw all the placed tiles
+            var placedTiles = svg.select('#placed-tiles');
+
+            var tiles = placedTiles.selectAll('image').data(gamestate.placedTiles);
+            tiles.enter().append('image').attr({
+                x: function(d) { return svgWidth / 2 + d.x * tileSize; },
+                y: function(d) { return svgHeight / 2 + d.y * tileSize; },
+                width: tileSize,
+                height: tileSize,
+                'xlink:href': function(d) { console.log('here'); return d.tile.imageURL; },
+                transform: function(d) { return 'rotate(' + 90 * d.rotation + ', ' + (svgWidth / 2 + d.x * tileSize + tileSize / 2) + ', ' + (svgHeight / 2 + d.y * tileSize + tileSize / 2) + ')'; }
+            });
+
+            // var activeTile = activeTileContainer.select('image').data(gamestate.activeTile);
+            // activeTile.attr({
+            //     'xlink:href': function(d) { return d.tile.imageUrl; }
+            // });
+
+        }
     </script>
 </div>
 </body>

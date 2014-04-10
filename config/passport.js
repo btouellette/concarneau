@@ -5,7 +5,7 @@ var TwitterStrategy  = require('passport-twitter').Strategy;
 var GoogleStrategy   = require('passport-google-oauth').OAuth2Strategy;
 
 // load up the user model
-var User       = require('../app/models/user');
+var User = require('../app/models/user');
 
 // load the auth variables
 var configAuth = require('./auth'); // use this one for testing
@@ -26,9 +26,9 @@ module.exports = function(passport) {
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
         User.findById(id, function(err, user) {
-        	User.populate(user, { path: 'activeGames', model: 'Gamestate' }, function(err, user) {
-            	done(err, user);
-        	});
+            user.populate('activeGames', function(err, user) {
+                done(err, user);
+            });
         });
     });
 

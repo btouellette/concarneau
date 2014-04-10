@@ -11,23 +11,22 @@ var mongoose = require('mongoose');
 // WSW         ESE
 // SW SSW S SSE SE
 
-var User = require('./user');
 // define the schema for our game model
 var gamestateSchema = mongoose.Schema({
     name: String,
     players: [{
-        user: mongoose.Schema.Types.ObjectId,
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,
         remainingMeeples: Number,
         active: Boolean
     }],
-    unusedTiles: [mongoose.Schema.Types.ObjectId], // references tiles (external schema)
+    unusedTiles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tile' }],
     activeTile: {
-        tile: mongoose.Schema.Types.ObjectId,
+        tile: { type: mongoose.Schema.Types.ObjectId, ref: 'Tile' },
         rotation: Number // number of times tile is rotated clockwise
     },
     placedTiles: [{
-        tile: mongoose.Schema.Types.ObjectId, // references tiles (external schema)
+        tile: { type: mongoose.Schema.Types.ObjectId, ref: 'Tile' },
         rotation: Number, // number of times tile is rotated clockwise
         meeples: [{
             player: mongoose.Schema.Types.ObjectId, // references players
@@ -36,13 +35,6 @@ var gamestateSchema = mongoose.Schema({
                 index: Number // which element of tiles[].roads/cities/farms (external schema)
             }
         }],
-        northTile: mongoose.Schema.Types.ObjectId, // references placedTiles
-        southTile: mongoose.Schema.Types.ObjectId,
-        westTile: mongoose.Schema.Types.ObjectId,
-        eastTile: mongoose.Schema.Types.ObjectId
-    }],
-    startingTile: [{
-        tile: mongoose.Schema.Types.ObjectId, // references tiles (external schema)
         northTile: mongoose.Schema.Types.ObjectId, // references placedTiles
         southTile: mongoose.Schema.Types.ObjectId,
         westTile: mongoose.Schema.Types.ObjectId,

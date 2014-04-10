@@ -14,14 +14,18 @@ var mongoose = require('mongoose');
 // define the schema for our game model
 var tileSchema = mongoose.Schema({
     northEdge: String, // edges are 'road', 'city', or 'field'
-    southEdge: String, 
-    westEdge: String, 
-    eastEdge: String, 
+    southEdge: String,
+    westEdge: String,
+    eastEdge: String,
     roads: [{ directions: [String] }], // features are arrays of directions, example of curved road or triangle city ['S','W']
     cities: [{ directions: [String] }],
     farms: [{ directions: [String] }],
     cloister: Boolean,
-    imageURL: String
+    doublePoints: Boolean,
+    imageURL: String,
+    expansion: String,
+    count: Number,
+    startingTile: Boolean
 });
 
 // create the model for game information and expose it to our app

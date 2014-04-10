@@ -16,6 +16,9 @@
     "socket.io": "^0.9.16",
     "yargs": "~1.2.1",
     "cookie": "~0.1.1",
-    "connect": "~2.14.3"
+    "connect": "~2.14.3",
+    "q": "~1.0.1",
+    "moniker": "~0.1.2",
+    "connect-mongo": "~0.4.0"
   }
 }

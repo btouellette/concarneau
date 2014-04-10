@@ -19,8 +19,9 @@ module.exports = function(app, passport, mongoose) {
 		req.logout();
 		res.redirect('/');
 	});
-	
+
 	app.get('/game', isLoggedIn, function(req, res) {
+		//TODO: remove #_=_ hash added by facebook here
 		res.render('game.ejs', {
 			user : req.user
 		});
@@ -39,7 +40,7 @@ module.exports = function(app, passport, mongoose) {
 
 		// process the login form
 		app.post('/login', passport.authenticate('local-login', {
-			successRedirect : '/profile', // redirect to the secure profile section
+			successRedirect : '/game', // redirect to the secure game section
 			failureRedirect : '/login', // redirect back to the signup page if there is an error
 			failureFlash : true // allow flash messages
 		}));
@@ -65,7 +66,7 @@ module.exports = function(app, passport, mongoose) {
 		// handle the callback after facebook has authenticated the user
 		app.get('/auth/facebook/callback',
 			passport.authenticate('facebook', {
-				successRedirect : '/profile',
+				successRedirect : '/game',
 				failureRedirect : '/'
 			}));
 
@@ -77,7 +78,7 @@ module.exports = function(app, passport, mongoose) {
 		// handle the callback after twitter has authenticated the user
 		app.get('/auth/twitter/callback',
 			passport.authenticate('twitter', {
-				successRedirect : '/profile',
+				successRedirect : '/game',
 				failureRedirect : '/'
 			}));
 
@@ -90,7 +91,7 @@ module.exports = function(app, passport, mongoose) {
 		// the callback after google has authenticated the user
 		app.get('/auth/google/callback',
 			passport.authenticate('google', {
-				successRedirect : '/profile',
+				successRedirect : '/game',
 				failureRedirect : '/'
 			}));
 
