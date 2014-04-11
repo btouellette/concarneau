@@ -5,7 +5,6 @@ var bcrypt   = require('bcrypt-nodejs');
 // define the schema for our user model
 var userSchema = mongoose.Schema({
 
-	displayName: String,
     local            : {
         email        : String,
         password     : String
@@ -29,7 +28,8 @@ var userSchema = mongoose.Schema({
         name         : String
     },
     activeGames: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Gamestate' }], // external reference to gamestate objects
-    friends: [mongoose.Schema.Types.ObjectId]
+    friends: [mongoose.Schema.Types.ObjectId],
+    displayName: String
 
 });
 

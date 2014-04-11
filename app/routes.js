@@ -21,7 +21,6 @@ module.exports = function(app, passport, mongoose) {
 	});
 
 	app.get('/game', isLoggedIn, function(req, res) {
-		//TODO: remove #_=_ hash added by facebook here
 		res.render('game.ejs', {
 			user : req.user
 		});

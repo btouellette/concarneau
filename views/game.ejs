@@ -1,7 +1,16 @@
 <!doctype html>
 <html>
 <head>
-    <script type="text/javascript"> var idx=window.location.toString().indexOf("#_=_"); if (idx>0) { window.location = window.location.toString().substring(0, idx); } </script>
+    <script type="text/javascript">
+    // If Facebook redirect hash is present remove it: https://stackoverflow.com/questions/7131909/facebook-callback-appends-to-return-url
+    if (window.location.hash && window.location.hash == '#_=_') {
+        if (window.history && history.pushState) {
+            window.history.pushState("", document.title, window.location.pathname);
+        } else {
+            window.location.hash = '';
+        }
+    }
+	</script>
     <title>Concarneau</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
@@ -26,6 +35,13 @@
 		</ul>
 		<div class="col-lg-4">
 			<button class="btn btn-default btn-sm" onclick="socket.emit('new game')">New game</button>
+			<button class="btn btn-default btn-sm" onclick="socket.emit('start game', currentGameID)">Start game</button>
+			<div class="input-group">
+				<input type="text" class="form-control" placeholder="User ID" id="change-name-input">
+				<span class="input-group-btn">
+					<button class="btn btn-default" type="button" onclick="socket.emit('set display name', $('#change-name-input').val())">Change display name</button>
+				</span>
+			</div>
 			<div class="input-group">
 				<input type="text" class="form-control" placeholder="User ID" id="add-friend-input">
 				<span class="input-group-btn">
@@ -56,17 +72,13 @@
 		//TODO: keep all this out of the global namespace
         var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
         var currentGameID;
-        socket.on('sending gamestate', function(gamestate) {
-        	console.log(JSON.stringify(gamestate));
-        	currentGameID = gamestate._id;
-        	draw(gamestate);
-    	});
 
         var tileSize = 100;
         var svg = d3.select('#game-container');
         var svgHeight = $('#game-container').height();
         var svgWidth = $('#game-container').width();
-        svg.append('g').attr({ id: 'placed-tiles' });
+        var placedTilesContainer = svg.append('g').attr({ id: 'placed-tiles' });
+		var placementsContainer = svg.append('g').attr({ id: 'placements-container' });
         var activeTileContainer = svg.append('g').attr({ id: 'active-tile-container' });
         activeTileContainer.append('rect').attr({
             x: 0,
@@ -74,54 +86,47 @@
             width: tileSize + 10,
             height: tileSize + 10,
             fill: 'white'
-        });
+        }).on('click', function (d) {
+			$('#active-tile-image').attr({ x: $(this).attr('x') + 5, y: $(this).attr('y') + 5 })
+		});;
+        
+        socket.on('sending gamestate', function(gamestate) {
+        	console.log(JSON.stringify(gamestate));
+        	currentGameID = gamestate._id;
+        	draw(gamestate);
+    	});
 
         function draw(gamestate) {
-            // assign positions to all the placed tiles
-            gamestate.placedTiles[0].x = 0;
-            gamestate.placedTiles[0].y = 0;
-            var tileAssignations = {};
-            function assignNeighbors(tile) {
-            	tileAssignations[tile.x + ' ' + tile.y] = tile;
-                if(tile.northTile && !tile.northTile.hasOwnProperty('x')) {
-                    tile.northTile.x = tile.x;
-                    tile.northTile.y = tile.y - 1;
-                    assignNeighbors(tile.northTile);
-                }
-                if(tile.southTile && !tile.southTile.hasOwnProperty('x')) {
-                    tile.southTile.x = tile.x;
-                    tile.southTile.y = tile.y + 1;
-                    assignNeighbors(tile.southTile);
-                }
-                if(tile.westTile && !tile.westTile.hasOwnProperty('x')) {
-                    tile.westTile.x = tile.x - 1;
-                    tile.westTile.y = tile.y;
-                    assignNeighbors(tile.westTile);
-                }
-                if(tile.eastTile && !tile.eastTile.hasOwnProperty('x')) {
-                    tile.eastTile.x = tile.x + 1;
-                    tile.eastTile.y = tile.y;
-                    assignNeighbors(tile.eastTile);
-                }
-            }(gamestate.placedTiles[0]);
-            // now draw all the placed tiles
-            var placedTiles = svg.select('#placed-tiles');
-
-            var tiles = placedTiles.selectAll('image').data(gamestate.placedTiles);
-            tiles.enter().append('image').attr({
+            // draw all the placed tiles
+            placedTilesContainer.selectAll('image').data(gamestate.placedTiles).enter().append('image').attr({
                 x: function(d) { return svgWidth / 2 + d.x * tileSize; },
                 y: function(d) { return svgHeight / 2 + d.y * tileSize; },
                 width: tileSize,
                 height: tileSize,
-                'xlink:href': function(d) { console.log('here'); return d.tile.imageURL; },
+                'xlink:href': function(d) { return d.tile.imageURL; },
                 transform: function(d) { return 'rotate(' + 90 * d.rotation + ', ' + (svgWidth / 2 + d.x * tileSize + tileSize / 2) + ', ' + (svgHeight / 2 + d.y * tileSize + tileSize / 2) + ')'; }
             });
-
-            // var activeTile = activeTileContainer.select('image').data(gamestate.activeTile);
-            // activeTile.attr({
-            //     'xlink:href': function(d) { return d.tile.imageUrl; }
-            // });
-
+            
+            activeTileContainer.selectAll('image').data([gamestate.activeTile]).enter().append('image').attr({
+            	id: 'active-tile-image',
+                'xlink:href': function(d) { console.log(d.tile.imageURL); return d.tile.imageURL; },
+				x: 5,
+				y: 5,
+                width: tileSize,
+                height: tileSize
+            });
+			//TODO: show discarded tiles being tossed
+			
+			placementsContainer.selectAll('rect').data(gamestate.activeTile.validPlacements).enter().append('rect').attr({
+				x: function(d) { return svgWidth / 2 + d.x * tileSize; },
+                y: function(d) { return svgHeight / 2 + d.y * tileSize; },
+                width: tileSize,
+                height: tileSize,
+				fill: 'lightgray'
+			}).on('click', function (d) {
+				$('#active-tile-image').attr({ x: $(this).attr('x'), y: $(this).attr('y') });
+				//TODO: apply first valid rotation, click to go through rotations
+			});
         }
     </script>
 </div>

@@ -5,7 +5,7 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
-		body 		{ padding-top:80px; word-wrap:break-word; }
+		body { padding-top: 80px; word-wrap: break-word; }
 	</style>
 </head>
 <body>
@@ -30,7 +30,7 @@
 						<strong>email</strong>: <%= user.local.email %><br>
 						<strong>password</strong>: <%= user.local.password %>
 					</p>
-					
+
 					<a href="/unlink/local" class="btn btn-default">Unlink</a>
 				<% } else { %>
 					<a href="/connect/local" class="btn btn-default">Connect Local</a>
