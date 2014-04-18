@@ -36,7 +36,7 @@
 		<div class="col-lg-4">
 			<button class="btn btn-default btn-sm" onclick="socket.emit('new game')">New game</button>
 			<button class="btn btn-default btn-sm" onclick="socket.emit('start game', currentGameID)">Start game</button>
-			<button class="btn btn-default btn-sm" onclick="socket.emit('sending move', currentGameID, selectedMove)">Send move</button>
+			<button class="btn btn-default btn-sm" onclick="$(this).prop('disabled', true); socket.emit('sending move', currentGameID, selectedMove);" disabled="true" id="send-move-button">Send move</button>
 			<div class="input-group">
 				<input type="text" class="form-control" placeholder="User ID" id="change-name-input">
 				<span class="input-group-btn">
@@ -63,37 +63,40 @@
 			</div>
 		</div>
 	</div>
-	<svg id="game-container" width="1000" height="600">
-	<rect x="0" y="0" width="1000" height="600" fill="lightblue"></rect>
+	<svg id="game-svg" width="1000" height="600">
+	<rect x="0" y="0" width="1000" height="600" fill="lightblue" id="game-background"></rect>
 	</svg>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.4/d3.min.js"></script>
 	<script>
-	//TODO make this less conflicting
+	//TODO: make this less conflicting
 	var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
     var currentGameID, selectedMove;
+    	
+	function resetActiveTile() {
+		$('#active-tile').removeData('rotationIndex').removeData('placementIndex').attr({ 
+			transform: 'translate(5,5)'
+		});
+		// hide any placed meeples and their outlines and remove any selected move
+		$('#meeple-placements image').attr('visibility', 'hidden');
+		selectedMove = null;
+		$('#send-move-button').prop('disabled', true);
+	}
+	//TODO: add d3 zoom and pan
 	$(document).ready(function() {
-
         var tileSize = 100;
-        var svg = d3.select('#game-container');
-        var svgHeight = $('#game-container').height();
-        var svgWidth = $('#game-container').width();
-        
-        svg.append('rect').attr({
-        	class: 'active-tile-background',
-            x: 0,
-            y: 0,
-            width: tileSize + 10,
-            height: tileSize + 10,
-            fill: 'white'
-        }).on('click', resetActiveTile);
+        var svg = d3.select('#game-svg');
+        var svgHeight = $('#game-svg').height();
+        var svgWidth = $('#game-svg').width();
 		
-        var placedTilesContainer = svg.append('g').attr({ id: 'placed-tiles' });
-		var placementsContainer = svg.append('g').attr({ id: 'placements-container' });
-        var activeTileContainer = svg.append('g').attr({ id: 'active-tile-container', transform: 'translate(5,5)' });
-        var activeTileImageContainer = activeTileContainer.append('g').attr({ id: 'active-time-image-container' });
-        var meeplePlaceholderContainer = activeTileContainer.append('g').attr({ id: 'meeple-placeholder-container' });
+		var gameArea = svg.append('g').attr({ id: 'game-area' });
+        var placedTiles = gameArea.append('g').attr({ id: 'placed-tiles' });
+		var placements = gameArea.append('g').attr({ id: 'valid-placements' });
+        var activeTileContainer = gameArea.append('g').attr({ id: 'active-tile', transform: 'translate(5,5)' });
+        var meeplePlacements = activeTileContainer.append('g').attr({ id: 'meeple-placements' });
+        
+        d3.select('#game-background').on('click', resetActiveTile);
         
         socket.on('sending gamestate', function(gamestate) {
         	console.log('==== got gamestate ====');
@@ -101,21 +104,12 @@
         	currentGameID = gamestate._id;
         	draw(gamestate);
     	});
-    	
-    	function resetActiveTile() {
-    		$('#active-tile-container').removeData('rotationIndex').removeData('placementIndex').attr({ 
-				transform: 'translate(5,5)'
-			});
-			// hide any placed meeples and their outlines and remove any selected move
-			$('#meeple-placeholder-container image').attr('visibility', 'hidden');
-			selectedMove = null;
-    	}
 
         function draw(gamestate) {
         	selectedMove = null;
             // for all newly placed tiles: add a group for the placed tile and its meeples
             // then draw the tile image
-            var tileGroup = placedTilesContainer.selectAll('g.placed-tile').data(gamestate.placedTiles);
+            var tileGroup = placedTiles.selectAll('g.placed-tile').data(gamestate.placedTiles);
             tileGroup.enter().append('g').attr({
             	class: 'placed-tile',
             	transform: function(d) { 
@@ -135,9 +129,14 @@
         		return d.meeples.map(function(item) { 
             		return {
             			color: gamestate.players[item.playerIndex].color,
-            			meepleOffset: item.placement.locationType === 'cloister' ? { x: 1/2, y: 1/2 } : d.tile[item.placement.locationType === 'city' ? 'cities' : item.placement.locationType + 's'][item.placement.index].meepleOffset,
             			rotation: d.rotation,
-            			location: item.placement.locationType
+            			location: item.placement.locationType,
+            			meepleOffset:
+	            			item.placement.locationType === 'cloister' ? 
+		            			{ x: 1/2, y: 1/2 } :
+		            		item.placement.locationType === 'city' ?
+		            			d.tile['cities'][item.placement.index].meepleOffset :
+		            			d.tile[item.placement.locationType + 's'][item.placement.index].meepleOffset
             		};
         		});;
         	});
@@ -158,186 +157,186 @@
             // and removing any meeples that have been picked up
             meepleImages.exit().remove();
             
-            if(gamestate.activeTile.tile) {
-            	// draw the active tile
-            	var activeTile = activeTileImageContainer.selectAll('image').data([gamestate.activeTile]);
-	            activeTile.enter().append('image').attr({
-	            	id: 'active-tile-image',
-	                width: tileSize,
-	                height: tileSize,
-	                'pointer-events': 'none'
-	            });
-	            // reset to the base position and update the image URL every draw
-	            activeTile.attr({
-					x: 0,
-					y: 0,
-	                'xlink:href': function(d) { return d.tile.imageURL; }
-	            });
-	            // clear out any stored data about the active tile from the last update
-	            resetActiveTile();
-				//TODO: show discarded tiles being tossed
-				
-				// get the number of remaining meeples and the color
-				var meepleColor, remainingMeeples;
-				for(var i = 0; i < gamestate.players.length; i++) {
-					if(gamestate.players[i].user === '<%= user._id %>') {
-						meepleColor = gamestate.players[i].color;
-						remainingMeeples = gamestate.players[i].remainingMeeples;
-					}
+        	// draw the active tile
+        	var activeTileImage = activeTileContainer.selectAll('image').data([gamestate.activeTile]);
+            activeTileImage.enter().insert('image', '#meeple-placements').attr({
+                width: tileSize,
+                height: tileSize,
+                'pointer-events': 'none'
+            });
+            // reset to the base position and update the image URL every draw
+            activeTileImage.attr({
+				x: 0,
+				y: 0,
+                'xlink:href': function(d) { return d.tile.imageURL; }
+            });
+            // clear out any stored data about the active tile from the last update
+            resetActiveTile();
+			//TODO: show discarded tiles being tossed
+			
+			// get the number of remaining meeples and the color
+			var meepleColor, remainingMeeples;
+			for(var i = 0; i < gamestate.players.length; i++) {
+				if(gamestate.players[i].user === '<%= user._id %>') {
+					meepleColor = gamestate.players[i].color;
+					remainingMeeples = gamestate.players[i].remainingMeeples;
 				}
-				// draw the places where the active tile can be placed
-				var validPlacements = placementsContainer.selectAll('image').data(gamestate.activeTile.validPlacements);
-				validPlacements.enter().append('image').attr({
-					id: function(d, i) { return 'placement-' + i; },
-	                width: tileSize,
-	                height: tileSize,
-	                'xlink:href': '/images/ui/placement_available.png'
+			}
+			// draw the places where the active tile can be placed
+			var validPlacements = placements.selectAll('image').data(gamestate.activeTile.validPlacements);
+			validPlacements.enter().append('image').attr({
+				id: function(d, i) { return 'placement-' + i; },
+                width: tileSize,
+                height: tileSize,
+                'xlink:href': '/images/ui/placement_available.png'
+			});
+			validPlacements.attr({
+				x: function(d) { return svgWidth / 2 + d.x * tileSize; },
+                y: function(d) { return svgHeight / 2 + d.y * tileSize; }
+			}).on('click', function (d, i) {
+				var $activeTile = $('#active-tile');
+				var rotationIndex;
+				// if we have previously clicked this placement box move to the next valid rotation
+				if($activeTile.data('placementIndex') === i) {
+					rotationIndex = ($activeTile.data('rotationIndex') + 1) % d.rotations.length;
+				} else {
+					// if this is a new location reset to the first rotation
+					rotationIndex = 0;
+					// hide any placed meeples
+					$('#meeple-placements .placed-meeple').attr('visibility', 'hidden');
+					// and reset the move
+					selectedMove = { 
+						placement: gamestate.activeTile.validPlacements[i]
+					};
+					$('#send-move-button').prop('disabled', false);
+				}
+				selectedMove.rotation = d.rotations[rotationIndex].rotation;
+				var rotationDegrees = selectedMove.rotation * 90;
+				// store data about this selection in the active tile
+				$activeTile.data('rotationIndex', rotationIndex);
+				$activeTile.data('placementIndex', i);
+				// move the active tile over top of the placement box
+				var x = parseInt($(this).attr('x'), 10);
+				var y = parseInt($(this).attr('y'), 10);
+				$activeTile.attr({
+					transform: 'translate(' + x + ',' + y + ') rotate(' + rotationDegrees + ',' + tileSize / 2 + ',' + tileSize / 2 + ')'
 				});
-				validPlacements.attr({
-					x: function(d) { return svgWidth / 2 + d.x * tileSize; },
-	                y: function(d) { return svgHeight / 2 + d.y * tileSize; }
-				}).on('click', function (d, i) {
-					var $activeTile = $('#active-tile-container');
-					var rotationIndex;
-					// if we have previously clicked this placement box move to the next valid rotation
-					if($activeTile.data('placementIndex') === i) {
-						rotationIndex = ($activeTile.data('rotationIndex') + 1) % d.rotations.length;
-					} else {
-						// if this is a new location reset to the first rotation
-						rotationIndex = 0;
-						// hide any placed meeples
-						$('#meeple-placeholder-container .placed-meeple').attr('visibility', 'hidden');
-						// and reset the move
-						selectedMove = { 
-							placement: gamestate.activeTile.validPlacements[i]
-						};
-					}
-					selectedMove.rotation = d.rotations[rotationIndex].rotation;
-					var rotationDegrees = selectedMove.rotation * 90;
-					// store data about this selection in the active tile
-					$activeTile.data('rotationIndex', rotationIndex);
-					$activeTile.data('placementIndex', i);
-					// move the active tile over top of the placement box
-					var x = parseInt($(this).attr('x'), 10);
-					var y = parseInt($(this).attr('y'), 10);
-					$activeTile.attr({
-						transform: 'translate(' + x + ',' + y + ') rotate(' + rotationDegrees + ',' + tileSize / 2 + ',' + tileSize / 2 + ')'
-					});
-					if(remainingMeeples > 0) {
-						// show outlines for any valid meeple placements and
-	        			// rotate the meeple placeholders and hidden placed meeples to upright positions
-						var validMeeplePlacements = d.rotations[rotationIndex].meeples;
-						var container = d3.select('#meeple-placeholder-container');
-						container.selectAll('.meeple-outline').attr({
-							visibility: function(d) {
-								for(var i = 0; i < validMeeplePlacements.length; i++) {
-									if(validMeeplePlacements[i].locationType === d.type &&
-									   validMeeplePlacements[i].index === d.index) {
-										// remove hidden visibility attribute
-										return null;
-									}
-								}
-								return 'hidden';
-							},
-							transform: function() { 
-								return $(this).attr('transform').replace(/(rotate\()(\d+)/, '$1' + (360 - rotationDegrees));
-							}
-						});
-						// remove meeple placement from the move and hide placed meeple if old placement is no longer valid
-						container.selectAll('.placed-meeple').attr({
-							visibility: function(d) {
-								for(var i = 0; i < validMeeplePlacements.length; i++) {
-									if(validMeeplePlacements[i].locationType === d.type &&
-									   validMeeplePlacements[i].index === d.index) {
-										// remove hidden visibility attribute
-										return $(this).attr('visibility');
-									}
-								}
-								if(selectedMove.meeple &&
-								   selectedMove.meeple.type === d.type &&
-								   selectedMove.meeple.index === d.index) {
-									delete selectedMove.meeple;
-								}
-								return 'hidden';
-							},
-							transform: function() { 
-								return $(this).attr('transform').replace(/(rotate\()(\d+)/, '$1' + (360 - rotationDegrees));
-							}
-						});
-					}
-				});
-				validPlacements.exit().remove();
-				
-				// draw the potential meeple placement for the active tile
 				if(remainingMeeples > 0) {
-					var allMeepleLocations = gamestate.activeTile.tile.roads.map(function(item, index) { item.type = 'road'; item.index = index; return item; });
-					allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.farms.map(function(item, index) { item.type = 'farm'; item.index = index; return item; }));
-					allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.cities.map(function(item, index) { item.type = 'city'; item.index = index; return item; }));
-					if(gamestate.activeTile.tile.cloister) {
-						allMeepleLocations = allMeepleLocations.concat([{ type: 'cloister', index: 1, directions: ['C'], meepleOffset: { x: 1/2, y: 1/2 }}]);
-					}
-					// if there were none of a certain type remove all undefined elements added to the array
-					allMeepleLocations = allMeepleLocations.filter(function(n) { return n != undefined });
-					// draw the outlines on which meeples can be placed
-					var meepleOutlines = meeplePlaceholderContainer.selectAll('image.meeple-outline').data(allMeepleLocations);
-					meepleOutlines.enter().append('image').attr({
-						width: tileSize / 4,
-						height: tileSize / 4,
-						class: 'meeple-outline'
+					// show outlines for any valid meeple placements and
+        			// rotate the meeple placeholders and hidden placed meeples to upright positions
+					var validMeeplePlacements = d.rotations[rotationIndex].meeples;
+					var container = d3.select('#meeple-placements');
+					container.selectAll('.meeple-outline').attr({
+						visibility: function(d) {
+							for(var i = 0; i < validMeeplePlacements.length; i++) {
+								if(validMeeplePlacements[i].locationType === d.type &&
+								   validMeeplePlacements[i].index === d.index) {
+									// remove hidden visibility attribute
+									return null;
+								}
+							}
+							return 'hidden';
+						},
+						transform: function() { 
+							return $(this).attr('transform').replace(/(rotate\()(\d+)/, '$1' + (360 - rotationDegrees));
+						}
 					});
-					meepleOutlines.attr({
-						x: function(d) {
-							return (d.meepleOffset.x - 1/8) * tileSize;
+					// remove meeple placement from the move and hide placed meeple if old placement is no longer valid
+					container.selectAll('.placed-meeple').attr({
+						visibility: function(d) {
+							for(var i = 0; i < validMeeplePlacements.length; i++) {
+								if(validMeeplePlacements[i].locationType === d.type &&
+								   validMeeplePlacements[i].index === d.index) {
+									// remove hidden visibility attribute
+									return $(this).attr('visibility');
+								}
+							}
+							if(selectedMove.meeple &&
+							   selectedMove.meeple.type === d.type &&
+							   selectedMove.meeple.index === d.index) {
+								delete selectedMove.meeple;
+							}
+							return 'hidden';
 						},
-						y: function(d) {
-							return (d.meepleOffset.y - 1/8) * tileSize;
-						},
-						transform: function(d) { 
-							return 'rotate(0,' + d.meepleOffset.x * tileSize + ',' + d.meepleOffset.y * tileSize + ')'; 
-						},
-						'xlink:href': function(d) { 
-							return '/images/meeples/outline_' + (d.type === 'farm' ? 'lying' : 'standing') +'.png'; 
-						},
-						visibility: 'hidden'
-					}).on('click', function(d, i) {
-						// when an outline is clicked unhide the meeple in it
-						var $placedMeeples = $('#meeple-placeholder-container .placed-meeple');
-						$placedMeeples.attr('visibility', 'hidden');
-						$placedMeeples.eq(i).removeAttr('visibility');
-						selectedMove.meeple = {
-							type: d.type,
-							index: d.index
-						};
+						transform: function() { 
+							return $(this).attr('transform').replace(/(rotate\()(\d+)/, '$1' + (360 - rotationDegrees));
+						}
 					});
-					meepleOutlines.exit().remove();
-					
-					var placedMeeples = meeplePlaceholderContainer.selectAll('image.placed-meeple').data(allMeepleLocations);
-					placedMeeples.enter().append('image').attr({
-						width: tileSize / 4,
-						height: tileSize / 4,
-						class: 'placed-meeple'
-					});
-					placedMeeples.attr({
-						x: function(d) {
-							return (d.meepleOffset.x - 1/8) * tileSize;
-						},
-						y: function(d) {
-							return (d.meepleOffset.y - 1/8) * tileSize;
-						},
-						'xlink:href': function(d) { 
-							return '/images/meeples/' + meepleColor + '_' + (d.directions[0].length > 1 ? 'lying' : 'standing') +'.png'; 
-						},
-						transform: function(d) { 
-							return 'rotate(0,' + d.meepleOffset.x * tileSize + ',' + d.meepleOffset.y * tileSize + ')'; 
-						},
-						visibility: 'hidden'
-					});
-					placedMeeples.exit().remove();
 				}
-            } else {
-            	// no active tile means a new (unstarted) game
-            	//TODO: reset state
-            }
+				//TODO: enable send move button
+			});
+			validPlacements.exit().remove();
+				
+			// draw the potential meeple placement for the active tile
+			if(remainingMeeples > 0 && gamestate.activeTile.tile) {
+				var allMeepleLocations = gamestate.activeTile.tile.roads.map(function(item, index) { item.type = 'road'; item.index = index; return item; });
+				allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.farms.map(function(item, index) { item.type = 'farm'; item.index = index; return item; }));
+				allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.cities.map(function(item, index) { item.type = 'city'; item.index = index; return item; }));
+				if(gamestate.activeTile.tile.cloister) {
+					allMeepleLocations = allMeepleLocations.concat([{ type: 'cloister', index: 1, directions: ['C'], meepleOffset: { x: 1/2, y: 1/2 }}]);
+				}
+				// if there were none of a certain type remove all undefined elements added to the array
+				allMeepleLocations = allMeepleLocations.filter(function(n) { return n != undefined });
+				// draw the outlines on which meeples can be placed
+				var meepleOutlines = meeplePlacements.selectAll('image.meeple-outline').data(allMeepleLocations);
+				meepleOutlines.enter().append('image').attr({
+					width: tileSize / 4,
+					height: tileSize / 4,
+					class: 'meeple-outline'
+				});
+				meepleOutlines.attr({
+					x: function(d) {
+						return (d.meepleOffset.x - 1/8) * tileSize;
+					},
+					y: function(d) {
+						return (d.meepleOffset.y - 1/8) * tileSize;
+					},
+					transform: function(d) { 
+						return 'rotate(0,' + d.meepleOffset.x * tileSize + ',' + d.meepleOffset.y * tileSize + ')'; 
+					},
+					'xlink:href': function(d) { 
+						return '/images/meeples/outline_' + (d.type === 'farm' ? 'lying' : 'standing') +'.png'; 
+					},
+					visibility: 'hidden'
+				}).on('click', function(d, i) {
+					// when an outline is clicked unhide the meeple in it
+					var $placedMeeples = $('#meeple-placements .placed-meeple');
+					$placedMeeples.attr('visibility', 'hidden');
+					$placedMeeples.eq(i).removeAttr('visibility');
+					selectedMove.meeple = {
+						type: d.type,
+						index: d.index
+					};
+				});
+				meepleOutlines.exit().remove();
+				
+				var placedMeeples = meeplePlacements.selectAll('image.placed-meeple').data(allMeepleLocations);
+				placedMeeples.enter().append('image').attr({
+					width: tileSize / 4,
+					height: tileSize / 4,
+					class: 'placed-meeple'
+				});
+				placedMeeples.attr({
+					x: function(d) {
+						return (d.meepleOffset.x - 1/8) * tileSize;
+					},
+					y: function(d) {
+						return (d.meepleOffset.y - 1/8) * tileSize;
+					},
+					'xlink:href': function(d) { 
+						return '/images/meeples/' + meepleColor + '_' + (d.directions[0].length > 1 ? 'lying' : 'standing') +'.png'; 
+					},
+					transform: function(d) { 
+						return 'rotate(0,' + d.meepleOffset.x * tileSize + ',' + d.meepleOffset.y * tileSize + ')'; 
+					},
+					visibility: 'hidden'
+				}).on('click', function(d, i) {
+					// when a visible meeple is clicked hide it and remove it from the move
+					$(this).attr('visibility', 'hidden');
+					delete selectedMove.meeple;
+				});
+				placedMeeples.exit().remove();
+			}
         }	
 	});
     </script>
