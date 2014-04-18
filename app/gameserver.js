@@ -1,4 +1,3 @@
-/* jshint -W099 */
 var cookie = require('cookie');
 var connect = require('connect');
 
@@ -37,83 +36,83 @@ module.exports = function(server, sessionStore) {
 	});
 
     io.sockets.on('connection', function (socket) {
-    	// retrieve user information for user specific actions
+		// retrieve user information for user specific actions
         sessionStore.get(socket.handshake.sessionID, function(err, session) {
             if(err || !session) {
                 console.log("couldn't retrieve session");
                 return;
             }
             User.findById(session.passport.user, function(err, currentUser) {
-		        socket.on('new game', function() {
-		        	// pull the user information from the db again in case it has changed since the socket was established
-		        	User.findById(currentUser._id, function(err, currentUser) {
+				socket.on('new game', function() {
+					// pull the user information from the db again in case it has changed since the socket was established
+					User.findById(currentUser._id, function(err, currentUser) {
 						if(err) { console.log('new game find user err: ' + err); }
 						//TODO: remove after testing
-			            currentUser.activeGames = [];
-					    Gamestate.remove({}).exec();
-			            var gamestate = new Gamestate(); // create a new gamestate
-			            gamestate.initializeNewGame(currentUser, function() {
+						currentUser.activeGames = [];
+						Gamestate.remove({}).exec();
+						var gamestate = new Gamestate(); // create a new gamestate
+						gamestate.initializeNewGame(currentUser, function() {
 							subscribe(socket, gamestate); // when creating a game it is now active so subscribe to updates
 							gamestate.populate('placedTiles.tile', function(err, gamestate) {
 								if(err) { console.log('new game populate err: ' + err); }
 								socket.emit('sending gamestate', gamestate);
-				            });
-			            });
-		        	});
-		        });
-		        socket.on('load game', function(gameID) {
-		            Gamestate.findById(gameID, function(err, gamestate) {
-		                if(err) { console.log('load find err: ' + err); }
-		                if(gamestate.userIsInGame(currentUser)) {
-			                subscribe(socket, gamestate); // when loading a game it is now active so subscribe to updates
-			                gamestate.populate('placedTiles.tile activeTile.tile', function(err, gamestate) {
-			                    if(err) { console.log('load populate err: ' + err); }
-			                    socket.emit('sending gamestate', gamestate);
-			                });
-		                }
-		            });
-		        });
-		        socket.on('start game', function(gameID) {
-		            Gamestate.findById(gameID, function(err, gamestate) {
-		                if(err) { console.log('start game err: ' + err); }
-		                if(gamestate.userIsInGame(currentUser)) {
+							});
+						});
+					});
+				});
+				socket.on('load game', function(gameID) {
+					Gamestate.findById(gameID, function(err, gamestate) {
+						if(err) { console.log('load find err: ' + err); }
+						if(gamestate && gamestate.userIsInGame(currentUser)) {
+							subscribe(socket, gamestate); // when loading a game it is now active so subscribe to updates
+							gamestate.populate('placedTiles.tile activeTile.tile', function(err, gamestate) {
+								if(err) { console.log('load populate err: ' + err); }
+								socket.emit('sending gamestate', gamestate);
+							});
+						}
+					});
+				});
+				socket.on('start game', function(gameID) {
+					Gamestate.findById(gameID, function(err, gamestate) {
+						if(err) { console.log('start game err: ' + err); }
+						if(gamestate && gamestate.userIsInGame(currentUser)) {
 							gamestate.startGame(function(err, gamestate) {
 								socket.emit('sending gamestate', gamestate);
 							});
 						}
-		            });
-		        });
-		        socket.on('place tile', function(gameID, x, y) {
-		            Gamestate.findById(gameID, function(err, gamestate) {
-		                if(err) { console.log('load find err: ' + err); }
-						if(gamestate.userIsActive(currentUser)) {
-
+					});
+				});
+				socket.on('sending move', function(gameID, move) {
+					Gamestate.findById(gameID, function(err, gamestate) {
+						if(err) { console.log('load find err: ' + err); }
+						if(gamestate && gamestate.userIsActive(currentUser)) {
+							gamestate.placeTile(move, function(err, gamestate) {
+								socket.emit('sending gamestate', gamestate);
+							});
 						}
 					});
-		        });
-		        socket.on('add user to game', function(gameID, userID) {
-		            Gamestate.findById(gameID, function(err, gamestate) {
-			            if(!err && gamestate.userIsInGame(currentUser) && !gamestate.userIsInGame(userID)) {
-			            	gamestate.players.push({ user: userID });
-		        			User.findByIdAndUpdate(userID, { $push: { activeGames: gameID }}, function(err) {
-		        				if(err) {
-	        						console.log('user add to game err: ' + err);
-	        					} else {
-	            					gamestate.save();
-	        					}
-		        			});
-			            }
-		            });
-		        });
-		        socket.on('add friend', function(userID) {
-		        	User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: userID }}).exec();
-		        });
-		        socket.on('remove friend', function(userID) {
-		        	User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
-		        });
-            	socket.on('set display name', function(name) {
-	        		User.findByIdAndUpdate(currentUser._id, { $set: { displayName: name }}).exec();
-            	});
+				});
+				socket.on('add user to game', function(gameID, userID) {
+					Gamestate.findById(gameID, function(err, gamestate) {
+						if(!err && 
+							gamestate && 
+							gamestate.players.length < 5 &&
+							gamestate.userIsInGame(currentUser) && 
+							!gamestate.userIsInGame(userID)) {
+							gamestate.players.push({ user: userID });
+							User.findByIdAndUpdate(userID, { $push: { activeGames: gameID }}).exec();
+						}
+					});
+				});
+				socket.on('add friend', function(userID) {
+					User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: userID }}).exec();
+				});
+				socket.on('remove friend', function(userID) {
+					User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
+				});
+				socket.on('set display name', function(name) {
+					User.findByIdAndUpdate(currentUser._id, { $set: { displayName: name }}).exec();
+				});
             });
         });
 		socket.on('disconnect', function() {

@@ -1,5 +1,7 @@
 // server.js
 
+//TODO: consider setting up logging via winston (https://github.com/flatiron/winston)
+
 // set up ======================================================================
 // if we're behind an http proxy set up all requests to go through it
 if(process.env.HTTP_PROXY) {
@@ -36,10 +38,12 @@ require('./config/passport')(passport); // pass passport for configuration
 
 // set up our express application
 app.use(express.logger('dev')); // log every request to the console
+app.use(express.compress());
 app.use(express.cookieParser()); // read cookies (needed for auth)
 app.use(express.json());
 app.use(express.urlencoded()); // get information from html forms
-app.use('/images', express.static(__dirname + '/images'));
+//TODO: consider using static cache (https://github.com/isaacs/st)
+app.use('/images', express.static(__dirname + '/images', { maxAge: 31557600000 /* one year caching */ }));
 
 app.set('view engine', 'ejs'); // set up ejs for templating
 
