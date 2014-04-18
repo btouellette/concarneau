@@ -72,11 +72,11 @@
 	<script>
 	//TODO: make this less conflicting
 	var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
-    var currentGameID, selectedMove;
+    var currentGameID, selectedMove, activeTileTransform;
     	
 	function resetActiveTile() {
 		$('#active-tile').removeData('rotationIndex').removeData('placementIndex').attr({ 
-			transform: 'translate(5,5)'
+			transform: activeTileTransform
 		});
 		// hide any placed meeples and their outlines and remove any selected move
 		$('#meeple-placements image').attr('visibility', 'hidden');
@@ -86,17 +86,34 @@
 	//TODO: add d3 zoom and pan
 	$(document).ready(function() {
         var tileSize = 100;
-        var svg = d3.select('#game-svg');
+		
+        var zoom = d3.behavior.zoom().scaleExtent([0.25, 1]).on('zoom', function() {
+    		d3.event.sourceEvent.preventDefault();
+			gameArea.attr('transform', 'translate(' + d3.event.translate + ') scale(' + d3.event.scale + ')');
+			activeTileTransform = 'scale(' + 1/d3.event.scale + ') translate(' + d3.event.translate.map(function(item) { return -1 * item + 5; }) + ')';
+			if(!selectedMove) {
+				activeTileContainer.attr('transform', activeTileTransform);
+			}
+		});
+		//TODO: zoom and pan when active tile moves if out of zoom/pan range
+		//TODO: use d3 transitions
+		
+        var svg = d3.select('#game-svg').call(zoom);
         var svgHeight = $('#game-svg').height();
         var svgWidth = $('#game-svg').width();
-		
+        
 		var gameArea = svg.append('g').attr({ id: 'game-area' });
         var placedTiles = gameArea.append('g').attr({ id: 'placed-tiles' });
 		var placements = gameArea.append('g').attr({ id: 'valid-placements' });
         var activeTileContainer = gameArea.append('g').attr({ id: 'active-tile', transform: 'translate(5,5)' });
         var meeplePlacements = activeTileContainer.append('g').attr({ id: 'meeple-placements' });
         
-        d3.select('#game-background').on('click', resetActiveTile);
+        // reset the active tile if the user clicks the background and isn't doing a zoom/pan
+        d3.select('#game-background').on('click', function() {
+        	if (d3.event.defaultPrevented === false) {
+        		resetActiveTile();
+    		}
+		});
         
         socket.on('sending gamestate', function(gamestate) {
         	console.log('==== got gamestate ====');
@@ -158,7 +175,7 @@
             meepleImages.exit().remove();
             
         	// draw the active tile
-        	var activeTileImage = activeTileContainer.selectAll('image').data([gamestate.activeTile]);
+        	var activeTileImage = activeTileContainer.selectAll('image').data(gamestate.activeTile.tile ? [gamestate.activeTile.tile] : []);
             activeTileImage.enter().insert('image', '#meeple-placements').attr({
                 width: tileSize,
                 height: tileSize,
@@ -168,7 +185,7 @@
             activeTileImage.attr({
 				x: 0,
 				y: 0,
-                'xlink:href': function(d) { return d.tile.imageURL; }
+                'xlink:href': function(d) { return d.imageURL; }
             });
             // clear out any stored data about the active tile from the last update
             resetActiveTile();

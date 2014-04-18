@@ -5,8 +5,6 @@ var moniker = require('moniker');
 var Q = require('q');
 var Tile = require('../models/tile');
 
-//TODO: check all if(item) statements to ensure they don't need to be if(item !== undefined) instead
-
 // Tile features are defined in terms of the cardinal directions they use
 // Roads and cities potentially connect cardinal directions (N S E W)
 // Fields potentially connect secondary-intercardinal directions (NNW NNE ENE ESE SSE SSW WSW WNW)
@@ -507,7 +505,6 @@ gamestateSchema.methods.drawTile = function(callback) {
 			gamestate.activeTile.validPlacements.push(groupedPlacements[key]);
 		}
 		gamestate.save(function(err, gamestate) {
-			//TODO: why is this throwing "VersionError: No matching document found." with a single user???
             if(err) {
 				console.log('draw tile save err: ' + err);
 			}
