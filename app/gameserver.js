@@ -6,6 +6,8 @@ var Tile = require('./models/tile');
 var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
+//TODO: send update when players see game finish, when all have seen delete from db
+//TODO: broadcast game updates to subscriptions
 var subscriptions = {
 	gameToSocket: {}, // index by gameid, array of sockets to send update messages to
 	socketToGame: {} // index by socket id, current active gameid

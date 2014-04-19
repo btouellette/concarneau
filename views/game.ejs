@@ -70,7 +70,18 @@
 	<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.5/d3.min.js"></script>
 	<script>
-	//TODO: make this less conflicting
+	//TODO: show active players + points + remaining meeples
+	//TODO: make better background
+	//TODO: integrate friends list into side panel on SVG
+	//TODO: integrate game list into side panel on SVG
+	//TODO: have first game autoload
+	//TODO: move send game button onto SVG
+	//TODO: move name change onto SVG side panel
+	//TODO: make game creation dialog where user can select friends before game starts
+	//TODO: auto calculate zoom by number of tiles placed
+	//TODO: add link accounts page link
+	
+	//TODO: move these variables out of the global namespace
 	var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
     var currentGameID, selectedMove, activeTileTransform;
     	

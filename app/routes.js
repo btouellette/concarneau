@@ -1,5 +1,7 @@
 module.exports = function(app, passport, mongoose) {
 
+//TODO: if user is logged in forward to game page from root
+
 // normal routes ===============================================================
 
 	// show the home page (will also have our login links)
