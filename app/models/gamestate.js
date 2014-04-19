@@ -89,6 +89,7 @@ gamestateSchema.methods.userIsActive = function(user) {
 };
 
 gamestateSchema.methods.drawTile = function(callback) {
+	// console.log('drawing new tile');
 	this.populate('unusedTiles placedTiles.tile', function(err, gamestate) {
 		//TODO: if we're out of tiles detect and score/complete game
 		// move one random tile from unused to active
@@ -404,37 +405,50 @@ gamestateSchema.methods.drawTile = function(callback) {
 			// check farms
 			var farmDirections = ['NNE','ENE','ESE','SSE','SSW','WSW','WNW','NNW'];
 			for(var index4 = 0; index4 < activeTile.farms.length; index4++) {
+				// console.log('checking farm: ' + index4 + ' ' + JSON.stringify(activeTile.farms[index4]));
 				valid = true;
 				var rotatedFarmDirections = activeTile.farms[index4].directions.map(function(direction) {
 					return farmDirections[(farmDirections.indexOf(direction) + currentPlacement.rotation * 2) % 8];
 				});
 				if(currentPlacement.directionToSource === 'N') {
+					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('NNW') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'SSW'), gamestate);
+						// console.log('NNW ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('NNE') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'SSE'), gamestate);
+						// console.log('NNE ' + valid);
 					}
 				} else if(currentPlacement.directionToSource === 'E') {
+					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('ENE') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'WNW'), gamestate);
+						// console.log('ENE ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('ESE') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'WSW'), gamestate);
+						// console.log('ESE ' + valid);
 					}
 				} else if(currentPlacement.directionToSource === 'S') {
+					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('SSW') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'NNW'), gamestate);
+						// console.log('SSW ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('SSE') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'NNE'), gamestate);
+						// console.log('SSE ' + valid);
 					}
 				} else if(currentPlacement.directionToSource === 'W') {
+					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('WNW') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'ENE'), gamestate);
+						// console.log('WNW ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('WSW') !== -1) {
 						valid = valid && !isFeatureOwned(adjacentTile, 'farm', getFeatureIndex(adjacentTile, 'farm', 'ESE'), gamestate);
+						// console.log('WSW ' + valid);
 					}
 				}
 				if(valid) {
@@ -530,10 +544,14 @@ function isFeatureOwned(placedTile, featureType, featureIndex, gamestate) {
 			if(!checkedTiles) {
 				checkedTiles = {};
 			}
-			if(checkedTiles[currentTile]) {
+			if(checkedTiles[currentTile] &&
+			   checkedTiles[currentTile].indexOf(featureType + ':' + featureIndex) !== -1) {
 				return false;
 			}
-			checkedTiles[currentTile] = true;
+			if(!checkedTiles[currentTile]) {
+				checkedTiles[currentTile] = [];
+			}
+			checkedTiles[currentTile].push(featureType + ':' + featureIndex);
 			// console.log('checking this tile');
 			// first check on the current tile
 			for(var i = 0; i < currentTile.meeples.length; i++) {
@@ -551,76 +569,68 @@ function isFeatureOwned(placedTile, featureType, featureIndex, gamestate) {
 			var rotatedDirections = currentTile.tile[pluralType][featureIndex].directions.map(function(direction) {
 				return directions[(directions.indexOf(direction) + rotation * (featureType === 'farm' ? 2 : 1)) % directions.length];
 			});
-			var flippedDirection, index;
+			var flippedDirection, indices, directionIndex;
 			if(currentTile.northTileIndex !== undefined) {
 				// console.log('checking N');
+				indices = [rotatedDirections.indexOf('N'), rotatedDirections.indexOf('NNW'), rotatedDirections.indexOf('NNE')];
 				// check the feature for north edges
-				index = rotatedDirections.indexOf('N');
-				if(index === -1) {
-					index = rotatedDirections.indexOf('NNW');
-				}
-				if(index === -1) {
-					index = rotatedDirections.indexOf('NNE');
-				}
-				if(index !== -1) {
-					connectedTile = gamestate.placedTiles[currentTile.northTileIndex];
-					flippedDirection = rotatedDirections[index].replace(/N/g,'S');
-					if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
-						return true;
+				for(var i1 = 0; i1 < 3; i1++) {
+					directionIndex = indices[i1];
+					if(directionIndex !== -1) {
+						// for any that were found check their connecting features
+						connectedTile = gamestate.placedTiles[currentTile.northTileIndex];
+						flippedDirection = rotatedDirections[directionIndex].replace(/N/g,'S');
+						if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
+							return true;
+						}
 					}
 				}
 			}
 			if(currentTile.eastTileIndex !== undefined) {
 				// console.log('checking E');
+				indices = [rotatedDirections.indexOf('E'), rotatedDirections.indexOf('ENE'), rotatedDirections.indexOf('ESE')];
 				// check the feature for east edges
-				index = rotatedDirections.indexOf('E');
-				if(index === -1) {
-					index = rotatedDirections.indexOf('ENE');
-				}
-				if(index === -1) {
-					index = rotatedDirections.indexOf('ESE');
-				}
-				if(index !== -1) {
-					connectedTile = gamestate.placedTiles[currentTile.eastTileIndex];
-					flippedDirection = rotatedDirections[index].replace(/E/g,'W');
-					if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
-						return true;
+				for(var i2 = 0; i2 < 3; i2++) {
+					directionIndex = indices[i2];
+					if(directionIndex !== -1) {
+						// for any that were found check their connecting features
+						connectedTile = gamestate.placedTiles[currentTile.eastTileIndex];
+						flippedDirection = rotatedDirections[directionIndex].replace(/E/g,'W');
+						if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
+							return true;
+						}
 					}
 				}
 			}
 			if(currentTile.southTileIndex !== undefined) {
 				// console.log('checking S');
+				indices = [rotatedDirections.indexOf('S'), rotatedDirections.indexOf('SSW'), rotatedDirections.indexOf('SSE')];
 				// check the feature for south edges
-				index = rotatedDirections.indexOf('S');
-				if(index === -1) {
-					index = rotatedDirections.indexOf('SSW');
-				}
-				if(index === -1) {
-					index = rotatedDirections.indexOf('SSE');
-				}
-				if(index !== -1) {
-					connectedTile = gamestate.placedTiles[currentTile.southTileIndex];
-					flippedDirection = rotatedDirections[index].replace(/S/g,'N');
-					if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
-						return true;
+				for(var i3 = 0; i3 < 3; i3++) {
+					directionIndex = indices[i3];
+					if(directionIndex !== -1) {
+						// for any that were found check their connecting features
+						connectedTile = gamestate.placedTiles[currentTile.southTileIndex];
+						flippedDirection = rotatedDirections[directionIndex].replace(/S/g,'N');
+						if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
+							return true;
+						}
 					}
 				}
 			}
 			if(currentTile.westTileIndex !== undefined) {
 				// console.log('checking W');
+				indices = [rotatedDirections.indexOf('W'), rotatedDirections.indexOf('WNW'), rotatedDirections.indexOf('WSW')];
 				// check the feature for west edges
-				index = rotatedDirections.indexOf('W');
-				if(index === -1) {
-					index = rotatedDirections.indexOf('WNW');
-				}
-				if(index === -1) {
-					index = rotatedDirections.indexOf('WSW');
-				}
-				if(index !== -1) {
-					connectedTile = gamestate.placedTiles[currentTile.westTileIndex];
-					flippedDirection = rotatedDirections[index].replace(/W/g,'E');
-					if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
-						return true;
+				for(var i4 = 0; i4 < 3; i4++) {
+					directionIndex = indices[i4];
+					if(directionIndex !== -1) {
+						// for any that were found check their connecting features
+						connectedTile = gamestate.placedTiles[currentTile.westTileIndex];
+						flippedDirection = rotatedDirections[directionIndex].replace(/W/g,'E');
+						if(checkForMeeples(connectedTile, featureType, getFeatureIndex(connectedTile, featureType, flippedDirection), checkedTiles)) {
+							return true;
+						}
 					}
 				}
 			}
