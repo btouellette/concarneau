@@ -84,13 +84,13 @@ module.exports = function(server, sessionStore) {
 						}
 					});
 				});
-				socket.on('sending move', function(gameID, move) {
+				socket.on('sending move', function(gameID, move, autocomplete) {
 					Gamestate.findById(gameID, function(err, gamestate) {
 						if(err) { console.log('load find err: ' + err); }
 						if(gamestate && gamestate.userIsActive(currentUser)) {
 							gamestate.placeTile(move, function(err, gamestate) {
 								socket.emit('sending gamestate', gamestate);
-							});
+							}, autocomplete);
 						}
 					});
 				});

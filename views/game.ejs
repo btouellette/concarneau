@@ -36,7 +36,10 @@
 		<div class="col-lg-4">
 			<button class="btn btn-default btn-sm" onclick="socket.emit('new game')">New game</button>
 			<button class="btn btn-default btn-sm" onclick="socket.emit('start game', currentGameID)">Start game</button>
-			<button class="btn btn-default btn-sm" onclick="$(this).prop('disabled', true); socket.emit('sending move', currentGameID, selectedMove);" disabled="true" id="send-move-button">Send move</button>
+			<button class="btn btn-default btn-sm" onclick="$(this).prop('disabled', true); socket.emit('sending move', currentGameID, selectedMove, $('#complete-checkbox').is(':checked'));" disabled="true" id="send-move-button">Send move</button>
+			<div class="checkbox">
+				<label><input type="checkbox" id="complete-checkbox"> Test complete</label>
+			</div>
 			<div class="input-group">
 				<input type="text" class="form-control" placeholder="User ID" id="change-name-input">
 				<span class="input-group-btn">
@@ -128,6 +131,8 @@
         socket.on('sending gamestate', function(gamestate) {
         	console.log('==== got gamestate ====');
         	console.log(JSON.stringify(gamestate));
+        	console.log('==== score ====');
+        	console.log(JSON.stringify(gamestate.players[0].points));
         	currentGameID = gamestate._id;
         	draw(gamestate);
     	});

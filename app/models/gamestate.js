@@ -94,6 +94,8 @@ function completeGame(gamestate) {
 	while(i < gamestate.placedTiles.length) {
 		var tile = gamestate.placedTiles[i];
 		if(tile.meeples.length !== 0) {
+			console.log('finalizing meeple=>');
+			console.log(JSON.stringify(tile.meeples[0]));
 			checkAndFinalizeFeature(tile, tile.meeples[0].placement.index, tile.meeples[0].placement.locationType, true, gamestate);
 		} else {
 			i++;
@@ -101,11 +103,11 @@ function completeGame(gamestate) {
 	}
 }
 
-gamestateSchema.methods.drawTile = function(callback) {
+gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 	// console.log('drawing new tile');
 	this.populate('unusedTiles placedTiles.tile', function(err, gamestate) {
 		// if we're out of tiles score/complete game
-		if(gamestate.unusedTiles.length === 0) {
+		if(gamestate.unusedTiles.length === 0 || autocomplete) {
 			completeGame(gamestate);
 		}
 		// move one random tile from unused to active
@@ -142,7 +144,7 @@ gamestateSchema.methods.drawTile = function(callback) {
 					westEdge: mappedTile.tile.northEdge
 				};
 		});
-		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0) {
+		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
 			// find out all the places we can place it
 			for(var i = 0; i < gamestate.placedTiles.length; i++) {
@@ -534,6 +536,10 @@ gamestateSchema.methods.drawTile = function(callback) {
 		for (var key in groupedPlacements) {
 			gamestate.activeTile.validPlacements.push(groupedPlacements[key]);
 		}
+		if(autocomplete) {
+			callback(null, gamestate);
+			return;
+		}
 		gamestate.save(function(err, gamestate) {
             if(err) {
 				console.log('draw tile save err: ' + err);
@@ -713,8 +719,8 @@ gamestateSchema.methods.startGame = function(callback) {
 		gamestate.drawTile(callback);
 	}
 };
-
-gamestateSchema.methods.placeTile = function(move, callback) {
+//TODO: remove all autocomplete
+gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	var gamestate = this;
 	var validPlacement = false;
 	// get the active player
@@ -813,7 +819,7 @@ gamestateSchema.methods.placeTile = function(move, callback) {
 			// change the active player
 			gamestate.players[activePlayerIndex].active = false;
 			gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
-			gamestate.drawTile(callback);
+			gamestate.drawTile(callback, autocomplete);
 		});
 	}
 };
@@ -829,15 +835,15 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			};
 			// iteratively check this tile and all those around it
 			// add a point for every tile in range
-			for(var ind = 0; ind < gamestate.placedTiles; ind++) {
-				if((gamestate.placedTiles[ind].x <= currentTile.x + 1 || gamestate.placedTiles[ind].x >= currentTile.x - 1) &&
-				   (gamestate.placedTiles[ind].y <= currentTile.y + 1 || gamestate.placedTiles[ind].y >= currentTile.y - 1)) {
+			for(var ind = 0; ind < gamestate.placedTiles.length; ind++) {
+				if((gamestate.placedTiles[ind].x <= currentTile.x + 1 && gamestate.placedTiles[ind].x >= currentTile.x - 1) &&
+				   (gamestate.placedTiles[ind].y <= currentTile.y + 1 && gamestate.placedTiles[ind].y >= currentTile.y - 1)) {
 					results.points++;
 				}
 			}
 			// grab the potential reference to the cloister meeple
-			for(var ind2 = 0; ind2 < currentTile.meeples; ind2++) {
-				if(currentTile.meeples[ind2].locationType === 'cloister') {
+			for(var ind2 = 0; ind2 < currentTile.meeples.length; ind2++) {
+				if(currentTile.meeples[ind2].placement.locationType === 'cloister') {
 					results.tilesWithMeeples.push({
 						placedTile: currentTile,
 						meepleIndex: ind2
@@ -846,6 +852,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 				}
 			}
 			results.complete = (results.points === 9);
+			return results;
 		} else if(featureType === 'road' || featureType === 'city' || featureType === 'farm') {
 			// recursively calculate feature (road or city) completeness, point value
 			// and record tiles with placed meeples for potential removal and scoring
@@ -871,21 +878,27 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			if(checked[currentTile]) {
 				checked[currentTile].features.push(featureIndex);
 			} else {
-				checked[currentTile].tile = currentTile;
-				checked[currentTile].features = [featureIndex];
+				checked[currentTile] = {
+					tile: currentTile,
+					features: [featureIndex]
+				};
 				// only add points if this is the first time encountering the tile
 				if(featureType === 'city') {
 					results.points = currentTile.tile.doublePoints ? 2 : 1;
 				} else if(featureType === 'road') {
 					results.points = 1;
 				} else if(featureType === 'farm') {
+					console.log('checking farm: ' + featureIndex);
+					console.log(JSON.stringify(currentTile));
 					// find any complete cities adjacent to this field which have not been recorded yet
-					if(currentTile.farms[featureIndex].adjacentCities) {
+					if(currentTile.tile.farms[featureIndex].adjacentCityIndices) {
 						// for each adjacent city
-						for(var k = 0; k < currentTile.farms[featureIndex].adjacentCityIndices.length; k++) {
+						for(var k = 0; k < currentTile.tile.farms[featureIndex].adjacentCityIndices.length; k++) {
 							// get the completeness
-							var cityIndex = currentTile.farms[featureIndex].adjacentCityIndices[k];
+							var cityIndex = currentTile.tile.farms[featureIndex].adjacentCityIndices[k];
+							console.log('checking adjacent city: ' + cityIndex);
 							var info = getFeatureInfo(currentTile, cityIndex, 'city');
+							console.log(JSON.stringify(info));
 							if(info.complete) {
 								var unseen = true;
 								// check each of the features visited when gathering the info on the city against previously seen cities
@@ -986,6 +999,8 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 		}
 	}
 	function scoreAndRemoveMeeples(featureInfo) {
+		console.log('attempting to score meeples=>');
+		console.log(JSON.stringify(featureInfo));
 		// if the feature is done and there were meeples remove and score them
 		if((featureInfo.complete || gameFinished) && featureInfo.tilesWithMeeples.length > 0) {
 			// the points only go to the player(s) with the most meeples on the feature
