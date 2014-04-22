@@ -147,7 +147,10 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				};
 		});
 		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
+			// splice a random unused tile into the active tile
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
+			// make sure mongoose sees the field as changed to save later
+			gamestate.markModified('unusedTiles');
 			// find out all the places we can place it
 			for(var i = 0; i < gamestate.placedTiles.length; i++) {
 				currentTile = gamestate.placedTiles[i];

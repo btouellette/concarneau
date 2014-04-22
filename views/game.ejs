@@ -110,6 +110,7 @@
 	$(document).ready(function() {
         var tileSize = 100;
 		
+		//TODO: finer grained scrolling
         var zoom = d3.behavior.zoom().scaleExtent([0.25, 1]).on('zoom', function() {
         	//d3.event.sourceEvent.preventDefault();
 			reverseScale = 1/d3.event.scale;
@@ -155,13 +156,14 @@
         	resetActiveTile(false);
         	
 			// rotate the player array such that this player is on top
-			while(gamestate.players[0] !== '<%= user._id %>') {
-				gamestate.players.push(gamestate.players.shift());
+        	var reorderedPlayers = gamestate.players.slice(0);
+			while(reorderedPlayers[0].user !== '<%= user._id %>') {
+				reorderedPlayers.push(reorderedPlayers.shift());
 			}
 			// get the number of remaining meeples and the color
-			var meepleColor = gamestate.players[0].color;
-			var remainingMeeples = gamestate.players[0].remainingMeeples;
-			var userIsActive = gamestate.players[0].active;
+			var meepleColor = reorderedPlayers[0].color;
+			var remainingMeeples = reorderedPlayers[0].remainingMeeples;
+			var userIsActive = reorderedPlayers[0].active;
         	
             // for all newly placed tiles: add a group for the placed tile and its meeples
             // then draw the tile image
@@ -384,8 +386,9 @@
 				meepleOutlines.exit().remove();
 			}
 			
+			//TODO: move score over so 3 digits fit
 			// draw the players scores and remaining meeples
-			var scoreGroups = scoreArea.selectAll('g').data(gamestate.started ? gamestate.players : []);
+			var scoreGroups = scoreArea.selectAll('g').data(gamestate.started ? reorderedPlayers : []);
 			var group = scoreGroups.enter().append('g').attr({
 				id: function(d) {
 					return 'score-group-' + d.color;
