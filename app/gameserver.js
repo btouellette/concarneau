@@ -6,8 +6,8 @@ var Tile = require('./models/tile');
 var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
+//TODO: trim/lean before emitting
 //TODO: send update when players see game finish, when all have seen delete from db
-//TODO: broadcast game updates to subscriptions
 var subscriptions = {
 	gameToSocket: {}, // index by gameid, array of sockets to send update messages to
 	socketToGame: {} // index by socket id, current active gameid
@@ -79,7 +79,9 @@ module.exports = function(server, sessionStore) {
 						if(err) { console.log('start game err: ' + err); }
 						if(gamestate && gamestate.userIsInGame(currentUser)) {
 							gamestate.startGame(function(err, gamestate) {
-								socket.emit('sending gamestate', gamestate);
+								for(var i = 0; i < subscriptions.gameToSocket[gameID].length; i++) {
+									subscriptions.gameToSocket[gameID][i].emit('sending gamestate', gamestate);
+								}
 							});
 						}
 					});
@@ -89,7 +91,9 @@ module.exports = function(server, sessionStore) {
 						if(err) { console.log('load find err: ' + err); }
 						if(gamestate && gamestate.userIsActive(currentUser)) {
 							gamestate.placeTile(move, function(err, gamestate) {
-								socket.emit('sending gamestate', gamestate);
+								for(var i = 0; i < subscriptions.gameToSocket[gameID].length; i++) {
+									subscriptions.gameToSocket[gameID][i].emit('sending gamestate', gamestate);
+								}
 							}, autocomplete);
 						}
 					});
@@ -102,7 +106,10 @@ module.exports = function(server, sessionStore) {
 							gamestate.userIsInGame(currentUser) && 
 							!gamestate.userIsInGame(userID)) {
 							gamestate.players.push({ user: userID });
-							User.findByIdAndUpdate(userID, { $push: { activeGames: gameID }}).exec();
+							gamestate.save();
+							//TODO: remove after testing
+							User.findByIdAndUpdate(userID, { $set: { activeGames: [gameID] }}).exec();
+							// User.findByIdAndUpdate(userID, { $push: { activeGames: gameID }}).exec();
 						}
 					});
 				});

@@ -18,12 +18,14 @@ var Tile = require('../models/tile');
 // define the schema for our game model
 var gamestateSchema = mongoose.Schema({
     name: String,
+    started: { type: Boolean, default: false },
     players: [{
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,
         remainingMeeples: Number,
         active: Boolean,
-        color: String
+        color: String,
+        acknowledgedGameEnd: Boolean
     }],
     unusedTiles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tile' }],
     activeTile: {
@@ -94,8 +96,8 @@ function completeGame(gamestate) {
 	while(i < gamestate.placedTiles.length) {
 		var tile = gamestate.placedTiles[i];
 		if(tile.meeples.length !== 0) {
-			console.log('finalizing meeple=>');
-			console.log(JSON.stringify(tile.meeples[0]));
+			// console.log('finalizing meeple=>');
+			// console.log(JSON.stringify(tile.meeples[0]));
 			checkAndFinalizeFeature(tile, tile.meeples[0].placement.index, tile.meeples[0].placement.locationType, true, gamestate);
 		} else {
 			i++;
@@ -703,19 +705,18 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, callback) {
 
 gamestateSchema.methods.startGame = function(callback) {
 	var gamestate = this;
-	var gameAlreadyStarted = false;
-	// choose a random player to start
-	var startingPlayer = Math.floor(Math.random()*gamestate.players.length);
-	var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
-	for(var i = 0; i < gamestate.players.length; i++) {
-		gameAlreadyStarted = gameAlreadyStarted || gamestate.players[i].active;
-		gamestate.players[i].points = 0;
-		gamestate.players[i].remainingMeeples = 7;
-		gamestate.players[i].active = (i === startingPlayer);
-		// choose a random remaining color for this player
-		gamestate.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
-	}
-	if(!gameAlreadyStarted) {
+	if(!gamestate.started) {
+		// choose a random player to start
+		var startingPlayer = Math.floor(Math.random()*gamestate.players.length);
+		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
+		for(var i = 0; i < gamestate.players.length; i++) {
+			gamestate.players[i].points = 0;
+			gamestate.players[i].remainingMeeples = 7;
+			gamestate.players[i].active = (i === startingPlayer);
+			// choose a random remaining color for this player
+			gamestate.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
+		}
+		gamestate.started = true;
 		gamestate.drawTile(callback);
 	}
 };
@@ -888,17 +889,17 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 				} else if(featureType === 'road') {
 					results.points = 1;
 				} else if(featureType === 'farm') {
-					console.log('checking farm: ' + featureIndex);
-					console.log(JSON.stringify(currentTile));
+					// console.log('checking farm: ' + featureIndex);
+					// console.log(JSON.stringify(currentTile));
 					// find any complete cities adjacent to this field which have not been recorded yet
 					if(currentTile.tile.farms[featureIndex].adjacentCityIndices) {
 						// for each adjacent city
 						for(var k = 0; k < currentTile.tile.farms[featureIndex].adjacentCityIndices.length; k++) {
 							// get the completeness
 							var cityIndex = currentTile.tile.farms[featureIndex].adjacentCityIndices[k];
-							console.log('checking adjacent city: ' + cityIndex);
+							// console.log('checking adjacent city: ' + cityIndex);
 							var info = getFeatureInfo(currentTile, cityIndex, 'city');
-							console.log(JSON.stringify(info));
+							// console.log(JSON.stringify(info));
 							if(info.complete) {
 								var unseen = true;
 								// check each of the features visited when gathering the info on the city against previously seen cities
@@ -999,8 +1000,8 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 		}
 	}
 	function scoreAndRemoveMeeples(featureInfo) {
-		console.log('attempting to score meeples=>');
-		console.log(JSON.stringify(featureInfo));
+		// console.log('attempting to score meeples=>');
+		// console.log(JSON.stringify(featureInfo));
 		// if the feature is done and there were meeples remove and score them
 		if((featureInfo.complete || gameFinished) && featureInfo.tilesWithMeeples.length > 0) {
 			// the points only go to the player(s) with the most meeples on the feature
