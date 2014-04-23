@@ -44,7 +44,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['WSW','SSW','SSE','ESE'], meepleOffset: { x: 1/2, y: 3/4 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/RCr.png',
+			imageURL: '/content/images/tiles/base-game/RCr.png',
 			expansion: 'base-game',
 			count: 4,
 			startingTile: true
@@ -58,7 +58,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['WNW','WSW','SSW','SSE','ESE','ENE'], meepleOffset: { x: 1/2, y: 5/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/C.png',
+			imageURL: '/content/images/tiles/base-game/C.png',
 			expansion: 'base-game',
 			count: 5,
 			startingTile: false
@@ -73,7 +73,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['SSW','SSE','ESE','ENE'], meepleOffset: { x: 5/8, y: 5/8 }, adjacentCityIndices: [0, 1]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CC.2.png',
+			imageURL: '/content/images/tiles/base-game/CC.2.png',
 			expansion: 'base-game',
 			count: 2,
 			startingTile: false
@@ -88,7 +88,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['WNW','WSW','ENE','ESE'], meepleOffset: { x: 1/4, y: 1/2 }, adjacentCityIndices: [0, 1]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CFC.2.png',
+			imageURL: '/content/images/tiles/base-game/CFC.2.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false
@@ -103,7 +103,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSW','SSE'], meepleOffset: { x: 1/2, y: 7/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: true,
-			imageURL: '/images/tiles/base-game/CFc+.png',
+			imageURL: '/content/images/tiles/base-game/CFc+.png',
 			expansion: 'base-game',
 			count: 2,
 			startingTile: false
@@ -118,7 +118,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSW','SSE'], meepleOffset: { x: 1/2, y: 7/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CFc.1.png',
+			imageURL: '/content/images/tiles/base-game/CFc.1.png',
 			expansion: 'base-game',
 			count: 1,
 			startingTile: false
@@ -136,7 +136,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSE','ESE'], meepleOffset: { x: 13/16, y: 13/16 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CRRR.png',
+			imageURL: '/content/images/tiles/base-game/CRRR.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false
@@ -151,7 +151,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSE','ESE'], meepleOffset: { x: 13/16, y: 13/16 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CRr.png',
+			imageURL: '/content/images/tiles/base-game/CRr.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false
@@ -165,7 +165,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['SSW','SSE','ESE','ENE'], meepleOffset: { x: 11/16, y: 11/16 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: true,
-			imageURL: '/images/tiles/base-game/Cc+.png',
+			imageURL: '/content/images/tiles/base-game/Cc+.png',
 			expansion: 'base-game',
 			count: 2,
 			startingTile: false
@@ -179,7 +179,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['SSW','SSE','ESE','ENE'], meepleOffset: { x: 11/16, y: 11/16 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/Cc.1.png',
+			imageURL: '/content/images/tiles/base-game/Cc.1.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false
@@ -194,7 +194,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSE','ESE'], meepleOffset: { x: 7/8, y: 7/8 }}],
 			cloister: false,
 			doublePoints: true,
-			imageURL: '/images/tiles/base-game/CcRr+.png',
+			imageURL: '/content/images/tiles/base-game/CcRr+.png',
 			expansion: 'base-game',
 			count: 2,
 			startingTile: false
@@ -209,7 +209,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSE','ESE'], meepleOffset: { x: 7/8, y: 7/8 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CcRr.png',
+			imageURL: '/content/images/tiles/base-game/CcRr.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false
@@ -223,7 +223,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['SSW','SSE'], meepleOffset: { x: 1/2, y: 7/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: true,
-			imageURL: '/images/tiles/base-game/Ccc+.png',
+			imageURL: '/content/images/tiles/base-game/Ccc+.png',
 			expansion: 'base-game',
 			count: 1,
 			startingTile: false
@@ -237,7 +237,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['SSW','SSE'], meepleOffset: { x: 1/2, y: 7/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/Ccc.png',
+			imageURL: '/content/images/tiles/base-game/Ccc.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false
@@ -252,7 +252,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSE'], meepleOffset: { x: 3/4, y: 7/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: true,
-			imageURL: '/images/tiles/base-game/CccR+.png',
+			imageURL: '/content/images/tiles/base-game/CccR+.png',
 			expansion: 'base-game',
 			count: 2,
 			startingTile: false
@@ -267,7 +267,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSE'], meepleOffset: { x: 3/4, y: 7/8 }, adjacentCityIndices: [0]}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/CccR.png',
+			imageURL: '/content/images/tiles/base-game/CccR.png',
 			expansion: 'base-game',
 			count: 1,
 			startingTile: false
@@ -281,7 +281,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [],
 			cloister: false,
 			doublePoints: true,
-			imageURL: '/images/tiles/base-game/Cccc+.png',
+			imageURL: '/content/images/tiles/base-game/Cccc+.png',
 			expansion: 'base-game',
 			count: 1,
 			startingTile: false
@@ -295,7 +295,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['NNW','NNE','ENE','ESE','SSE','SSW','WSW','WNW'], meepleOffset: { x: 13/16, y: 13/16 }}],
 			cloister: true,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/L.png',
+			imageURL: '/content/images/tiles/base-game/L.png',
 			expansion: 'base-game',
 			count: 4,
 			startingTile: false
@@ -309,7 +309,7 @@ tileSchema.statics.loadTiles = function() {
 			farms: [{ directions: ['NNW','NNE','ENE','ESE','SSE','SSW','WSW','WNW'], meepleOffset: { x: 13/16, y: 13/16 }}],
 			cloister: true,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/LR.png',
+			imageURL: '/content/images/tiles/base-game/LR.png',
 			expansion: 'base-game',
 			count: 2,
 			startingTile: false
@@ -324,7 +324,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['ESE','SSE','SSW','WSW'], meepleOffset: { x: 3/4, y: 3/4 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/RFr.png',
+			imageURL: '/content/images/tiles/base-game/RFr.png',
 			expansion: 'base-game',
 			count: 8,
 			startingTile: false
@@ -342,7 +342,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSW','WSW'], meepleOffset: { x: 1/4, y: 3/4 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/RRR.png',
+			imageURL: '/content/images/tiles/base-game/RRR.png',
 			expansion: 'base-game',
 			count: 4,
 			startingTile: false
@@ -362,7 +362,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSW','WSW'], meepleOffset: { x: 3/16, y: 13/16 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/RRRR.png',
+			imageURL: '/content/images/tiles/base-game/RRRR.png',
 			expansion: 'base-game',
 			count: 1,
 			startingTile: false
@@ -377,7 +377,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSW','WSW'], meepleOffset: { x: 1/4, y: 3/4 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/Rr.png',
+			imageURL: '/content/images/tiles/base-game/Rr.png',
 			expansion: 'base-game',
 			count: 9,
 			startingTile: false
@@ -392,7 +392,7 @@ tileSchema.statics.loadTiles = function() {
 			        { directions: ['SSW','WSW'], meepleOffset: { x: 1/4, y: 3/4 }}],
 			cloister: false,
 			doublePoints: false,
-			imageURL: '/images/tiles/base-game/RrC.png',
+			imageURL: '/content/images/tiles/base-game/RrC.png',
 			expansion: 'base-game',
 			count: 3,
 			startingTile: false

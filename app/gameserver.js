@@ -6,6 +6,7 @@ var Tile = require('./models/tile');
 var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
+//TODO: user chat
 //TODO: trim/lean before emitting
 //TODO: send update when players see game finish, when all have seen delete from db
 var subscriptions = {

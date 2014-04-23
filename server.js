@@ -43,7 +43,7 @@ app.use(express.cookieParser()); // read cookies (needed for auth)
 app.use(express.json());
 app.use(express.urlencoded()); // get information from html forms
 //TODO: consider using static cache (https://github.com/isaacs/st)
-app.use('/images', express.static(__dirname + '/images', { maxAge: 31557600000 /* one year caching */ }));
+app.use('/content', express.static(__dirname + '/content', { maxAge: 31557600000 /* one year caching */ }));
 
 app.set('view engine', 'ejs'); // set up ejs for templating
 

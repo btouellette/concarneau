@@ -1,0 +1,33 @@
+body
+{
+	padding-top: 80px;
+}
+/*
+#game-svg 
+{ 
+	top: 0px; 
+	right: 0px; 
+	left: 0px; 
+	bottom: 0px; 
+}
+*/
+.iconmelon,
+.im
+{
+	position: relative;
+	width: 32px;
+	height: 32px;
+	display: block;
+	fill: #525151;
+}
+
+.iconmelon:after,
+.im:after
+{
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
