@@ -19,6 +19,7 @@ var Tile = require('../models/tile');
 var gamestateSchema = mongoose.Schema({
     name: String,
     started: { type: Boolean, default: false },
+    finished: { type: Boolean, default: false },
     players: [{
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,

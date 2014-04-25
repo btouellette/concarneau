@@ -121,7 +121,7 @@ module.exports = function(server, sessionStore) {
 					User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
 				});
 				socket.on('set display name', function(name) {
-					User.findByIdAndUpdate(currentUser._id, { $set: { displayName: name }}).exec();
+					User.findByIdAndUpdate(currentUser._id, { $set: { username: name }}).exec();
 				});
             });
         });

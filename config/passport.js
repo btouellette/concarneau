@@ -10,6 +10,9 @@ var User = require('../app/models/user');
 // load the auth variables
 var configAuth = require('./auth'); // use this one for testing
 
+//TODO: if signed up for a local account with the same e-mail as fb or g+ merge accounts
+//TODO: don't send tokens and hashed passwords to the client
+
 module.exports = function(passport) {
 
     // =========================================================================
@@ -25,9 +28,11 @@ module.exports = function(passport) {
 
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
-        User.findById(id, function(err, user) {
-            user.populate('activeGames', function(err, user) {
-                done(err, user);
+        User.findById(id, 'username friends activeGames local facebook google twitter', function(err, user) {
+            user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles', function(err, user) {
+				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
+					done(err, user);
+				});
             });
         });
     });
