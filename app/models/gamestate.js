@@ -20,6 +20,7 @@ var gamestateSchema = mongoose.Schema({
     name: String,
     started: { type: Boolean, default: false },
     finished: { type: Boolean, default: false },
+    messages: [{ playerIndex: Number, message: String }], //TODO only store the last 100? messages and impose limit on length
     players: [{
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,

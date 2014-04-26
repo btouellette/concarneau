@@ -114,8 +114,19 @@ module.exports = function(server, sessionStore) {
 						}
 					});
 				});
-				socket.on('add friend', function(userID) {
-					User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: userID }}).exec();
+				socket.on('add friend', function(username) {
+					User.findOne({ username: username }, function(err, user) {
+						if(user) {
+							User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err) {
+								if(!err) {
+									socket.emit('friend added', username, user._id);
+								}
+							});
+						} else {
+							socket.emit('friend not found');
+						}
+					});
+					
 				});
 				socket.on('remove friend', function(userID) {
 					User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();

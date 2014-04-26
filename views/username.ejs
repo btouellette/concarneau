@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+	<title>Node Authentication</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+	<style>
+		body { padding-top: 80px; }
+	</style>
+</head>
+<body>
+<div class="container">
+	<div class="col-sm-6 col-sm-offset-3">
+	
+		<h3><span class="fa fa-user"></span> Choose a username</h3>
+		<p>This will be used for other users to find and play with you</p>
+		<p>Must be alphanumeric or underscore and 1-12 characters</p>
+			
+		<% if (message.length > 0) { %>
+			<div class="alert alert-danger"><%= message %></div>
+		<% } %>
+		
+		<form action="/username" method="post">
+			<div class="form-group">
+				<input type="text" class="form-control" 
+				       maxlength="15" required="true" pattern="[a-z0-9_]{1,12}" title="Must be 1-12 alphanumeric or underscore characters"
+				       name="username">
+			</div>
+			<button type="submit" class="btn btn-warning btn-lg">Submit</button>
+		</form>
+	</div>
+</div>
+</body>
+</html>

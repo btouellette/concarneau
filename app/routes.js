@@ -1,3 +1,5 @@
+var User = require('./models/user');
+
 module.exports = function(app, passport, mongoose) {
 
 // normal routes ===============================================================
@@ -24,7 +26,36 @@ module.exports = function(app, passport, mongoose) {
 		res.redirect('/');
 	});
 
-	app.get('/game', isLoggedIn, function(req, res) {
+	app.get('/username', isLoggedIn, function(req, res) {
+		res.render('username.ejs', {
+			user : req.user,
+			message: req.flash('usernameMessage')
+		});
+	});
+	
+	// process the username form
+	app.post('/username', isLoggedIn, function(req, res) {
+		var username = req.body.username.toLowerCase();
+		if(/^[a-z0-9_]{1,12}$/.test(username)) {
+			User.findByIdAndUpdate(req.user._id, { $set: { username: username }}, function(err) {
+				if(err) {
+					if(err.lastErrorObject.code === 11001) {
+						req.flash('usernameMessage', 'Username already taken');
+					} else {
+						req.flash('usernameMessage', err.errmsg);
+					}
+					res.redirect('/username');
+				} else {
+					res.redirect('/game');
+				}
+			});
+		} else {
+			req.flash('usernameMessage', username.length > 12 ? 'Username too long' : username.length === 0 ? 'Username too short' : 'Username using invalid characters');
+			res.redirect('/username');
+		}
+	});
+
+	app.get('/game', [isLoggedIn, hasUsername], function(req, res) {
 		res.render('game.ejs', {
 			user : req.user
 		});
@@ -56,7 +87,7 @@ module.exports = function(app, passport, mongoose) {
 
 		// process the signup form
 		app.post('/signup', passport.authenticate('local-signup', {
-			successRedirect : '/profile', // redirect to the secure profile section
+			successRedirect : '/username', // redirect to the username choosing page
 			failureRedirect : '/signup', // redirect back to the signup page if there is an error
 			failureFlash : true // allow flash messages
 		}));
@@ -198,8 +229,15 @@ module.exports = function(app, passport, mongoose) {
 
 // route middleware to ensure user is logged in
 function isLoggedIn(req, res, next) {
-	if (req.isAuthenticated())
+	if(req.isAuthenticated()) {
 		return next();
-
+	}
 	res.redirect('/');
+}
+
+function hasUsername(req, res, next) {
+	if(req.user.username) {
+		return next();
+	}
+	res.redirect('/username');
 }

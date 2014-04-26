@@ -32,7 +32,7 @@ var userSchema = mongoose.Schema({
     },
     activeGames: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Gamestate' }], // external reference to gamestate objects
     friends: [mongoose.Schema.Types.ObjectId],
-    username: String
+    username: { type: String, lowercase: true, trim: true, unique: true }
 
 });
 
