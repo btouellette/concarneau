@@ -120,6 +120,7 @@ module.exports = function(server, sessionStore) {
 				socket.on('add friend', function(username) {
 					User.findOne({ username: username }, function(err, user) {
 						if(user) {
+							//TODO: make this set distinct
 							User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err) {
 								if(!err) {
 									socket.emit('friend added', username, user._id);

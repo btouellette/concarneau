@@ -524,6 +524,11 @@ $(document).ready(function() {
 			currentGameID = gamestate._id;
 			draw(gamestate);
 		}	
+    	document.title = '(!) Concarneau';
+    	$('body').on('mousemove', function() { 
+			document.title = 'Concarneau';
+			$('body').off('mousemove');
+		});
 	});
 	
 	socket.on('friend added', function(username, userID) {
