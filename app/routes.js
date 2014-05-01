@@ -1,5 +1,7 @@
 var User = require('./models/user');
 
+//TODO: confirm e-mail before allowing into game
+
 module.exports = function(app, passport, mongoose) {
 
 // normal routes ===============================================================
