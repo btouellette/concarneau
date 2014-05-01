@@ -2,15 +2,24 @@
 // load the things we need
 var mongoose = require('mongoose');
 
-// Tile features are defined in terms of the cardinal directions they use
-// Roads and cities potentially connect cardinal directions (N S E W)
-// Fields potentially connect secondary-intercardinal directions (NNW NNE ENE ESE SSE SSW WSW WNW)
+// tile features are defined in terms of the cardinal directions they use
+// roads and cities potentially connect cardinal directions (N S E W)
+// fields potentially connect secondary-intercardinal directions (NNW NNE ENE ESE SSE SSW WSW WNW)
 
 // NW NNW N NNE NE
 // WNW         ENE
 // W      *      E
 // WSW         ESE
 // SW SSW S SSE SE
+
+// tile images are created in GIMP with settings:
+// rounded rectangle 7px
+// unsharp mask 100 0.6 0
+// hue/lightness/saturation -> master -> 0 -30 10
+// hue/lightness/saturation -> magenta -> 0 0 -100
+// shrink selection 1 pixel
+// stroke selection 1 pixel black rounded edges
+// add tile_overlay.xcf
 
 // define the schema for our game model
 var tileSchema = mongoose.Schema({
