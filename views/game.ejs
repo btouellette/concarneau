@@ -256,6 +256,7 @@ $(document).ready(function() {
 		},
 		events: {
             render: function(event, api) {
+            	$(this).attr('id', 'btc-popup');
                 // detect when it was clicked and store it
                 api.elements.target.click(function(e) { 
                     api.wasClicked = !api.wasClicked;
@@ -263,7 +264,8 @@ $(document).ready(function() {
             },
             hide: function(event, api) {
                 // if we're hiding and it was previously clicked stop, if it gets hidden unset the clicked status
-                if(api.wasClicked && (event.originalEvent.type === 'mouseleave' || event.originalEvent.type === 'mouseout')) {
+                if((api.wasClicked && (event.originalEvent.type === 'mouseleave' || event.originalEvent.type === 'mouseout')) ||
+                   $('#btc-popup').is(":hover")) {
                     try{ event.preventDefault(); } catch(e) {}
                 } else {
                 	api.wasClicked = false;
