@@ -52,6 +52,7 @@ require('./config/passport')(passport); // pass passport for configuration
 app.set('view engine', 'ejs'); // set up ejs for templating
 if(!process.env.C9_PROJECT) {
 	// redirect to https if the request isn't secured
+	app.set('trust proxy', true);
 	app.use(function(req, res, next) {
 		if(!req.secure) {
 			return res.redirect('https://' + req.get('Host') + req.url);
