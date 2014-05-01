@@ -9,3 +9,5 @@ process.env.TWITTER_CALLBACK = 'https://concarneau-c9-btouellette.c9.io/auth/twi
 process.env.GOOGLE_CALLBACK = 'https://concarneau-c9-btouellette.c9.io/auth/google/callback';
 
 process.env.MONGOLAB_URI = 'mongodb://' + process.env.IP + '/concarneau_db';
+
+process.env.SOCKET_URL = 'https://concarneau-c9-btouellette.c9.io';

@@ -9,9 +9,12 @@ var User = require('./models/user');
 //TODO: user chat
 //TODO: trim/lean before emitting
 //TODO: send update when players see game finish, when all have seen delete from db
+//TODO: send error messages back to client if failure and report them back
+//TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
 var subscriptions = {
 	gameToSocket: {}, // index by gameid, array of sockets to send update messages to
-	socketToGame: {} // index by socket id, current active gameid
+	socketToGame: {}, // index by socket id, current active gameid
+	userToSocket: {}
 };
 
 module.exports = function(server, sessionStore) {
@@ -46,19 +49,30 @@ module.exports = function(server, sessionStore) {
                 return;
             }
             User.findById(session.passport.user, function(err, currentUser) {
-				socket.on('new game', function() {
+				subscriptions.userToSocket[currentUser._id] = socket;
+				socket.on('disconnect', function() {
+					unsubscribe(socket); // on disconnect remove update subscriptions
+					delete subscriptions.userToSocket[currentUser._id];
+				});
+				socket.on('new game', function(friends) {
 					// pull the user information from the db again in case it has changed since the socket was established
 					User.findById(currentUser._id, function(err, currentUser) {
 						if(err) { console.log('new game find user err: ' + err); }
-						//TODO: remove after testing
-						currentUser.activeGames = [];
-						Gamestate.remove({}).exec();
 						var gamestate = new Gamestate(); // create a new gamestate
-						gamestate.initializeNewGame(currentUser, function() {
+						gamestate.initializeNewGame(currentUser, friends, function() {
 							subscribe(socket, gamestate); // when creating a game it is now active so subscribe to updates
-							gamestate.populate('placedTiles.tile', function(err, gamestate) {
+							gamestate.populate('placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
 								if(err) { console.log('new game populate err: ' + err); }
-								socket.emit('sending gamestate', gamestate);
+								// get distinct list of user IDs in the game
+								var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+									return self.indexOf(value) === index;
+								});
+								// if players are active send them the new game
+								for(var i = 0; i < distinctUserIDs.length; i++) {
+									if(subscriptions.userToSocket[distinctUserIDs[i]]) {
+										subscriptions.userToSocket[distinctUserIDs[i]].emit('game started', gamestate, currentUser._id);
+									}
+								}
 							});
 						});
 					});
@@ -68,21 +82,22 @@ module.exports = function(server, sessionStore) {
 						if(err) { console.log('load find err: ' + err); }
 						if(gamestate && gamestate.userIsInGame(currentUser)) {
 							subscribe(socket, gamestate); // when loading a game it is now active so subscribe to updates
-							gamestate.populate('placedTiles.tile activeTile.tile', function(err, gamestate) {
+							gamestate.populate('placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
 								if(err) { console.log('load populate err: ' + err); }
 								socket.emit('sending gamestate', gamestate);
 							});
 						}
 					});
 				});
-				socket.on('start game', function(gameID) {
-					Gamestate.findById(gameID, function(err, gamestate) {
-						if(err) { console.log('start game err: ' + err); }
-						if(gamestate && gamestate.userIsInGame(currentUser)) {
-							gamestate.startGame(function(err, gamestate) {
-								for(var i = 0; i < subscriptions.gameToSocket[gameID].length; i++) {
-									subscriptions.gameToSocket[gameID][i].emit('sending gamestate', gamestate);
-								}
+				socket.on('remove game', function(gameID) {
+					Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
+						if(err) { 
+							console.log('remove game err: ' + err);
+						} else {
+							gamestate.populate('players.user', function(err, gamestate) {
+								for(var i = 0; i < gamestate.players.length; i++) {
+									User.findByIdAndUpdate(gamestate.players[i].user, { $pull: { activeGames: gamestate._id }}).exec();
+								}	
 							});
 						}
 					});
@@ -90,27 +105,15 @@ module.exports = function(server, sessionStore) {
 				socket.on('sending move', function(gameID, move, autocomplete) {
 					Gamestate.findById(gameID, function(err, gamestate) {
 						if(err) { console.log('load find err: ' + err); }
-						if(gamestate && gamestate.userIsActive(currentUser)) {
+						if(gamestate && gamestate.userIsActive(currentUser) && move) {
 							gamestate.placeTile(move, function(err, gamestate) {
-								for(var i = 0; i < subscriptions.gameToSocket[gameID].length; i++) {
-									subscriptions.gameToSocket[gameID][i].emit('sending gamestate', gamestate);
-								}
+								gamestate.populate('placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
+									if(err) { console.log('send move populate err: ' + err); }
+									for(var i = 0; i < subscriptions.gameToSocket[gameID].length; i++) {
+										subscriptions.gameToSocket[gameID][i].emit('sending gamestate', gamestate);
+									}
+								});
 							}, autocomplete);
-						}
-					});
-				});
-				socket.on('add user to game', function(gameID, userID) {
-					Gamestate.findById(gameID, function(err, gamestate) {
-						if(!err && 
-							gamestate && 
-							gamestate.players.length < 5 &&
-							gamestate.userIsInGame(currentUser) && 
-							!gamestate.userIsInGame(userID)) {
-							gamestate.players.push({ user: userID });
-							gamestate.save();
-							//TODO: remove after testing
-							User.findByIdAndUpdate(userID, { $set: { activeGames: [gameID] }}).exec();
-							// User.findByIdAndUpdate(userID, { $push: { activeGames: gameID }}).exec();
 						}
 					});
 				});
@@ -136,9 +139,6 @@ module.exports = function(server, sessionStore) {
 				});
             });
         });
-		socket.on('disconnect', function() {
-			unsubscribe(socket); // on disconnect remove update subscriptions
-		});
     });
 };
 

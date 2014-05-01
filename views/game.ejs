@@ -21,7 +21,7 @@
 <div id="wrapper">
 <div id="menus">
 	<div id="game-menu">
-		<span class="menu-header">GAMES</span>
+		<span class="menu-header">GAMES <i class="fa fa-edit" onclick="enableGamesEdit(event)"> <i class="fa fa-plus-square-o"></i></i></span>
 		<div id="active-games">
 			<div class="menu-sub-header">Your move:</div>
 		</div>
@@ -33,7 +33,7 @@
 		</div>
 	</div>
 	<div id="friends-menu">
-		<span class="menu-header">FRIENDS</span>
+		<span class="menu-header">FRIENDS <i class="fa fa-edit" onclick="enableFriendsEdit(event)"></i></span>
 		<form id="add-friend-form">
 			<div class="input-group">
 				<input type="text" class="form-control" id="add-friend-input" placeholder="Username" autocomplete="off">
@@ -52,17 +52,17 @@
 	</div>
 </div>
 <div id="menu-selection">
-	<div class="iconmelon" onclick="menuClick('#game-menu', this)">
+	<div id="game-menu-selection" class="iconmelon" onclick="menuClick('#game-menu', this)">
 		<svg viewBox="0 0 32 32">
 			<use xlink:href="#svgicon-templates"></use>
 		</svg>
 	</div>
-	<div class="iconmelon" onclick="menuClick('#friends-menu', this)">
+	<div id="friends-menu-selection" class="iconmelon" onclick="menuClick('#friends-menu', this)">
 		<svg viewBox="0 0 32 32">
 			<use xlink:href="#svgicon-environment"></use>
 		</svg>
 	</div>
-	<div class="iconmelon" onclick="menuClick('#settings-menu', this)">
+	<div id="settings-menu-selection" class="iconmelon" onclick="menuClick('#settings-menu', this)">
 		<svg viewBox="0 0 32 32">
 			<use xlink:href="#svgicon-settings"></use>
 		</svg>
@@ -70,7 +70,7 @@
 </div>
 <div id="author-info">
 	<div>Created by <span id="author-name">Brian Ouellette</span> <a href="http://github.com/btouellette/concarneau"><img height="25" width="25" src="/content/images/ui/github_logo.png" /></a></div>
-	<span>Donate?</span>
+	<span>Buy me a beer?</span>
 	<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
 		<input type="hidden" name="cmd" value="_donations">
 		<input type="hidden" name="business" value="btouellette@gmail.com">
@@ -95,42 +95,51 @@
 </svg>
 </div>
 </div>
-<!--<div class="container">
-	<div>
-		<div class="col-lg-4">
-			<button class="btn btn-default btn-sm" onclick="socket.emit('start game', currentGameID)">Start game</button>
-			<div class="input-group">
-				<input type="text" class="form-control" placeholder="User ID" id="change-name-input">
-				<span class="input-group-btn">
-					<button class="btn btn-default" type="button" onclick="socket.emit('set display name', $('#change-name-input').val())">Change display name</button>
-				</span>
-			</div>
-			<div class="input-group">
-			<div class="input-group">
-				<input type="text" class="form-control" placeholder="User ID" id="remove-friend-input">
-				<span class="input-group-btn">
-					<button class="btn btn-default" type="button" onclick="socket.emit('remove friend', $('#remove-friend-input').val())">Remove friend</button>
-				</span>
-			</div>
-			<div class="input-group">
-				<input type="text" class="form-control" placeholder="User ID" id="add-to-game-input">
-				<span class="input-group-btn">
-					<button class="btn btn-default" type="button" onclick="socket.emit('add user to game', currentGameID, $('#add-to-game-input').val())">Add to game</button>
-				</span>
-			</div>
-		</div>
-	</div>
-</div>-->
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.5/d3.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
 <script>
+//TODO: indicate move has been sent
 function menuClick(menuToOpen, button) {
 	$('#menus > div').hide();
 	$(menuToOpen).show();
 	$('#menu-selection > div').css('fill','#272727');
 	$(button).css('fill','#808080');
+}
+
+function enableFriendsEdit(e) {
+	$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-trash-o').css('cursor', 'pointer').on('click', function () {
+		socket.emit('remove friend', this.parentNode.id.substr(7));
+		$(this.parentNode).remove();
+	});
+	$(window).on('click.friend-edit', function() {
+		disableFriendsEdit();	
+	});
+	e.stopPropagation();
+}
+
+function disableFriendsEdit() {
+	$('#friends-list .fa-trash-o').removeClass('fa-trash-o').addClass('fa-user').css('cursor', '').off('click');
+	$(window).off('click.friend-edit');
+}
+
+function enableGamesEdit(e) {
+	$('#game-menu .tile-count').hide();
+	$('#game-menu .fa-trash-o').removeClass('hidden').on('click', function () {
+		socket.emit('remove game', this.parentNode.parentNode.id.substr(5));
+		$(this.parentNode.parentNode).remove();
+	});
+	$(window).on('click.games-edit', function() {
+		disableGamesEdit();	
+	});
+	e.stopPropagation();
+}
+
+function disableGamesEdit() {
+	$('#game-menu .fa-trash-o').addClass('hidden').off('click');
+	$('#game-menu .tile-count').show();
+	$(window).off('click.games-edit');
 }
 
 var user = <%- JSON.stringify(user) %>;
@@ -165,14 +174,11 @@ var user = <%- JSON.stringify(user) %>;
 })(jQuery);
 //TODO: show player names or avatars
 //TODO: have first game autoload
-//TODO: make game creation dialog where user can select friends before game starts, autostart games
-//TODO: auto calculate zoom by number of tiles placed
-//TODO: add link accounts and logout to settings menu
 //TODO: have visual indicator of ability to rotate
 //TODO: Modernizr and noscript redirects
 
-//TODO: move these variables out of the global namespace (add onclick to SVG elements via JS)
-var socket = io.connect('https://concarneau-c9-btouellette.c9.io');
+//TODO: move these variables out of the global namespace (add onclick to elements via JS)
+var socket = io.connect('<%- process.env.SOCKET_URL %>');
 var currentGameID, selectedMove, svgHeight, svgWidth;
 var reverseScale = 1;
 var reverseTranslation = [0,0];
@@ -190,15 +196,25 @@ function resetActiveTile(withTransition) {
 	selectedMove = null;
 	
 	if(withTransition) {
+		var startingScale = reverseScale;
+		var startingTranslationX = reverseTranslation[0];
+		var startingTranslationY = reverseTranslation[1];
 		d3.select('#confirm-button').transition().duration(transitionDuration).attr('opacity', 0);
 		d3.select('#confirm-button').transition().delay(transitionDuration).attr('visibility', 'hidden');
 		d3.select('#active-tile').transition().duration(transitionDuration).attr({ 
 			transform: 'scale(' + reverseScale + ') translate(' + (reverseTranslation[0] + (svgWidth - tileSize - 5)) + ',' + (reverseTranslation[1] + 5) + ')'
 		}).select('#active-tile-rotation').attr({
 			transform: 'rotate(0)'
+		}).each('end', function() {
+			// check to see if zoom or pan has happened since this transition began and redraw if so
+			if(reverseScale !== startingScale || 
+			   reverseTranslation[0] !== startingTranslationX ||
+			   reverseTranslation[1] !== startingTranslationY) {
+				resetActiveTile(true);   	
+	   		}
 		});
 	} else {
-		d3.select('#confirm-button').attr({
+		d3.select('#confirm-button').transition().duration(0).attr({
 			opacity: 0,
 			visibility: 'hidden'
 		});
@@ -215,8 +231,9 @@ $(document).ready(function() {
 	$('#author-name').replaceWith('<a href="mailto:' + 'btouellette+concarneau' + '@' + 'gmail.com' + '">Brian Ouellette</a>');
 	
 	$('#btc-donate').qtip({
+		prerender: true,
 		content: {
-			text: '1Ec6onfsQmoP9kkL3zkpB6c5sA4PVcXU2i'
+			text: '<img src="/content/images/ui/bitcoin_qr.png" class="btc-qr"></img>13C6vXxhQuSrGs628imU8ug2xvachM6pJ2'
 		},
 		style: {
 			classes: 'qtip-bootstrap'
@@ -254,13 +271,73 @@ $(document).ready(function() {
             }
         }
 	});
+	
+	$('#game-menu .fa-plus-square-o').qtip({
+		content: {
+			text: '<div id="new-game-popup"><div>Add friends to game:</div></div><button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button><button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>'
+		},
+		style: {
+			classes: 'qtip-bootstrap',
+			tip: {
+				corner: false
+			}
+		},
+		position: {
+			my: 'left center',
+			at: 'center right',
+			viewport: $(window), 
+            adjust: {
+                method: 'shift',
+                x: 225
+            }
+		},
+		show: {
+			event: 'click'
+		},
+		hide: {
+			event: 'click'
+		},
+		events: {
+			show: function() {
+				$('#friends-menu .fa-edit').hide();
+				$('#friends-menu-selection').click();
+				$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-plus-square-o').css('cursor', 'pointer');
+				$('#friends-list .friend-listing').on('click', function() {
+					if($('#new-game-popup .friend-listing').length < 4) {
+						var element = $(this);
+						element.clone().attr('id', 'add-' + element.attr('id')).addClass('add-friend-listing').appendTo('#new-game-popup');
+					}
+				});
+			},
+			hide: function() {
+				$('#friends-menu .fa-edit').show();
+				$('#game-menu-selection').click();
+				$('#friends-list .fa-plus-square-o').removeClass('fa-plus-square-o').addClass('fa-user').css('cursor', '');
+				$('#friends-list .friend-listing').off('click');
+			},
+			render: function(e, api) {
+                $('#new-game-cancel', this).click(function(event) {
+                    api.hide(event);
+                    event.preventDefault();
+                });
+                $('#new-game-send', this).click(function(event) {
+                	var friends = [];
+                	$('.add-friend-listing').each(function() {
+                		friends.push(this.id.substr(11));
+                	});
+                	socket.emit('new game', friends);
+                	api.hide(event);
+                	event.preventDefault();
+                });
+			}
+		}
+	});
 
 	$('#add-friend-form').on('submit', function(e) {
 		e.preventDefault();
 		socket.emit('add friend', $('#add-friend-input').val());
 	});
 
-    console.log(user);
 	// Load in SVG icons
 	var c = new XMLHttpRequest();
 	c.open('GET', '/content/images/ui/icons.svg', false);
@@ -275,7 +352,6 @@ $(document).ready(function() {
 		reverseScale = 1/d3.event.scale;
 		reverseTranslation = d3.event.translate.map(function(item) { return -1 * item; });
 		gameArea.attr('transform', 'translate(' + d3.event.translate + ') scale(' + d3.event.scale + ')');
-		//TODO: if you drag or scale while the active tile is returning from a placement it doesn't end up in the right place
 		if(!selectedMove) {
 			resetActiveTile(false);
 		}
@@ -303,7 +379,9 @@ $(document).ready(function() {
     	cursor: 'pointer',
     	visibility: 'hidden'
     }).on('click', function() {
-    	socket.emit('sending move', currentGameID, selectedMove);
+    	if(selectedMove) {
+    		socket.emit('sending move', currentGameID, selectedMove, false);
+    	}
     });
     confirmButton.append('circle').attr({
     	cy: 5 + tileSize / 2,
@@ -319,24 +397,24 @@ $(document).ready(function() {
     	y: 5 + tileSize / 2 - 16
     });
     
+	function addNewGameListing(game, menuGroup) {
+		var gameID = game._id;
+		
+		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
+		// add remaining tiles text
+		element += '<span class="right-side"><span class="tile-count">[' + game.unusedTiles.length + ']</span><i class="fa fa-trash-o hidden"></i></span>';
+		// add sub divs for each user in the game
+		element += game.players.map(function(item) {
+   			return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
+     		}).join('');
+     		element += '</div>';
+     		
+   		$(element).click(function() {
+     	  		socket.emit('load game', gameID);
+		}).appendTo(menuGroup);
+	}
+    
     function drawMenu(user) {
-    	function addNewGameListing(game, menuGroup) {
-    		var gameID = game._id;
-    		
-    		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
-    		// add remaining tiles text
-    		element += '<span class="tile-count">[' + game.unusedTiles.length + ']</span>';
-    		// add sub divs for each user in the game
-    		element += game.players.map(function(item) {
-   				return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
-   	  		}).join('');
-   	  		element += '</div>';
-   	  		
-	   		$(element).click(function() {
-   	  	  		socket.emit('load game', gameID);
-			}).appendTo(menuGroup);
-    	}
-        //TODO: allow user to hide/ignore games
     	//TODO: add and test transitions
     	// set up the game menu
         var $gameListings = $('#game-menu');
@@ -409,12 +487,34 @@ $(document).ready(function() {
 		}
 	});
     // update the SVG on resize
-	//TODO: transition cleanly on resize
     $(window).on("debouncedresize", function () { if(lastGamestate) { draw(lastGamestate); }});  
     // listen for new gamestate data from the server
     socket.on('sending gamestate', function(gamestate) {
+    	console.log(gamestate);
     	currentGameID = gamestate._id;
     	draw(gamestate);
+	});
+	socket.on('game started', function(gamestate, startingUserID) {
+		// add to active or inactive games depending on which this player is
+        var $activeGames = $('#active-games');
+        var $inactiveGames = $('#inactive-games');
+    	var active = false;
+    	for(var k = 0; k < gamestate.players.length; k++) {
+    		if(gamestate.players[k].user._id === user._id &&
+    		   gamestate.players[k].active) {
+    		   	active = true;
+   				addNewGameListing(gamestate, $activeGames);
+    			break;
+    		}
+    	}
+    	if(!active) {
+   			addNewGameListing(gamestate, $inactiveGames);
+    	}
+		// draw if this user triggered the new game
+		if(user._id === startingUserID) {
+			currentGameID = gamestate._id;
+			draw(gamestate);
+		}	
 	});
 	
 	socket.on('friend added', function(username, userID) {
@@ -463,8 +563,13 @@ $(document).ready(function() {
     	resetActiveTile(false);
     	
 		// rotate the player array such that this player is on top
+		// go through the entire array to ensure that if this player is in the game multiple times the active version is on top
+		var playerCount = gamestate.players.length;
+		var count = 0;
     	var reorderedPlayers = gamestate.players.slice(0);
-		while(reorderedPlayers[0].user !== user._id) {
+		while(reorderedPlayers[0].user._id !== user._id ||
+		      (!reorderedPlayers[0].active && count < playerCount)) {
+	      	count++;
 			reorderedPlayers.push(reorderedPlayers.shift());
 		}
 		// get the number of remaining meeples and the color
@@ -570,7 +675,7 @@ $(document).ready(function() {
 				selectedMove = { 
 					placement: gamestate.activeTile.validPlacements[i]
 				};
-				d3.select('#confirm-button').attr('visibility', null);
+				d3.select('#confirm-button').transition().duration(0).attr('visibility', null);
 				d3.select('#confirm-button').transition().duration(transitionDuration).attr('opacity', 1);
 			}
 			selectedMove.rotation = d.rotations[rotationIndex].rotation;
@@ -635,73 +740,75 @@ $(document).ready(function() {
 		validPlacements.exit().remove();
 			
 		// draw the potential meeple placement for the active tile
-		if(gamestate.started) {
-			var allMeepleLocations = gamestate.activeTile.tile.roads.map(function(item, index) { item.type = 'road'; item.index = index; return item; });
+		var allMeepleLocations = [];
+		if(gamestate.activeTile.tile) {
+			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.roads.map(function(item, index) { item.type = 'road'; item.index = index; return item; }));
 			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.farms.map(function(item, index) { item.type = 'farm'; item.index = index; return item; }));
 			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.cities.map(function(item, index) { item.type = 'city'; item.index = index; return item; }));
 			if(gamestate.activeTile.tile.cloister) {
 				allMeepleLocations = allMeepleLocations.concat([{ type: 'cloister', index: 1, directions: ['C'], meepleOffset: { x: 1/2, y: 1/2 }}]);
 			}
-			// if there were none of a certain type remove all undefined elements added to the array
-			allMeepleLocations = allMeepleLocations.filter(function(n) { return n != undefined });
-			// don't display meeple locations if we can't place meeples
-			if(remainingMeeples === 0 || !userIsActive) {
-				allMeepleLocations = [];
-			}
-			// draw the outlines on which meeples can be placed
-			var meepleOutlines = meeplePlacements.selectAll('g.outline-group').data(allMeepleLocations);
-			var meepleGroup = meepleOutlines.enter().append('g').attr({
-				class: 'outline-group'
-			});
-			meepleGroup.append('image').attr({
-				width: tileSize / 4,
-				height: tileSize / 4,
-				class: 'meeple-outline'
-			});
-			meepleGroup.append('image').attr({
-				width: tileSize / 4,
-				height: tileSize / 4,
-				class: 'placed-meeple'
-			});
-			meepleOutlines.attr({
-				transform: function(d) {
-					return 'translate(' + (d.meepleOffset.x - 1/2) * tileSize + ',' + (d.meepleOffset.y - 1/2) * tileSize + ')';
-				}
-			});
-			meepleOutlines.select('image.meeple-outline').attr({
-				x: -tileSize / 8,
-				y: -tileSize / 8,
-				'xlink:href': function(d) { 
-					return '/content/images/meeples/outline_' + (d.type === 'farm' ? 'lying' : 'standing') +'.png'; 
-				},
-				visibility: 'hidden'
-			}).on('click', function(d, i) {
-				// when an outline is clicked grab the leftmost available meeple and move it onto the outline
-				var $placedMeeples = $('.placed-meeple');
-				$placedMeeples.attr('visibility', 'hidden');
-				$(this).siblings('.placed-meeple').first().removeAttr('visibility');
-				$('#score-group-' + meepleColor + ' image').first().attr('visibility', 'hidden');
-				selectedMove.meeple = {
-					type: d.type,
-					index: d.index
-				};
-			});
-			meepleOutlines.select('image.placed-meeple').attr({
-				x: -tileSize / 8,
-				y: -tileSize / 8,
-				'xlink:href': function(d) { 
-					return '/content/images/meeples/' + meepleColor + '_' + (d.directions[0].length > 1 ? 'lying' : 'standing') +'.png'; 
-				},
-				visibility: 'hidden'
-			}).on('click', function(d, i) {
-				// when a visible meeple is clicked hide it and remove it from the move
-				$(this).attr('visibility', 'hidden');
-				$('#score-group-' + meepleColor + ' image').first().removeAttr('visibility');
-				delete selectedMove.meeple;
-			});
-			meepleOutlines.exit().remove();
 		}
-		
+		// if there were none of a certain type remove all undefined elements added to the array
+		allMeepleLocations = allMeepleLocations.filter(function(n) { return n != undefined });
+		// don't display meeple locations if we can't place meeples
+		if(remainingMeeples === 0 || !userIsActive) {
+			allMeepleLocations = [];
+		}
+		// draw the outlines on which meeples can be placed
+		var meepleOutlines = meeplePlacements.selectAll('g.outline-group').data(allMeepleLocations);
+		var meepleGroup = meepleOutlines.enter().append('g').attr({
+			class: 'outline-group'
+		});
+		meepleGroup.append('image').attr({
+			width: tileSize / 4,
+			height: tileSize / 4,
+			class: 'meeple-outline'
+		});
+		meepleGroup.append('image').attr({
+			width: tileSize / 4,
+			height: tileSize / 4,
+			class: 'placed-meeple'
+		});
+		meepleOutlines.attr({
+			transform: function(d) {
+				return 'translate(' + (d.meepleOffset.x - 1/2) * tileSize + ',' + (d.meepleOffset.y - 1/2) * tileSize + ')';
+			}
+		});
+		meepleOutlines.select('image.meeple-outline').attr({
+			x: -tileSize / 8,
+			y: -tileSize / 8,
+			'xlink:href': function(d) {
+				return '/content/images/meeples/outline_' + (d.type === 'farm' ? 'lying' : 'standing') +'.png'; 
+			},
+			visibility: 'hidden'
+		}).on('click', function(d, i) {
+			// when an outline is clicked grab the leftmost available meeple and move it onto the outline
+			var $placedMeeples = $('.placed-meeple');
+			$placedMeeples.attr('visibility', 'hidden');
+			$(this).siblings('.placed-meeple').first().removeAttr('visibility');
+			$('#score-group-' + meepleColor + ' image').first().attr('visibility', 'hidden');
+			selectedMove.meeple = {
+				type: d.type,
+				index: d.index
+			};
+		});
+		meepleOutlines.select('image.placed-meeple').attr({
+			x: -tileSize / 8,
+			y: -tileSize / 8,
+			'xlink:href': function(d) { 
+				return '/content/images/meeples/' + meepleColor + '_' + (d.directions[0].length > 1 ? 'lying' : 'standing') +'.png'; 
+			},
+			visibility: 'hidden'
+		}).on('click', function(d, i) {
+			// when a visible meeple is clicked hide it and remove it from the move
+			$(this).attr('visibility', 'hidden');
+			$('#score-group-' + meepleColor + ' image').first().removeAttr('visibility');
+			delete selectedMove.meeple;
+		});
+		meepleOutlines.exit().remove();
+
+		// draw outlines indicating the last tile each player placed
 		var markers = [];
 		var index = 0;
 		while(gamestate.players[index].active !== undefined && !gamestate.players[index].active) {
@@ -724,6 +831,8 @@ $(document).ready(function() {
 			'fill-opacity': 0,
 			'stroke-width': 3,
 			'stroke-linejoin': 'round',
+			rx: 7,
+			ry: 7,
 			width: tileSize,
 			height: tileSize
 		});
@@ -736,9 +845,11 @@ $(document).ready(function() {
 		
 		//TODO: draw score with nicer background/styling
 		// draw the players scores and remaining meeples
-		var scoreGroups = scoreArea.selectAll('g.score-group').data(gamestate.started ? reorderedPlayers : []);
+		var scoreGroups = scoreArea.selectAll('g.score-group').data(reorderedPlayers);
 		var group = scoreGroups.enter().append('g').attr({
-			class: 'score-group',
+			class: 'score-group'
+		});
+		scoreGroups.attr({
 			id: function(d) {
 				return 'score-group-' + d.color;
 			}
@@ -782,7 +893,8 @@ $(document).ready(function() {
 		});
 		availableMeeples.attr({
 			x: function(d) { return d.x; },
-			'xlink:href': function(d) { return d.url; }
+			'xlink:href': function(d) { return d.url; },
+			visibility: null
 		});
 		availableMeeples.exit().remove();
     }

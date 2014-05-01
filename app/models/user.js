@@ -2,7 +2,6 @@
 var mongoose = require('mongoose');
 var bcrypt   = require('bcrypt-nodejs');
 
-//TODO: add ability to search for user by e-mail or display name
 //TODO: if linked to fb/twitter/google find friends by contacts
 
 // define the schema for our user model

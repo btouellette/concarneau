@@ -113,6 +113,12 @@ html, body
 	display: table;
 }
 
+.menu-header .fa
+{
+	font-size: 18px;
+	cursor: pointer;
+}
+
 .menu-sub-header
 {
 	margin-left: 5px;
@@ -130,7 +136,7 @@ html, body
 	cursor: pointer;
 }
 
-.menu-game-listing .tile-count
+.menu-game-listing .right-side
 {
 	float: right;
 	margin-right: 3px;
@@ -167,7 +173,8 @@ html, body
 	font-size: 15px;
 }
 
-.friend-listing
+.friend-listing,
+#settings-menu a
 {
 	margin-left: 10px;
 	margin-right: 10px;
@@ -191,6 +198,13 @@ html, body
 .qtip
 {
 	max-width: 350px;
+}
+
+.btc-qr
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .iconmelon,

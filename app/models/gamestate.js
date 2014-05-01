@@ -4,6 +4,7 @@ var mongoose = require('mongoose');
 var moniker = require('moniker');
 var Q = require('q');
 var Tile = require('../models/tile');
+var User = require('../models/user');
 
 // Tile features are defined in terms of the cardinal directions they use
 // Roads and cities potentially connect cardinal directions (N S E W)
@@ -18,9 +19,8 @@ var Tile = require('../models/tile');
 // define the schema for our game model
 var gamestateSchema = mongoose.Schema({
     name: String,
-    started: { type: Boolean, default: false },
     finished: { type: Boolean, default: false },
-    messages: [{ playerIndex: Number, message: String }], //TODO only store the last 100? messages and impose limit on length
+    messages: [{ playerIndex: Number, message: String }], //TODO only store the last 100? messages and impose limit on length { $push: { messages: { $each: [{ playerIndex: userIndex, message: message}], $slice: -100 }}}
     players: [{
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,
@@ -105,6 +105,7 @@ function completeGame(gamestate) {
 			i++;
 		}
 	}
+	gamestate.finished = true;
 }
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
@@ -551,7 +552,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
             if(err) {
 				console.log('draw tile save err: ' + err);
 			}
-			gamestate.populate('activeTile.tile', callback);
+			gamestate.populate('activeTile.tile players.user.username', callback);
 		});
 	});
 };
@@ -668,11 +669,14 @@ function isFeatureOwned(placedTile, featureType, featureIndex, gamestate) {
 	}
 }
 
-gamestateSchema.methods.initializeNewGame = function(initialUser, callback) {
+gamestateSchema.methods.initializeNewGame = function(initialUser, friends, callback) {
 	var newGame = this;
-    newGame.players = [{ user: initialUser._id }]; // with the current user as the only player
     newGame.name = moniker.choose();
-    initialUser.activeGames.unshift(newGame._id); // add the game to the users active games
+    // add the initial players
+    var allPlayers = friends.concat([initialUser._id]);
+	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
+    // add the game to the users' active games
+    var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, { $push: { activeGames: newGame._id } }).exec();
     // grab the starting tile and make it the only placed tile
     var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
 		newGame.placedTiles.unshift({
@@ -691,40 +695,21 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, callback) {
 			}
 		}
 	});
-    Q.all([startTilePlaced, unusedTilesLoaded]).then(function() {
-        newGame.save(function(err) {
-            if(err) {
-				console.log('new game save err: ' + err);
-			}
-            initialUser.save(function(err) {
-                if(err) {
-					console.log('user save err: ' + err);
-				}
-				if(callback && typeof(callback) === 'function') {
-					callback(err, newGame);
-				}
-            });
-        });
+    Q.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
+		// choose a random player to start
+		var startingPlayer = Math.floor(Math.random()*newGame.players.length);
+		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
+		for(var i = 0; i < newGame.players.length; i++) {
+			newGame.players[i].points = 0;
+			newGame.players[i].remainingMeeples = 7;
+			newGame.players[i].active = (i === startingPlayer);
+			// choose a random remaining color for this player
+			newGame.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
+		}
+		newGame.drawTile(callback);
     });
 };
 
-gamestateSchema.methods.startGame = function(callback) {
-	var gamestate = this;
-	if(!gamestate.started) {
-		// choose a random player to start
-		var startingPlayer = Math.floor(Math.random()*gamestate.players.length);
-		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
-		for(var i = 0; i < gamestate.players.length; i++) {
-			gamestate.players[i].points = 0;
-			gamestate.players[i].remainingMeeples = 7;
-			gamestate.players[i].active = (i === startingPlayer);
-			// choose a random remaining color for this player
-			gamestate.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
-		}
-		gamestate.started = true;
-		gamestate.drawTile(callback);
-	}
-};
 //TODO: remove all autocomplete
 gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	var gamestate = this;
@@ -818,8 +803,59 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 			for(var k = 0; k < newlyPlacedTile.tile.roads.length; k++) {
 				checkAndFinalizeFeature(newlyPlacedTile, k, 'road', false, gamestate);
 			}
-			// and check for cloisters both on this tile and on any nearby tiles
-			checkAndFinalizeFeature(newlyPlacedTile, 1, 'cloister', false, gamestate);
+			// check for any completed cloisters caused by the tile placement both on this tile and on any nearby tiles
+			var northTile, northwestTile, northEastTile, westTile, eastTile, southTile, southwestTile, southeastTile;
+			if(newlyPlacedTile.northTileIndex !== undefined) {
+				northTile = gamestate.placedTiles[newlyPlacedTile.northTileIndex];
+				if(northTile.tile.cloister) {
+					checkAndFinalizeFeature(northTile, 1, 'cloister', false, gamestate);
+				}
+				if(northTile.westTileIndex !== undefined) {
+					northwestTile = gamestate.placedTiles[northTile.westTileIndex];
+					if(northwestTile.tile.cloister) {
+						checkAndFinalizeFeature(northwestTile, 1, 'cloister', false, gamestate);
+					}
+				}
+				if(northTile.eastTileIndex !== undefined) {
+					northEastTile = gamestate.placedTiles[northTile.eastTileIndex];
+					if(northEastTile.tile.cloister) {
+						checkAndFinalizeFeature(northEastTile, 1, 'cloister', false, gamestate);
+					}
+				}
+			}
+			if(newlyPlacedTile.southTileIndex !== undefined) {
+				southTile = gamestate.placedTiles[newlyPlacedTile.southTileIndex];
+				if(southTile.tile.cloister) {
+					checkAndFinalizeFeature(southTile, 1, 'cloister', false, gamestate);
+				}
+				if(southTile.westTileIndex !== undefined) {
+					southwestTile = gamestate.placedTiles[southTile.westTileIndex];
+					if(southwestTile.tile.cloister) {
+						checkAndFinalizeFeature(southwestTile, 1, 'cloister', false, gamestate);
+					}
+				}
+				if(southTile.eastTileIndex !== undefined) {
+					southeastTile = gamestate.placedTiles[southTile.eastTileIndex];
+					if(southeastTile.tile.cloister) {
+						checkAndFinalizeFeature(southeastTile, 1, 'cloister', false, gamestate);
+					}
+				}
+			}
+			if(newlyPlacedTile.eastTileIndex !== undefined) {
+				eastTile = gamestate.placedTiles[newlyPlacedTile.eastTileIndex];
+				if(eastTile.tile.cloister) {
+					checkAndFinalizeFeature(eastTile, 1, 'cloister', false, gamestate);
+				}
+			}
+			if(newlyPlacedTile.westTileIndex !== undefined) {
+				westTile = gamestate.placedTiles[newlyPlacedTile.westTileIndex];
+				if(westTile.tile.cloister) {
+					checkAndFinalizeFeature(westTile, 1, 'cloister', false, gamestate);
+				}
+			}
+			if(newlyPlacedTile.tile.cloister) {
+				checkAndFinalizeFeature(newlyPlacedTile, 1, 'cloister', false, gamestate);
+			}
 			// console.log('gamestate after cloisters =>' + JSON.stringify(gamestate));
 			// console.log('==========================');
 			// change the active player
@@ -1005,8 +1041,6 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 		}
 	}
 	function scoreAndRemoveMeeples(featureInfo) {
-		// console.log('attempting to score meeples=>');
-		// console.log(JSON.stringify(featureInfo));
 		// if the feature is done and there were meeples remove and score them
 		if((featureInfo.complete || gameFinished) && featureInfo.tilesWithMeeples.length > 0) {
 			// the points only go to the player(s) with the most meeples on the feature
@@ -1041,57 +1075,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 		}
 	}
 	
-	// check for any completed cloisters caused by the tile placement
-	var northTile, northwestTile, northEastTile, westTile, eastTile, southTile, southwestTile, southEastTile;
-	if(placedTile.northTileIndex !== undefined) {
-		northTile = gamestate.placedTiles[placedTile.northTileIndex];
-		if(northTile.tile.cloister) {
-			scoreAndRemoveMeeples(getFeatureInfo(northTile, null, 'cloister'));
-		}
-		if(northTile.westTileIndex !== undefined) {
-			northwestTile = gamestate.placedTiles[northTile.westTileIndex];
-			if(northwestTile.tile.cloister) {
-				scoreAndRemoveMeeples(getFeatureInfo(northwestTile, null, 'cloister'));
-			}
-		}
-		if(northTile.eastTileIndex !== undefined) {
-			northEastTile = gamestate.placedTiles[northTile.eastTileIndex];
-			if(northEastTile.tile.cloister) {
-				scoreAndRemoveMeeples(getFeatureInfo(northEastTile, null, 'cloister'));
-			}
-		}
-	}
-	if(placedTile.southTileIndex !== undefined) {
-		southTile = gamestate.placedTiles[placedTile.southTileIndex];
-		if(southTile.tile.cloister) {
-			scoreAndRemoveMeeples(getFeatureInfo(southTile, null, 'cloister'));
-		}
-		if(southTile.westTileIndex !== undefined) {
-			southwestTile = gamestate.placedTiles[southTile.westTileIndex];
-			if(southwestTile.tile.cloister) {
-				scoreAndRemoveMeeples(getFeatureInfo(southwestTile, null, 'cloister'));
-			}
-		}
-		if(southTile.eastTileIndex !== undefined) {
-			southEastTile = gamestate.placedTiles[southTile.eastTileIndex];
-			if(southEastTile.tile.cloister) {
-				scoreAndRemoveMeeples(getFeatureInfo(southEastTile, null, 'cloister'));
-			}
-		}
-	}
-	if(placedTile.eastTileIndex !== undefined) {
-		eastTile = gamestate.placedTiles[placedTile.eastTileIndex];
-		if(eastTile.tile.cloister) {
-			scoreAndRemoveMeeples(getFeatureInfo(eastTile, null, 'cloister'));
-		}
-	}
-	if(placedTile.westTileIndex !== undefined) {
-		westTile = gamestate.placedTiles[placedTile.westTileIndex];
-		if(westTile.tile.cloister) {
-			scoreAndRemoveMeeples(getFeatureInfo(westTile, null, 'cloister'));
-		}
-	}
-	// now score this feature
+	// score this feature
 	if((placedTile.tile.cloister && featureType === 'cloister') || 
 	   featureType === 'road' ||
 	   featureType === 'city' ||
