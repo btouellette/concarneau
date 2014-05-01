@@ -12,6 +12,8 @@
     }
 	</script>
     <title>Concarneau</title>
+    <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" type='text/css'>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type='text/css'>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.css" type='text/css'>
@@ -495,6 +497,11 @@ $(document).ready(function() {
     	console.log(gamestate);
     	currentGameID = gamestate._id;
     	draw(gamestate);
+    	document.title = '(!) Concarneau';
+    	$('body').on('mousemove', function() { 
+			document.title = 'Concarneau';
+			$('body').off('mousemove');
+		});
 	});
 	socket.on('game started', function(gamestate, startingUserID) {
 		// add to active or inactive games depending on which this player is

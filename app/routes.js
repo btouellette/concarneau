@@ -27,31 +27,37 @@ module.exports = function(app, passport, mongoose) {
 	});
 
 	app.get('/username', isLoggedIn, function(req, res) {
-		res.render('username.ejs', {
-			user : req.user,
-			message: req.flash('usernameMessage')
-		});
+		if(req.user.username) {
+			res.redirect('/game');
+		} else {
+			res.render('username.ejs', {
+				user : req.user,
+				message: req.flash('usernameMessage')
+			});
+		}
 	});
 	
 	// process the username form
 	app.post('/username', isLoggedIn, function(req, res) {
-		var username = req.body.username.toLowerCase();
-		if(/^[a-z0-9_]{1,12}$/.test(username)) {
-			User.findByIdAndUpdate(req.user._id, { $set: { username: username }}, function(err) {
-				if(err) {
-					if(err.lastErrorObject.code === 11001) {
-						req.flash('usernameMessage', 'Username already taken');
+		if(!req.user.username) {
+			var username = req.body.username.toLowerCase();
+			if(/^[a-z0-9_]{1,12}$/.test(username)) {
+				User.findByIdAndUpdate(req.user._id, { $set: { username: username }}, function(err) {
+					if(err) {
+						if(err.lastErrorObject.code === 11001) {
+							req.flash('usernameMessage', 'Username already taken');
+						} else {
+							req.flash('usernameMessage', err.errmsg);
+						}
+						res.redirect('/username');
 					} else {
-						req.flash('usernameMessage', err.errmsg);
+						res.redirect('/game');
 					}
-					res.redirect('/username');
-				} else {
-					res.redirect('/game');
-				}
-			});
-		} else {
-			req.flash('usernameMessage', username.length > 12 ? 'Username too long' : username.length === 0 ? 'Username too short' : 'Username using invalid characters');
-			res.redirect('/username');
+				});
+			} else {
+				req.flash('usernameMessage', username.length > 12 ? 'Username too long' : username.length === 0 ? 'Username too short' : 'Username using invalid characters');
+				res.redirect('/username');
+			}
 		}
 	});
 
