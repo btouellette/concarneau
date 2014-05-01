@@ -50,13 +50,15 @@ require('./config/passport')(passport); // pass passport for configuration
 
 // set up our express application
 app.set('view engine', 'ejs'); // set up ejs for templating
-app.set('trust proxy', true);
-app.use(function(req, res, next) {
-  if(!req.secure) {
-    return res.redirect('https://' + req.get('Host') + req.url);
-  }
-  next();
-});
+if(!process.env.C9_PROJECT) {
+	// redirect to https if the request isn't secured
+	app.use(function(req, res, next) {
+		if(!req.secure) {
+			return res.redirect('https://' + req.get('Host') + req.url);
+		}
+		next();
+	});
+}
 app.use(express.logger('dev')); // log every request to the console
 app.use(express.compress());
 app.use(express.cookieParser()); // read cookies (needed for auth)
