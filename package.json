@@ -19,6 +19,8 @@
     "connect": "~2.14.3",
     "q": "~1.0.1",
     "moniker": "~0.1.2",
-    "connect-mongo": "~0.4.0"
+    "connect-mongo": "~0.4.0",
+    "nodetime": "~0.8.15",
+    "newrelic": "~1.5.2"
   }
 }

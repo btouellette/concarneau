@@ -3,17 +3,29 @@
 //TODO: consider setting up logging via winston (https://github.com/flatiron/winston)
 
 // set up ======================================================================
+
+// if this is a c9 project configure appropriately
+if(process.env.C9_PROJECT) {
+    require('./config/c9');
+}
+
+// if configured to use nodetime or newrelic connect to it
+if(process.env.NEW_RELIC_LICENSE_KEY) {
+	require('newrelic')
+}
+if(process.env.NODETIME_ACCOUNT_KEY) {
+  require('nodetime').profile({
+    accountKey: process.env.NODETIME_ACCOUNT_KEY,
+    appName: 'Concarneau'
+  });
+}
+
 // if we're behind an http proxy set up all requests to go through it
 if(process.env.HTTP_PROXY) {
 	var parsedURL = require('url').parse(process.env.HTTP_PROXY);
 	var host = parsedURL && parsedURL.hostname ? parsedURL.hostname : '127.0.0.1';
 	var port = parsedURL && parsedURL.port ? parseInt(parsedURL.port, 10) : 8080;
 	require('./config/proxy')(host, port);
-}
-
-// if this is a c9 project configure appropriately
-if(process.env.C9_PROJECT) {
-    require('./config/c9');
 }
 
 var port = process.env.PORT || 8080;
