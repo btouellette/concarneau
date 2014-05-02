@@ -132,12 +132,14 @@ module.exports = function(server, sessionStore) {
 				socket.on('add friend', function(username) {
 					User.findOne({ username: username }, function(err, user) {
 						if(user) {
-							//TODO: make this set distinct
-							User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err) {
-								if(!err) {
-									socket.emit('friend added', username, user._id);
-								}
-							});
+							if(currentUser.friends.indexOf(user._id) === -1) {
+								User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err, user) {
+									if(!err) {
+										socket.emit('friend added', username, user._id);
+										currentUser = user;
+									}
+								});
+							}
 						} else {
 							socket.emit('friend not found');
 						}
