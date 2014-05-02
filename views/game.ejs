@@ -71,7 +71,10 @@
 	</div>
 </div>
 <div id="author-info">
-	<div>Created by <span id="author-name">Brian Ouellette</span> <a href="http://github.com/btouellette/concarneau"><img height="25" width="25" src="/content/images/ui/github_logo.png" /></a></div>
+	<div>
+		Created by <span id="author-name">Brian Ouellette</span>
+		<a href="http://github.com/btouellette/concarneau"><img height="25" width="25" src="/content/images/ui/github_logo.png" /></a>
+	</div>
 	<span>Buy me a beer?</span>
 	<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
 		<input type="hidden" name="cmd" value="_donations">
@@ -278,7 +281,11 @@ $(document).ready(function() {
 	
 	$('#game-menu .fa-plus-square-o').qtip({
 		content: {
-			text: '<div id="new-game-popup"><div>Add friends to game:</div></div><button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button><button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>'
+			text: '<div id="new-game-popup">' + 
+			        '<div>Add friends to game:</div>' + 
+			      '</div>' + 
+			      '<button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button>' + 
+			      '<button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>'
 		},
 		style: {
 			classes: 'qtip-bootstrap',
@@ -376,7 +383,7 @@ $(document).ready(function() {
                                                       .append('g').attr({ id: 'active-tile-rotation' });
     var meeplePlacements = activeTileImageContainer.append('g').attr({ id: 'meeple-placements' });
 	
-    var uiArea = svg.append('g').attr({ id: 'ui-area' })
+    var uiArea = svg.append('g').attr({ id: 'ui-area' });
     var scoreArea = uiArea.append('g').attr({ id: 'score-area' });
     var confirmButton = uiArea.append('g').attr({
     	id: 'confirm-button',
@@ -594,7 +601,7 @@ $(document).ready(function() {
     		cx: svgWidth - 5 - tileSize / 2
     	});
     	d3.select('#confirm-button > use').attr({
-    		x: svgWidth - 5 - tileSize / 2 - 16,
+    		x: svgWidth - 5 - tileSize / 2 - 16
     	});
     	
     	resetActiveTile(false);
@@ -787,7 +794,7 @@ $(document).ready(function() {
 			}
 		}
 		// if there were none of a certain type remove all undefined elements added to the array
-		allMeepleLocations = allMeepleLocations.filter(function(n) { return n != undefined });
+		allMeepleLocations = allMeepleLocations.filter(function(n) { return n !== undefined; });
 		// don't display meeple locations if we can't place meeples
 		if(remainingMeeples === 0 || !userIsActive) {
 			allMeepleLocations = [];
@@ -877,7 +884,7 @@ $(document).ready(function() {
 			x: function(d) { return svgWidth / 2 + d.x * tileSize; },
 			y: function(d) { return svgHeight / 2 + d.y * tileSize; },
 			stroke: function(d) { return d.color; }
-		})
+		});
 		turnMarkers.exit().remove();
 		
 		//TODO: draw score with nicer background/styling
@@ -900,7 +907,7 @@ $(document).ready(function() {
 		});
 		scoreGroups.select('text.point-total').text(function(d) { return d.points; }).attr({
 			style: function(d) {
-				var style = 'font-size:16px;'
+				var style = 'font-size:16px;';
 				if(d.active) {
 					style += 'font-weight:bold;';
 				}
