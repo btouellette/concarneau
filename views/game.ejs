@@ -414,7 +414,8 @@ $(document).ready(function() {
      		element += '</div>';
      		
    		$(element).click(function() {
-     	  		socket.emit('load game', gameID);
+     	  	socket.emit('load game', gameID);
+     	  	currentGameID = gameID;
 		}).appendTo(menuGroup);
 	}
     
@@ -495,15 +496,39 @@ $(document).ready(function() {
     // listen for new gamestate data from the server
     socket.on('sending gamestate', function(gamestate) {
     	console.log(gamestate);
-    	currentGameID = gamestate._id;
-    	draw(gamestate);
+    	// update the tile count in the menu
+    	$('#game-' + gamestate._id + ' .tile-count').text('[' + gamestate.unusedTiles.length + ']');
+    	// put the game listing in the correct place in the menu
+        var $activeGames = $('#active-games');
+        var $inactiveGames = $('#inactive-games');
+        var $finishedGames = $('#finished-games');
+    	if(gamestate.finished) {
+	   		$('#game-' + gamestate._id).appendTo($finishedGames);
+    	} else {
+        	var active = false;
+        	for(var k = 0; k < gamestate.players.length; k++) {
+        		if(gamestate.players[k].user._id === user._id &&
+        		   gamestate.players[k].active) {
+        		   	active = true;
+    		   		$('#game-' + gamestate._id).appendTo($activeGames);
+        			break;
+        		}
+        	}
+        	if(!active) {
+		   		$('#game-' + gamestate._id).appendTo($inactiveGames);
+        	}
+    	}
     	document.title = '(!) Concarneau';
     	$('body').on('mousemove', function() { 
 			document.title = 'Concarneau';
 			$('body').off('mousemove');
 		});
+		if(currentGameID === gamestate._id) {
+			draw(gamestate);
+		}
 	});
 	socket.on('game started', function(gamestate, startingUserID) {
+    	console.log(gamestate);
 		// add to active or inactive games depending on which this player is
         var $activeGames = $('#active-games');
         var $inactiveGames = $('#inactive-games');
@@ -530,7 +555,6 @@ $(document).ready(function() {
 			$('body').off('mousemove');
 		});
 	});
-	
 	socket.on('friend added', function(username, userID) {
 		var $alert = $('#username-alert');
 		$alert.text('Added!');
@@ -550,7 +574,6 @@ $(document).ready(function() {
 			});
 		}
 	});
-	
 	socket.on('friend not found', function() {
 		var $alert = $('#username-alert');
 		$alert.text('Username not found!');
@@ -760,7 +783,7 @@ $(document).ready(function() {
 			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.farms.map(function(item, index) { item.type = 'farm'; item.index = index; return item; }));
 			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.cities.map(function(item, index) { item.type = 'city'; item.index = index; return item; }));
 			if(gamestate.activeTile.tile.cloister) {
-				allMeepleLocations = allMeepleLocations.concat([{ type: 'cloister', index: 1, directions: ['C'], meepleOffset: { x: 1/2, y: 1/2 }}]);
+				allMeepleLocations = allMeepleLocations.concat([{ type: 'cloister', index: 1, meepleOffset: { x: 1/2, y: 1/2 }}]);
 			}
 		}
 		// if there were none of a certain type remove all undefined elements added to the array
@@ -811,7 +834,7 @@ $(document).ready(function() {
 			x: -tileSize / 8,
 			y: -tileSize / 8,
 			'xlink:href': function(d) { 
-				return '/content/images/meeples/' + meepleColor + '_' + (d.directions[0].length > 1 ? 'lying' : 'standing') +'.png'; 
+				return '/content/images/meeples/' + meepleColor + '_' + (d.type === 'farm' ? 'lying' : 'standing') +'.png'; 
 			},
 			visibility: 'hidden'
 		}).on('click', function(d, i) {

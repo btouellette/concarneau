@@ -1,3 +1,4 @@
+/* jslint smarttabs:true */
 var cookie = require('cookie');
 var connect = require('connect');
 
@@ -6,16 +7,12 @@ var Tile = require('./models/tile');
 var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
+//TODO: make sure updates to empty games or users don't crash the nodejs instance
 //TODO: user chat
-//TODO: trim/lean before emitting
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
-var subscriptions = {
-	gameToSocket: {}, // index by gameid, array of sockets to send update messages to
-	socketToGame: {}, // index by socket id, current active gameid
-	userToSocket: {}
-};
+var userToSocket = {};
 
 module.exports = function(server, sessionStore) {
 
@@ -49,10 +46,10 @@ module.exports = function(server, sessionStore) {
                 return;
             }
             User.findById(session.passport.user, function(err, currentUser) {
-				subscriptions.userToSocket[currentUser._id] = socket;
+				userToSocket[currentUser._id] = socket;
 				socket.on('disconnect', function() {
-					unsubscribe(socket); // on disconnect remove update subscriptions
-					delete subscriptions.userToSocket[currentUser._id];
+					// on disconnect remove update subscriptions
+					delete userToSocket[currentUser._id];
 				});
 				socket.on('new game', function(friends) {
 					// pull the user information from the db again in case it has changed since the socket was established
@@ -60,20 +57,22 @@ module.exports = function(server, sessionStore) {
 						if(err) { console.log('new game find user err: ' + err); }
 						var gamestate = new Gamestate(); // create a new gamestate
 						gamestate.initializeNewGame(currentUser, friends, function() {
-							subscribe(socket, gamestate); // when creating a game it is now active so subscribe to updates
-							gamestate.populate('placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
-								if(err) { console.log('new game populate err: ' + err); }
-								// get distinct list of user IDs in the game
-								var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
-									return self.indexOf(value) === index;
-								});
-								// if players are active send them the new game
-								for(var i = 0; i < distinctUserIDs.length; i++) {
-									if(subscriptions.userToSocket[distinctUserIDs[i]]) {
-										subscriptions.userToSocket[distinctUserIDs[i]].emit('game started', gamestate, currentUser._id);
+							gamestate.populate('placedTiles.tile activeTile.tile players.user',
+							                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset imageURL username',
+								function(err, gamestate) {
+									if(err) { console.log('new game populate err: ' + err); }
+									// get distinct list of user IDs in the game
+									var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+										return self.indexOf(value) === index;
+									});
+									// if players are active send them the new game
+									for(var i = 0; i < distinctUserIDs.length; i++) {
+										if(userToSocket[distinctUserIDs[i]]) {
+											userToSocket[distinctUserIDs[i]].emit('game started', gamestate, currentUser._id);
+										}
 									}
 								}
-							});
+							);
 						});
 					});
 				});
@@ -81,11 +80,13 @@ module.exports = function(server, sessionStore) {
 					Gamestate.findById(gameID, function(err, gamestate) {
 						if(err) { console.log('load find err: ' + err); }
 						if(gamestate && gamestate.userIsInGame(currentUser)) {
-							subscribe(socket, gamestate); // when loading a game it is now active so subscribe to updates
-							gamestate.populate('placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
-								if(err) { console.log('load populate err: ' + err); }
-								socket.emit('sending gamestate', gamestate);
-							});
+							gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user', 
+							                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
+								function(err, gamestate) {
+									if(err) { console.log('load populate err: ' + err); }
+									socket.emit('sending gamestate', gamestate);
+								}
+							);
 						}
 					});
 				});
@@ -107,12 +108,23 @@ module.exports = function(server, sessionStore) {
 						if(err) { console.log('load find err: ' + err); }
 						if(gamestate && gamestate.userIsActive(currentUser) && move) {
 							gamestate.placeTile(move, function(err, gamestate) {
-								gamestate.populate('placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
-									if(err) { console.log('send move populate err: ' + err); }
-									for(var i = 0; i < subscriptions.gameToSocket[gameID].length; i++) {
-										subscriptions.gameToSocket[gameID][i].emit('sending gamestate', gamestate);
+								gamestate.markModified('unusedTiles');
+								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
+								                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
+									function(err, gamestate) {
+										if(err) { console.log('send move populate err: ' + err); }
+										// get distinct list of user IDs in the game
+										var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+											return self.indexOf(value) === index;
+										});
+										// if players are active send them the new gamestate
+										for(var i = 0; i < distinctUserIDs.length; i++) {
+											if(userToSocket[distinctUserIDs[i]]) {
+												userToSocket[distinctUserIDs[i]].emit('sending gamestate', gamestate);
+											}
+										}
 									}
-								});
+								);
 							}, autocomplete);
 						}
 					});
@@ -135,33 +147,7 @@ module.exports = function(server, sessionStore) {
 				socket.on('remove friend', function(userID) {
 					User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
 				});
-				socket.on('set display name', function(name) {
-					User.findByIdAndUpdate(currentUser._id, { $set: { username: name }}).exec();
-				});
             });
         });
     });
 };
-
-function subscribe(socket, gamestate) {
-	unsubscribe(socket); // remove any other subscriptions
-	// add the gamestate -> socket mapping
-	if(subscriptions.gameToSocket[gamestate._id]) {
-		subscriptions.gameToSocket[gamestate._id].push(socket);
-	} else {
-		subscriptions.gameToSocket[gamestate._id] = [socket];
-	}
-	subscriptions.socketToGame[socket.id] = gamestate._id; // add the socket -> gamestate mapping
-}
-
-function unsubscribe(socket) {
-	var activeGameID = subscriptions.socketToGame[socket.id];
-	if(activeGameID) {
-		if(subscriptions.gameToSocket[activeGameID].length === 0) {
-			delete subscriptions.gameToSocket[activeGameID];
-		} else {
-			subscriptions.gameToSocket[activeGameID].splice(subscriptions.gameToSocket[activeGameID].indexOf(socket), 1);
-		}
-	}
-	delete subscriptions.socketToGame[socket.id];
-}

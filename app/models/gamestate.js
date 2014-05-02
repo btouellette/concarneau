@@ -552,7 +552,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
             if(err) {
 				console.log('draw tile save err: ' + err);
 			}
-			gamestate.populate('activeTile.tile players.user.username', callback);
+			callback(err, gamestate);
 		});
 	});
 };
