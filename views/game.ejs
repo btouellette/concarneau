@@ -750,7 +750,7 @@ $(document).ready(function() {
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
     		}
         });
-        tileGroup.selectAll('image.tile-image').attr({
+        placedTiles.selectAll('image.tile-image').data(gamestate.placedTiles).attr({
             'xlink:href': function(d) { return d.tile.imageURL; }
         });
         tileGroup.exit().remove();
