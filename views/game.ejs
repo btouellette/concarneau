@@ -135,6 +135,7 @@
 //TODO: only show friend edit button once you have friends, same with game, make both trash can icons
 //TODO: warn if you start a game by yourself
 //TODO: add game logs to chat
+//TODO: chat horizontal scrolling is wonky
 function menuClick(menuToOpen, button) {
 	$('#menus > div').hide();
 	$(menuToOpen).show();
@@ -746,7 +747,9 @@ $(document).ready(function() {
         		var x = svgWidth / 2 + d.x * tileSize;
         		var y = svgHeight / 2 + d.y * tileSize;
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
-    		},
+    		}
+        });
+        tileGroup.selectAll('image.placed-tile').attr({
             'xlink:href': function(d) { return d.tile.imageURL; }
         });
         tileGroup.exit().remove();
