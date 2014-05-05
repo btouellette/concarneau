@@ -132,6 +132,9 @@
 //TODO: some indicator that meeple has or hasn't been placed
 //TODO: show socket status on page
 //TODO: indicate move has been sent
+//TODO: only show friend edit button once you have friends, same with game, make both trash can icons
+//TODO: warn if you start a game by yourself
+//TODO: add game logs to chat
 function menuClick(menuToOpen, button) {
 	$('#menus > div').hide();
 	$(menuToOpen).show();
@@ -733,18 +736,18 @@ $(document).ready(function() {
         tileGroup.enter().append('g').attr({
         	class: 'placed-tile'
     	}).append('image').attr({
-            x: function(d) { return 0; },
-            y: function(d) { return 0; },
+            x: 0,
+            y: 0,
             width: tileSize,
-            height: tileSize,
-            'xlink:href': function(d) { return d.tile.imageURL; }
+            height: tileSize
         });
         tileGroup.attr({
         	transform: function(d) { 
         		var x = svgWidth / 2 + d.x * tileSize;
         		var y = svgHeight / 2 + d.y * tileSize;
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
-    		}
+    		},
+            'xlink:href': function(d) { return d.tile.imageURL; }
         });
         tileGroup.exit().remove();
         // then draw the meeples placed on all tiles
