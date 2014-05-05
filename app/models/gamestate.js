@@ -20,7 +20,7 @@ var User = require('../models/user');
 var gamestateSchema = mongoose.Schema({
     name: String,
     finished: { type: Boolean, default: false },
-    messages: [{ playerIndex: Number, message: String }], //TODO only store the last 100? messages and impose limit on length { $push: { messages: { $each: [{ playerIndex: userIndex, message: message}], $slice: -100 }}}
+    messages: [{ username: String, message: { type: String, trim: true } }],
     players: [{
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,
@@ -676,7 +676,7 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, callb
     var allPlayers = friends.concat([initialUser._id]);
 	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
     // add the game to the users' active games
-    var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, { $push: { activeGames: newGame._id } }).exec();
+    var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, { $push: { activeGames: newGame._id } }, { multi: true }).exec();
     // grab the starting tile and make it the only placed tile
     var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
 		newGame.placedTiles.unshift({

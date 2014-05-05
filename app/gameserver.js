@@ -12,7 +12,7 @@ var User = require('./models/user');
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
-var userToSocket = {};
+var userToSocket = {}; //TODO: allow multiple sockets for a user
 
 module.exports = function(server, sessionStore) {
 
@@ -84,7 +84,7 @@ module.exports = function(server, sessionStore) {
 							                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
 								function(err, gamestate) {
 									if(err) { console.log('load populate err: ' + err); }
-									socket.emit('sending gamestate', gamestate);
+									socket.emit('sending gamestate', gamestate, true);
 								}
 							);
 						}
@@ -120,7 +120,7 @@ module.exports = function(server, sessionStore) {
 										// if players are active send them the new gamestate
 										for(var i = 0; i < distinctUserIDs.length; i++) {
 											if(userToSocket[distinctUserIDs[i]]) {
-												userToSocket[distinctUserIDs[i]].emit('sending gamestate', gamestate);
+												userToSocket[distinctUserIDs[i]].emit('sending gamestate', gamestate, false);
 											}
 										}
 									}
@@ -148,6 +148,29 @@ module.exports = function(server, sessionStore) {
 				});
 				socket.on('remove friend', function(userID) {
 					User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
+				});
+				socket.on('sending message', function(message, gameID) {
+					Gamestate.findById(gameID, function(err, gamestate) {
+						if(err) { console.log('message find err: ' + err); }
+						if(gamestate && gamestate.userIsInGame(currentUser)) {
+							// add the message to the gamestate, trimming to 100 characters and limiting message array length to 100
+							message = message.substr(0,100);
+							Gamestate.findByIdAndUpdate(gameID, { $push: { messages: { $each: [{ username: currentUser.username, message: message}], $slice: -100 }}}, function(err, gamestate) {
+								gamestate.populate('players.user', function(err, gamestate) {
+									// get distinct list of user IDs in the game
+									var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+										return self.indexOf(value) === index;
+									});
+									// if players are active send them the new message
+									for(var i = 0; i < distinctUserIDs.length; i++) {
+										if(userToSocket[distinctUserIDs[i]]) {
+											userToSocket[distinctUserIDs[i]].emit('message sent', message, currentUser.username, gamestate._id);
+										}
+									}
+								});
+							});
+						}
+					});
 				});
             });
         });
