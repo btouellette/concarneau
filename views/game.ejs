@@ -737,6 +737,7 @@ $(document).ready(function() {
         tileGroup.enter().append('g').attr({
         	class: 'placed-tile'
     	}).append('image').attr({
+    		class: 'tile-image',
             x: 0,
             y: 0,
             width: tileSize,
@@ -749,7 +750,7 @@ $(document).ready(function() {
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
     		}
         });
-        tileGroup.selectAll('image.placed-tile').attr({
+        tileGroup.selectAll('image.tile-image').attr({
             'xlink:href': function(d) { return d.tile.imageURL; }
         });
         tileGroup.exit().remove();
