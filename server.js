@@ -60,7 +60,7 @@ if(!process.env.C9_PROJECT) {
 		next();
 	});
 }
-app.use(express.logger('dev')); // log every request to the console
+//app.use(express.logger('dev')); // log every request to the console
 app.use(express.compress());
 app.use(express.cookieParser()); // read cookies (needed for auth)
 app.use(express.json());

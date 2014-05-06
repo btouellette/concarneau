@@ -380,7 +380,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				return invalidPlacementIndices.indexOf(index) === -1;
 			});
 			if(potentialPlacements.length === 0) {
-				console.log('=======discarded tile=====');
+				// console.log('=======discarded tile=====');
 				discardedTiles.push(activeTile);
 			}
 		}
@@ -914,6 +914,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			// if we have already examined this feature skip checking and add zere points
 			if(checked[currentTile] &&
 			   checked[currentTile].features.indexOf(featureIndex) !== -1) {
+				// console.log('seen this tile');
 				return results;
 			}
 			// otherwise record the feature index of the tile as checked
@@ -924,44 +925,51 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 					tile: currentTile,
 					features: [featureIndex]
 				};
-				// only add points if this is the first time encountering the tile
+				// only add points for cities and roads if this is the first time encountering the tile
 				if(featureType === 'city') {
 					results.points = currentTile.tile.doublePoints ? 2 : 1;
 				} else if(featureType === 'road') {
 					results.points = 1;
-				} else if(featureType === 'farm') {
-					// console.log('checking farm: ' + featureIndex);
-					// console.log(JSON.stringify(currentTile));
-					// find any complete cities adjacent to this field which have not been recorded yet
-					if(currentTile.tile.farms[featureIndex].adjacentCityIndices) {
-						// for each adjacent city
-						for(var k = 0; k < currentTile.tile.farms[featureIndex].adjacentCityIndices.length; k++) {
-							// get the completeness
-							var cityIndex = currentTile.tile.farms[featureIndex].adjacentCityIndices[k];
-							// console.log('checking adjacent city: ' + cityIndex);
-							var info = getFeatureInfo(currentTile, cityIndex, 'city');
-							// console.log(JSON.stringify(info));
-							if(info.complete) {
-								var unseen = true;
-								// check each of the features visited when gathering the info on the city against previously seen cities
-								// this prevents cities from being counted twice during the farm point calculation
-								for(var f = 0; f < info.visitedFeatures.length; f++) {
-									if(checked.cities[info.visitedFeatures[f].tile]) {
-										if(checked.cities[info.visitedFeatures[f].tile].features.indexOf(cityIndex) !== -1) {
+				}
+			}
+			// if looking for farms add three points for each adjacent complete city
+			if(featureType === 'farm') {
+				// console.log('checking farm: ' + featureIndex);
+				// console.log('farm tile: ' + JSON.stringify(currentTile));
+				// find any complete cities adjacent to this field which have not been recorded yet
+				if(currentTile.tile.farms[featureIndex].adjacentCityIndices) {
+					// for each adjacent city
+					for(var k = 0; k < currentTile.tile.farms[featureIndex].adjacentCityIndices.length; k++) {
+						// get the completeness
+						var cityIndex = currentTile.tile.farms[featureIndex].adjacentCityIndices[k];
+						// console.log('checking adjacent city: ' + cityIndex);
+						var info = getFeatureInfo(currentTile, cityIndex, 'city');
+						// console.log('city: ' + JSON.stringify(info));
+						if(info.complete) {
+							var unseen = true;
+							// check each of the features visited when gathering the info on the city against previously seen cities
+							// this prevents cities from being counted twice during the farm point calculation
+							// console.log('checked: ' + JSON.stringify(checked));
+							for(var f = 0; f < info.visitedFeatures.length; f++) {
+								if(checked.cities[info.visitedFeatures[f].tile]) {
+									for(var g = 0; g < info.visitedFeatures[f].features.length; g++) {
+										var visitedIndex = info.visitedFeatures[f].features[g];
+										if(checked.cities[info.visitedFeatures[f].tile].features.indexOf(visitedIndex) !== -1) {
 											unseen = false;
 										} else {
-											checked.cities[info.visitedFeatures[f].tile].features.push(cityIndex);
+											checked.cities[info.visitedFeatures[f].tile].features.push(visitedIndex);
 										}
-									} else {
-										checked.cities[info.visitedFeatures[f].tile] = {
-											tile: info.visitedFeatures[f].tile,
-											features: info.visitedFeatures[f].features
-										};
 									}
+								} else {
+									checked.cities[info.visitedFeatures[f].tile] = {
+										tile: info.visitedFeatures[f].tile,
+										features: info.visitedFeatures[f].features
+									};
 								}
-								if(unseen) {
-									results.points += 3;
-								}
+							}
+							if(unseen) {
+								results.points += 3;
+								// console.log('**found unseen city**');
 							}
 						}
 					}
@@ -1069,6 +1077,10 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 					gamestate.players[k].remainingMeeples += meepleCount[k];
 					if(meepleCount[k] === maxNumberOfMeeples) {
 						gamestate.players[k].points += featureInfo.points * (featureType === 'city' && !gameFinished ? 2 : 1);
+						// console.log('=======');
+						// console.log('scoring ' + featureInfo.points * (featureType === 'city' && !gameFinished ? 2 : 1) + ' points for player ' + k + ' ' + featureType);
+						// console.log('-------');
+						// console.log('feature info: ' + JSON.stringify(featureInfo));
 					}
 				}
 			}

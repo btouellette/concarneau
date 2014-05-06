@@ -127,6 +127,7 @@ html, body
 	max-height: 250px;
 	background: white;
 	overflow-y: auto;
+	word-wrap: break-word;
 }
 
 #chat-body ul
