@@ -475,8 +475,8 @@ $(document).ready(function() {
 		// add sub divs for each user in the game
 		element += game.players.map(function(item) {
    			return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
-     		}).join('');
-     		element += '</div>';
+ 		}).join('');
+ 		element += '</div>';
      		
    		$(element).click(function() {
      	  	socket.emit('load game', gameID);
@@ -556,7 +556,6 @@ $(document).ready(function() {
     $(window).on("debouncedresize", function () { if(lastGamestate) { draw(lastGamestate); }});  
     // listen for new gamestate data from the server
     socket.on('sending gamestate', function(gamestate, loadingGame) {
-    	console.log(gamestate);
     	// update the tile count in the menu
     	$('#game-' + gamestate._id + ' .tile-count').text('[' + gamestate.unusedTiles.length + ']');
     	// put the game listing in the correct place in the menu
@@ -564,6 +563,16 @@ $(document).ready(function() {
         var $inactiveGames = $('#inactive-games');
         var $finishedGames = $('#finished-games');
         var $newGame = $('#game-' + gamestate._id);
+        // mark the active players name with <username> in the game list
+        var activePlayerIndex = 0;
+        while(!gamestate.players[activePlayerIndex].active && activePlayerIndex < gamestate.players.length) {
+        	activePlayerIndex++;
+        }
+        $newGame.children('.game-player-listing').text(function(i, text) {
+        	var username = text.replace('<','').replace('>','');
+        	return (i === activePlayerIndex ? '<' + username + '>' : username)
+    	});
+    	// put the game listing in the correct category in the menu
     	if(gamestate.finished) {
     		if($finishedGames.has($newGame).length === 0) {
 	   			$newGame.appendTo($finishedGames);
@@ -586,13 +595,14 @@ $(document).ready(function() {
 				}
         	}
     	}
+    	// update the page title to inform the user there is something new
     	document.title = '(!) Concarneau';
     	$('body').on('mousemove', function() { 
 			document.title = 'Concarneau';
 			$('body').off('mousemove');
 		});
 		if(loadingGame) {
-			// draw chat messages into chat box
+			// draw chat messages into chat box grouped by username
 			$('#chat-header-label span').text(' Chat');
 			var $chatBody = $('#chat-body');
 			var $messageList = $('#chat-message-list').detach();
@@ -618,12 +628,12 @@ $(document).ready(function() {
 			$('#chat-footer input').val('');
      	  	$('#chat-wrapper').removeClass('hidden');
 		}
+		// only draw if we are loading or are currently viewing this game 
 		if(currentGameID === gamestate._id) {
 			draw(gamestate);
 		}
 	});
 	socket.on('game started', function(gamestate, startingUserID) {
-    	console.log(gamestate);
 		// add to active or inactive games depending on which this player is
         var $activeGames = $('#active-games');
         var $inactiveGames = $('#inactive-games');
@@ -639,20 +649,22 @@ $(document).ready(function() {
     	if(!active) {
    			addNewGameListing(gamestate, $inactiveGames);
     	}
-		// draw if this user triggered the new game
+		// draw if this user triggered the new game otherwise update the page title to inform the user there is something new
 		if(userID === startingUserID) {
 			$('#chat-header-label span').text(' Chat');
 			$('#chat-message-list').empty();
 			currentGameID = gamestate._id;
 			draw(gamestate);
-		}	
-    	document.title = '(!) Concarneau';
-    	$('body').on('mousemove', function() { 
-			document.title = 'Concarneau';
-			$('body').off('mousemove');
-		});
+		} else {
+	    	document.title = '(!) Concarneau';
+	    	$('body').on('mousemove', function() { 
+				document.title = 'Concarneau';
+				$('body').off('mousemove');
+			});
+		}
 	});
 	socket.on('friend added', function(username, userID) {
+		// found a user with this username, add to the friends list in the menu and flash a success message
 		var $alert = $('#username-alert');
 		$alert.text('Added!');
 		$alert.removeClass('alert-danger').addClass('alert-success').fadeTo(0, 1).fadeTo(3500, 0);
@@ -672,6 +684,7 @@ $(document).ready(function() {
 		}
 	});
 	socket.on('friend not found', function() {
+		// couldn't find a user with this username, flash an error message
 		var $alert = $('#username-alert');
 		$alert.text('Username not found!');
 		$alert.removeClass('alert-success').addClass('alert-danger').fadeTo(0, 1).fadeTo(3500, 0);
@@ -693,7 +706,8 @@ $(document).ready(function() {
 					)
 				);
 			}
-			// scroll the chat list down if the user is at the bottom of it otherwise inform of the new message
+			// scroll the chat list down if the user was already at the bottom of it
+			// otherwise inform of the new message until they scroll down
 			if(scrolledToBottom && !$chatBody.is(':hidden')) {
 				$chatBody.scrollTop($chatBody[0].scrollHeight);
 			} else {
@@ -724,6 +738,7 @@ $(document).ready(function() {
         
     	lastGamestate = gamestate;
     	
+    	// position the confirm button under the active tile image in the upper right
     	d3.select('#confirm-button > circle').attr({
     		cx: svgWidth - 5 - tileSize / 2
     	});
@@ -748,8 +763,7 @@ $(document).ready(function() {
 		var remainingMeeples = reorderedPlayers[0].remainingMeeples;
 		var userIsActive = reorderedPlayers[0].active;
     	
-        // for all newly placed tiles: add a group for the placed tile and its meeples
-        // then draw the tile image
+        // for all newly placed tiles add a group for the placed tile and its meeples
         var tileGroup = placedTiles.selectAll('g.placed-tile').data(gamestate.placedTiles);
         tileGroup.enter().append('g').attr({
         	class: 'placed-tile'
@@ -767,11 +781,12 @@ $(document).ready(function() {
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
     		}
         });
+        // then draw the tile image
         placedTiles.selectAll('image.tile-image').data(gamestate.placedTiles).attr({
             'xlink:href': function(d) { return d.tile.imageURL; }
         });
         tileGroup.exit().remove();
-        // then draw the meeples placed on all tiles
+        // then draw the meeples placed on the tiles
         var meepleImages = tileGroup.selectAll('image.meeple').data(function(d) {
     		return d.meeples.map(function(item) { 
         		return {
