@@ -132,18 +132,19 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.5/d3.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
 <script>
-//TODO: some indicator that meeple has or hasn't been placed
 //TODO: show socket status on page
 //TODO: indicate move has been sent (remove valid placements)
 //TODO: only show friend edit button once you have friends, same with game, make both trash can icons
 //TODO: warn if you start a game by yourself
 //TODO: add game logs to chat
-//TODO: chat horizontal scrolling is wonky
 //TODO: show player names or avatars
-//TODO: have first game autoload
-//TODO: have visual indicator of ability to rotate
 //TODO: Modernizr and noscript redirects
 //TODO: move these variables out of the global namespace (add onclick to elements via JS)
+//TODO: zoom and pan when active tile moves if out of zoom/pan range
+//TODO: default zoom level should be dependendent on number of placed tiles
+//TODO: see if there is a way to prevent the image rerender across the board when the active tile is scaled
+//TODO: make meeple placement AFTER tile placement
+//TODO: add keyboard shortcuts ENTER = place tile, arrows = pan
 var userGames = <%- JSON.stringify(user.activeGames) %>;
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
@@ -423,10 +424,6 @@ $(document).ready(function() {
 		}
 	});
 	
-	//TODO: zoom and pan when active tile moves if out of zoom/pan range
-	//TODO: default zoom level should be dependendent on number of placed tiles
-	//TODO: see if there is a way to prevent the image rerender across the board when the active tile is scaled
-
     var svg = d3.select('#game-svg').call(zoom);
 	
 	var gameArea = svg.append('g').attr({ id: 'game-area' });
@@ -443,6 +440,7 @@ $(document).ready(function() {
 		y: -16,
     	transform: 'scale(' + tileSize / 32 + ')',
     	fill: 'white',
+    	stroke: 'black',
     	opacity: 0,
     	'pointer-events': 'none'
     });

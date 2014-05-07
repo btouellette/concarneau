@@ -11,7 +11,7 @@ var User = require('./models/user');
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
-var userToSocket = {}; //TODO: allow multiple sockets for a user
+var userToSocket = {};
 
 module.exports = function(server, sessionStore) {
 
@@ -45,10 +45,18 @@ module.exports = function(server, sessionStore) {
                 return;
             }
             User.findById(session.passport.user, function(err, currentUser) {
-				userToSocket[currentUser._id] = socket;
+				if(userToSocket[currentUser._id]) {
+					userToSocket[currentUser._id].push(socket);
+				} else {
+					userToSocket[currentUser._id] = [socket];
+				}
 				socket.on('disconnect', function() {
 					// on disconnect remove update subscriptions
-					delete userToSocket[currentUser._id];
+					if(userToSocket[currentUser._id].length === 1) {
+						delete userToSocket[currentUser._id];
+					} else {
+						userToSocket[currentUser._id].splice(userToSocket[currentUser._id].indexOf(socket), 1);
+					}
 				});
 				socket.on('new game', function(friends) {
 					// pull the user information from the db again in case it has changed since the socket was established
@@ -66,8 +74,11 @@ module.exports = function(server, sessionStore) {
 									});
 									// if players are active send them the new game
 									for(var i = 0; i < distinctUserIDs.length; i++) {
-										if(userToSocket[distinctUserIDs[i]]) {
-											userToSocket[distinctUserIDs[i]].emit('game started', gamestate, currentUser._id);
+										var socketArray = userToSocket[distinctUserIDs[i]];
+										if(socketArray) {
+											for(var k = 0; k < socketArray.length; k++) {
+												socketArray[k].emit('game started', gamestate, currentUser._id);
+											}
 										}
 									}
 								}
@@ -118,8 +129,11 @@ module.exports = function(server, sessionStore) {
 										});
 										// if players are active send them the new gamestate
 										for(var i = 0; i < distinctUserIDs.length; i++) {
-											if(userToSocket[distinctUserIDs[i]]) {
-												userToSocket[distinctUserIDs[i]].emit('sending gamestate', gamestate, false);
+											var socketArray = userToSocket[distinctUserIDs[i]];
+											if(socketArray) {
+												for(var k = 0; k < socketArray.length; k++) {
+													socketArray[k].emit('sending gamestate', gamestate, false);
+												}
 											}
 										}
 									}
@@ -162,8 +176,11 @@ module.exports = function(server, sessionStore) {
 									});
 									// if players are active send them the new message
 									for(var i = 0; i < distinctUserIDs.length; i++) {
-										if(userToSocket[distinctUserIDs[i]]) {
-											userToSocket[distinctUserIDs[i]].emit('message sent', message, currentUser.username, gamestate._id);
+										var socketArray = userToSocket[distinctUserIDs[i]];
+										if(socketArray) {
+											for(var k = 0; k < socketArray.length; k++) {
+												socketArray[k].emit('message sent', message, currentUser.username, gamestate._id);
+											}
 										}
 									}
 								});
