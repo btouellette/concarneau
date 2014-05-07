@@ -237,6 +237,7 @@ function resetActiveTile(withTransition) {
 	// remove data stored regarding the active tile position
 	$('#active-tile').removeData('rotationIndex').removeData('placementIndex');
 	// hide any placed meeples and their outlines
+	$('#meeple-placements').attr('visibility', 'hidden');
 	$('#meeple-placements image').attr('visibility', 'hidden');
 	// show the meeples in the score area as they are no longer placed
 	$('#score-area image').first().removeAttr('visibility');
@@ -247,8 +248,9 @@ function resetActiveTile(withTransition) {
 		var startingScale = reverseScale;
 		var startingTranslationX = reverseTranslation[0];
 		var startingTranslationY = reverseTranslation[1];
-		d3.select('#confirm-button').transition().duration(transitionDuration).attr('opacity', 0);
-		d3.select('#confirm-button').transition().delay(transitionDuration).attr('visibility', 'hidden');
+		d3.selectAll('#confirm-button,#send-move-button').transition().duration(transitionDuration).attr('opacity', 0);
+		d3.selectAll('#confirm-button,#send-move-button').transition().delay(transitionDuration).attr('visibility', 'hidden');
+		d3.selectAll('#confirm-button > *').transition().delay(transitionDuration).attr('visibility', null);
 		d3.select('#active-tile').transition().duration(transitionDuration).attr({ 
 			transform: 'scale(' + reverseScale + ') translate(' + (reverseTranslation[0] + (svgWidth - tileSize - 5)) + ',' + (reverseTranslation[1] + 5) + ')'
 		}).select('#active-tile-rotation').attr({
@@ -265,10 +267,11 @@ function resetActiveTile(withTransition) {
 			opacity: 0
 		});
 	} else {
-		d3.select('#confirm-button').transition().duration(0).attr({
+		d3.selectAll('#confirm-button,#send-move-button').transition().duration(0).attr({
 			opacity: 0,
 			visibility: 'hidden'
 		});
+		d3.selectAll('#confirm-button > *').attr('visibility', null);
 		d3.select('#active-tile').attr({ 
 			transform: 'scale(' + reverseScale + ') translate(' + (reverseTranslation[0] + (svgWidth - tileSize - 5)) + ',' + (reverseTranslation[1] + 5) + ')'
 		}).select('#active-tile-rotation').attr({
@@ -444,18 +447,46 @@ $(document).ready(function() {
     	opacity: 0,
     	'pointer-events': 'none'
     });
-    var meeplePlacements = activeTileImageContainer.append('g').attr({ id: 'meeple-placements' });
+    var meeplePlacements = activeTileImageContainer.append('g').attr({ 
+    	id: 'meeple-placements', 
+    	visibility: 'hidden' 
+	});
 	
     var uiArea = svg.append('g').attr({ id: 'ui-area' });
     var scoreArea = uiArea.append('g').attr({ id: 'score-area' });
-    var confirmButton = uiArea.append('g').attr({
-    	id: 'confirm-button',
+    var sendMoveButton = uiArea.append('g').attr({
+    	id: 'send-move-button',
     	cursor: 'pointer',
     	visibility: 'hidden'
     }).on('click', function() {
     	if(selectedMove) {
     		socket.emit('sending move', currentGameID, selectedMove, $('#test-complete').is(':checked'));
     	}
+    });
+    sendMoveButton.append('circle').attr({
+    	cy: 5 + tileSize / 2,
+    	cx: $('#svg-wrapper').width() - 5 - tileSize / 2,
+    	r: 30,
+    	fill: 'green',
+    	stroke: 'black',
+    	'stroke-width': 5
+    });
+    sendMoveButton.append('use').attr({
+    	'xlink:href': '#svgicon-transfer',
+    	x: $('#svg-wrapper').width() - 5 - tileSize / 2 - 16,
+    	y: 5 + tileSize / 2 - 16
+    });
+    var confirmButton = uiArea.append('g').attr({
+    	id: 'confirm-button',
+    	cursor: 'pointer',
+    	visibility: 'hidden'
+    }).on('click', function() {
+    	d3.selectAll('#confirm-button,#active-tile-rotation-indicator').attr('visibility', 'hidden');
+    	d3.select('#send-move-button').attr({
+    		visibility: null,
+    		opacity: 1
+		});
+		d3.select('#meeple-placements').attr('visibility', null);
     });
     confirmButton.append('circle').attr({
     	cy: 5 + tileSize / 2,
@@ -473,7 +504,6 @@ $(document).ready(function() {
     
 	function addNewGameListing(game, menuGroup) {
 		var gameID = game._id;
-		
 		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
 		// add remaining tiles text
 		element += '<span class="right-side"><span class="tile-count">[' + game.unusedTiles.length + ']</span><i class="fa fa-trash-o hidden"></i></span>';
@@ -482,7 +512,7 @@ $(document).ready(function() {
    			return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
  		}).join('');
  		element += '</div>';
-     		
+ 		// when the game listing is clicked load that game
    		$(element).click(function() {
      	  	socket.emit('load game', gameID);
      	  	$('#chat-wrapper').removeClass('hidden');
@@ -743,11 +773,11 @@ $(document).ready(function() {
         
     	lastGamestate = gamestate;
     	
-    	// position the confirm button under the active tile image in the upper right
-    	d3.select('#confirm-button > circle').attr({
+    	// position the buttons under the active tile image in the upper right
+    	d3.selectAll('#confirm-button > circle,#send-move-button > circle').attr({
     		cx: svgWidth - 5 - tileSize / 2
     	});
-    	d3.select('#confirm-button > use').attr({
+    	d3.selectAll('#confirm-button > use,#send-move-button > use').attr({
     		x: svgWidth - 5 - tileSize / 2 - 16
     	});
     	
@@ -862,15 +892,16 @@ $(document).ready(function() {
 			} else {
 				// if this is a new location reset to the first rotation
 				rotationIndex = 0;
-				// hide any placed meeples
-				$('#meeple-placements .placed-meeple').attr('visibility', 'hidden');
+				// show all the remaining meeples in case one was temporarily placed and is returned to the pool
 				$('#score-area image').first().removeAttr('visibility');
 				// and reset the move
 				selectedMove = { 
 					placement: gamestate.activeTile.validPlacements[i]
 				};
-				d3.select('#confirm-button').transition().duration(0).attr('visibility', null);
-				d3.select('#confirm-button').transition().duration(transitionDuration).attr('opacity', 1);
+				// show the placement confirmation again and hide the send move button, meeple outlines, and any placed meeples
+				d3.selectAll('#meeple-placements,#send-move-button,#meeple-placements .placed-meeple').attr('visibility', 'hidden');
+				d3.selectAll('#confirm-button').attr('visibility', null);
+				d3.selectAll('#confirm-button').transition().duration(transitionDuration).attr('opacity', 1);
 			}
 			selectedMove.rotation = d.rotations[rotationIndex].rotation;
 			var rotationDegrees = selectedMove.rotation * 90;
