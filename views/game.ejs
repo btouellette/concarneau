@@ -139,6 +139,11 @@
 //TODO: warn if you start a game by yourself
 //TODO: add game logs to chat
 //TODO: chat horizontal scrolling is wonky
+var userGames = <%- JSON.stringify(user.activeGames) %>;
+var userFriends = <%- JSON.stringify(user.friends) %>;
+var userID = '<%- user._id %>';
+var socket = io.connect('<%- process.env.SOCKET_URL %>');
+
 function menuClick(menuToOpen, button) {
 	$('#menus > div').hide();
 	$(menuToOpen).show();
@@ -180,8 +185,6 @@ function disableGamesEdit() {
 	$(window).off('click.games-edit');
 }
 
-var user = <%- JSON.stringify(user) %>;
-
 (function ($) {
     // debouncedresize: special jQuery event that happens once after a window resize
     // https://github.com/louisremi/jquery-smartresize
@@ -216,7 +219,6 @@ var user = <%- JSON.stringify(user) %>;
 //TODO: Modernizr and noscript redirects
 
 //TODO: move these variables out of the global namespace (add onclick to elements via JS)
-var socket = io.connect('<%- process.env.SOCKET_URL %>');
 var currentGameID, selectedMove, svgHeight, svgWidth;
 var reverseScale = 1;
 var reverseTranslation = [0,0];
@@ -251,6 +253,9 @@ function resetActiveTile(withTransition) {
 				resetActiveTile(true);   	
 	   		}
 		});
+		d3.select('#active-tile-rotation-indicator').transition().duration(transitionDuration).attr({
+			opacity: 0
+		});
 	} else {
 		d3.select('#confirm-button').transition().duration(0).attr({
 			opacity: 0,
@@ -260,6 +265,9 @@ function resetActiveTile(withTransition) {
 			transform: 'scale(' + reverseScale + ') translate(' + (reverseTranslation[0] + (svgWidth - tileSize - 5)) + ',' + (reverseTranslation[1] + 5) + ')'
 		}).select('#active-tile-rotation').attr({
 			transform: 'rotate(0)'
+		});
+		d3.select('#active-tile-rotation-indicator').attr({
+			opacity: 0
 		});
 	}
 }
@@ -421,6 +429,16 @@ $(document).ready(function() {
     var activeTileContainer = gameArea.append('g').attr({ id: 'active-tile' });
     var activeTileImageContainer = activeTileContainer.append('g').attr({ id: 'active-tile-translation', transform: 'translate(' + tileSize / 2 + ',' + tileSize / 2 + ')' })
                                                       .append('g').attr({ id: 'active-tile-rotation' });
+    activeTileImageContainer.append('use').attr({
+    	id: 'active-tile-rotation-indicator',
+    	'xlink:href': '#svgicon-repeat-payment',
+		x: -16,
+		y: -16,
+    	transform: 'scale(' + tileSize / 32 + ')',
+    	fill: 'white',
+    	opacity: 0,
+    	'pointer-events': 'none'
+    });
     var meeplePlacements = activeTileImageContainer.append('g').attr({ id: 'meeple-placements' });
 	
     var uiArea = svg.append('g').attr({ id: 'ui-area' });
@@ -466,72 +484,67 @@ $(document).ready(function() {
      	  	currentGameID = gameID;
 		}).appendTo(menuGroup);
 	}
-    
-    function drawMenu(user) {
-    	//TODO: add and test transitions
-    	// set up the game menu
-        var $gameListings = $('#game-menu');
-        var $activeGames = $('#active-games');
-        var $inactiveGames = $('#inactive-games');
-        var $finishedGames = $('#finished-games');
-        var userGames = user.activeGames;
-        // add the active games and separate waiting and finished games
-        for(var i = 0; i < userGames.length; i++) {
-        	if(userGames[i].finished) {
-    		   	if($gameListings.has('#game-' + userGames[i]._id).length) {
-    		   		$('#game-' + userGames[i]._id).appendTo($finishedGames);
-    		   	} else {
-    		   		addNewGameListing(userGames[i], $finishedGames);
-    		   	}
-        	} else {
-	        	var active = false;
-	        	for(var k = 0; k < userGames[i].players.length; k++) {
-	        		if(userGames[i].players[k].user._id === user._id &&
-	        		   userGames[i].players[k].active) {
-	        		   	active = true;
-	        		   	if($gameListings.has('#game-' + userGames[i]._id).length) {
-	        		   		$('#game-' + userGames[i]._id).appendTo($activeGames);
-	        		   	} else {
-    		   				addNewGameListing(userGames[i], $activeGames);
-	        		   	}
-	        			break;
-	        		}
-	        	}
-	        	if(!active) {
+	
+    // draw the menus
+    var $gameListings = $('#game-menu');
+    var $activeGames = $('#active-games');
+    var $inactiveGames = $('#inactive-games');
+    var $finishedGames = $('#finished-games');
+    // add the active games and separate waiting and finished games
+    for(var i = 0; i < userGames.length; i++) {
+    	if(userGames[i].finished) {
+		   	if($gameListings.has('#game-' + userGames[i]._id).length) {
+		   		$('#game-' + userGames[i]._id).appendTo($finishedGames);
+		   	} else {
+		   		addNewGameListing(userGames[i], $finishedGames);
+		   	}
+    	} else {
+        	var active = false;
+        	for(var k = 0; k < userGames[i].players.length; k++) {
+        		if(userGames[i].players[k].user._id === userID &&
+        		   userGames[i].players[k].active) {
+        		   	active = true;
         		   	if($gameListings.has('#game-' + userGames[i]._id).length) {
-        		   		$('#game-' + userGames[i]._id).appendTo($inactiveGames);
+        		   		$('#game-' + userGames[i]._id).appendTo($activeGames);
         		   	} else {
-    		   				addNewGameListing(userGames[i], $inactiveGames);
+		   				addNewGameListing(userGames[i], $activeGames);
         		   	}
-	        	}
-        	}
-        }
-        // set up the friends menu
-        var friends = user.friends.sort(function(a, b) {
-        	var username_a = a.username.toLowerCase();
-        	var username_b = b.username.toLowerCase();
-        	if(username_a  > username_b) {
-        		return 1;
-        	}
-        	if(username_a < username_b) {
-        		return -1;
-        	}
-        	return 0;
-        });
-        var $friendsList = $('#friends-menu');
-        for(var j = 0; j < friends.length; j++) {
-        	if($friendsList.has('#friend-' + friends[j]._id).length === 0) {
-        		// insert the new friend in alphabetical order by display name
-        		var element = '<div class="friend-listing" id="friend-' + friends[j]._id + '"><i class="fa fa-user"></i> ' + friends[j].username + '</div>';
-        		if(j === 0) {
-        			$(element).appendTo("#friends-list");
-        		} else {
-    				$(element).insertAfter('#friend-' + friends[j-1]._id);
+        			break;
         		}
         	}
-        }
+        	if(!active) {
+    		   	if($gameListings.has('#game-' + userGames[i]._id).length) {
+    		   		$('#game-' + userGames[i]._id).appendTo($inactiveGames);
+    		   	} else {
+		   				addNewGameListing(userGames[i], $inactiveGames);
+    		   	}
+        	}
+    	}
     }
-    drawMenu(user);
+    // set up the friends menu
+    var friends = userFriends.sort(function(a, b) {
+    	var username_a = a.username.toLowerCase();
+    	var username_b = b.username.toLowerCase();
+    	if(username_a  > username_b) {
+    		return 1;
+    	}
+    	if(username_a < username_b) {
+    		return -1;
+    	}
+    	return 0;
+    });
+    var $friendsList = $('#friends-menu');
+    for(var j = 0; j < friends.length; j++) {
+    	if($friendsList.has('#friend-' + friends[j]._id).length === 0) {
+    		// insert the new friend in alphabetical order by display name
+    		var element = '<div class="friend-listing" id="friend-' + friends[j]._id + '"><i class="fa fa-user"></i> ' + friends[j].username + '</div>';
+    		if(j === 0) {
+    			$(element).appendTo("#friends-list");
+    		} else {
+				$(element).insertAfter('#friend-' + friends[j-1]._id);
+    		}
+    	}
+    }
     
     // reset the active tile if the user clicks the background and isn't doing a zoom/pan
     d3.select('#game-background').on('click', function() {
@@ -558,7 +571,7 @@ $(document).ready(function() {
     	} else {
         	var active = false;
         	for(var k = 0; k < gamestate.players.length; k++) {
-        		if(gamestate.players[k].user._id === user._id &&
+        		if(gamestate.players[k].user._id === userID &&
         		   gamestate.players[k].active) {
         		   	active = true;
     				if($activeGames.has($newGame).length === 0) {
@@ -616,7 +629,7 @@ $(document).ready(function() {
         var $inactiveGames = $('#inactive-games');
     	var active = false;
     	for(var k = 0; k < gamestate.players.length; k++) {
-    		if(gamestate.players[k].user._id === user._id &&
+    		if(gamestate.players[k].user._id === userID &&
     		   gamestate.players[k].active) {
     		   	active = true;
    				addNewGameListing(gamestate, $activeGames);
@@ -627,7 +640,7 @@ $(document).ready(function() {
    			addNewGameListing(gamestate, $inactiveGames);
     	}
 		// draw if this user triggered the new game
-		if(user._id === startingUserID) {
+		if(userID === startingUserID) {
 			$('#chat-header-label span').text(' Chat');
 			$('#chat-message-list').empty();
 			currentGameID = gamestate._id;
@@ -725,7 +738,7 @@ $(document).ready(function() {
 		var playerCount = gamestate.players.length;
 		var count = 0;
     	var reorderedPlayers = gamestate.players.slice(0);
-		while(reorderedPlayers[0].user._id !== user._id ||
+		while(reorderedPlayers[0].user._id !== userID ||
 		      (!reorderedPlayers[0].active && count < playerCount)) {
 	      	count++;
 			reorderedPlayers.push(reorderedPlayers.shift());
@@ -793,7 +806,7 @@ $(document).ready(function() {
         
     	// draw the active tile
     	var activeTileImage = activeTileImageContainer.selectAll('image.active-tile-image').data(gamestate.activeTile.tile ? [gamestate.activeTile.tile] : []);
-        activeTileImage.enter().insert('image', '#meeple-placements').attr({
+        activeTileImage.enter().insert('image', '#active-tile-rotation-indicator').attr({
             width: tileSize,
             height: tileSize,
             class: 'active-tile-image',
@@ -852,6 +865,10 @@ $(document).ready(function() {
 			});
 			d3.select('#active-tile-rotation').transition().duration(transitionDuration).attr({
 				transform: 'rotate(' + rotationDegrees + ')'
+			});
+			// if there are rotations make the indicator visible
+			d3.select('#active-tile-rotation-indicator').transition().duration(transitionDuration).attr({
+				opacity: d.rotations.length > 1 ? 0.45 : 0
 			});
 			if(remainingMeeples > 0) {
 				// show outlines for any valid meeple placements and
@@ -1004,7 +1021,7 @@ $(document).ready(function() {
 		});
 		turnMarkers.exit().remove();
 		
-		//TODO: draw score with nicer background/styling
+		//TODO: draw score with nicer background/styling and player names
 		// draw the players scores and remaining meeples
 		var scoreGroups = scoreArea.selectAll('g.score-group').data(reorderedPlayers);
 		var group = scoreGroups.enter().append('g').attr({

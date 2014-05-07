@@ -8,7 +8,6 @@ var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
 //TODO: make sure updates to empty games or users don't crash the nodejs instance
-//TODO: user chat
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
