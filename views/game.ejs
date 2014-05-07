@@ -139,10 +139,21 @@
 //TODO: warn if you start a game by yourself
 //TODO: add game logs to chat
 //TODO: chat horizontal scrolling is wonky
+//TODO: show player names or avatars
+//TODO: have first game autoload
+//TODO: have visual indicator of ability to rotate
+//TODO: Modernizr and noscript redirects
+//TODO: move these variables out of the global namespace (add onclick to elements via JS)
 var userGames = <%- JSON.stringify(user.activeGames) %>;
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
 var socket = io.connect('<%- process.env.SOCKET_URL %>');
+
+var currentGameID, selectedMove, svgHeight, svgWidth;
+var reverseScale = 1;
+var reverseTranslation = [0,0];
+var transitionDuration = 750;
+var tileSize = 100;
 
 function menuClick(menuToOpen, button) {
 	$('#menus > div').hide();
@@ -170,8 +181,15 @@ function disableFriendsEdit() {
 function enableGamesEdit(e) {
 	$('#game-menu .tile-count').hide();
 	$('#game-menu .fa-trash-o').removeClass('hidden').on('click', function () {
-		socket.emit('remove game', this.parentNode.parentNode.id.substr(5));
+		var gameID = this.parentNode.parentNode.id.substr(5);
+		socket.emit('remove game', gameID);
 		$(this.parentNode.parentNode).remove();
+		// if we deleted the game we are viewing remove relevant svg elements
+		if(gameID === currentGameID) {
+			resetActiveTile(false);
+			$('#placed-tiles,#turn-markers,#valid-placements,#meeple-placements,#score-area').empty();
+			$('#active-tile-image').remove();
+		}
 	});
 	$(window).on('click.games-edit', function() {
 		disableGamesEdit();	
@@ -213,17 +231,6 @@ function disableGamesEdit() {
         threshold: 150
     };
 })(jQuery);
-//TODO: show player names or avatars
-//TODO: have first game autoload
-//TODO: have visual indicator of ability to rotate
-//TODO: Modernizr and noscript redirects
-
-//TODO: move these variables out of the global namespace (add onclick to elements via JS)
-var currentGameID, selectedMove, svgHeight, svgWidth;
-var reverseScale = 1;
-var reverseTranslation = [0,0];
-var transitionDuration = 750;
-var tileSize = 100;
 	
 function resetActiveTile(withTransition) {
 	// remove data stored regarding the active tile position
@@ -820,11 +827,11 @@ $(document).ready(function() {
         meepleImages.exit().remove();
         
     	// draw the active tile
-    	var activeTileImage = activeTileImageContainer.selectAll('image.active-tile-image').data(gamestate.activeTile.tile ? [gamestate.activeTile.tile] : []);
+    	var activeTileImage = activeTileImageContainer.selectAll('#active-tile-image').data(gamestate.activeTile.tile ? [gamestate.activeTile.tile] : []);
         activeTileImage.enter().insert('image', '#active-tile-rotation-indicator').attr({
             width: tileSize,
             height: tileSize,
-            class: 'active-tile-image',
+            id: 'active-tile-image',
             'pointer-events': 'none'
         });
         // reset to the base position and update the image URL every draw
