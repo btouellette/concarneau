@@ -362,6 +362,7 @@ $(document).ready(function() {
 		},
 		events: {
 			show: function() {
+				$('#new-game-popup .friend-listing').remove();
 				$('#friends-menu .fa-edit').hide();
 				$('#friends-menu-selection').click();
 				$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-plus-square-o').css('cursor', 'pointer');
