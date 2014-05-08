@@ -264,7 +264,8 @@ function resetActiveTile(withTransition) {
 	   		}
 		});
 		d3.select('#active-tile-rotation-indicator').transition().duration(transitionDuration).attr({
-			opacity: 0
+			opacity: 0,
+			visibility: null
 		});
 	} else {
 		d3.selectAll('#confirm-button,#send-move-button').transition().duration(0).attr({
@@ -278,7 +279,8 @@ function resetActiveTile(withTransition) {
 			transform: 'rotate(0)'
 		});
 		d3.select('#active-tile-rotation-indicator').attr({
-			opacity: 0
+			opacity: 0,
+			visibility: null
 		});
 	}
 }
