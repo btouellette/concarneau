@@ -37,14 +37,14 @@ module.exports = function(server, sessionStore) {
 		accept(null, true);
 	});
 
-    io.sockets.on('connection', function (socket) {
+	io.sockets.on('connection', function (socket) {
 		// retrieve user information for user specific actions
-        sessionStore.get(socket.handshake.sessionID, function(err, session) {
-            if(err || !session) {
-                console.log("couldn't retrieve session");
-                return;
-            }
-            User.findById(session.passport.user, function(err, currentUser) {
+		sessionStore.get(socket.handshake.sessionID, function(err, session) {
+			if(err || !session) {
+				console.log("couldn't retrieve session");
+				return;
+			}
+			User.findById(session.passport.user, function(err, currentUser) {
 				if(userToSocket[currentUser._id]) {
 					userToSocket[currentUser._id].push(socket);
 				} else {
@@ -188,7 +188,7 @@ module.exports = function(server, sessionStore) {
 						}
 					});
 				});
-            });
-        });
-    });
+			});
+		});
+	});
 };
