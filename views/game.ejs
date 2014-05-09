@@ -633,12 +633,15 @@ $(document).ready(function() {
 				}
         	}
     	}
-    	// update the page title to inform the user there is something new
-    	document.title = '(!) Concarneau';
-    	$('body').on('mousemove', function() { 
-			document.title = 'Concarneau';
-			$('body').off('mousemove');
-		});
+    	// update the page title to inform the user there is something new if they weren't the one to play the move
+    	var previousPlayerIndex = activePlayerIndex === 0 ? gamestate.players.length - 1 : activePlayerIndex - 1;
+    	if(gamestate.players[previousPlayerIndex].user._id !== userID) {
+	    	document.title = '(!) Concarneau';
+	    	$('body').on('mousemove', function() { 
+				document.title = 'Concarneau';
+				$('body').off('mousemove');
+			});
+    	}
 		if(loadingGame) {
 			// draw chat messages into chat box grouped by username
 			$('#chat-header-label span').text(' Chat');
