@@ -22,8 +22,8 @@ module.exports = function(server, sessionStore) {
 		}
 	});
 
-    var io = require('socket.io').listen(server);
-    io.set('log level', 1); // reduce logging
+	var io = require('socket.io').listen(server);
+	io.set('log level', 1); // reduce logging
 	io.set('authorization', function(handshakeData, accept)  {
 		if (handshakeData.headers.cookie) {
 			handshakeData.cookie = cookie.parse(handshakeData.headers.cookie);
