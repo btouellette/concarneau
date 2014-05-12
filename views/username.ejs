@@ -9,30 +9,31 @@
 	<style>
 		body { padding-top: 80px; }
 		input { text-transform: lowercase; }
+		.jumbotron { font-size: 14px; }
+		.jumbotron h1 { font-size: 36px; }
 	</style>
 </head>
-<body>
+<body background="/content/images/ui/bg.jpg">
 <div class="container">
-	<div class="col-sm-6 col-sm-offset-3">
-	
-		<h3><span class="fa fa-user"></span> Choose a username</h3>
-		<p>This will be used for other users to find and play with you</p>
-		<p>Must be alphanumeric or underscore and 1-12 characters</p>
-			
-		<% if (message.length > 0) { %>
-			<div class="alert alert-danger"><%= message %></div>
-		<% } %>
+<div class="jumbotron">
+	<h3><span class="fa fa-user"></span> Choose a username</h3>
+	<p>This will be used for other users to find and play with you</p>
+	<p>Must be alphanumeric or underscore and 1-12 characters</p>
 		
-		<form action="/username" method="post">
-			<div class="form-group">
-				<input type="text" class="form-control" 
-				       maxlength="12" required="true" pattern="[a-z0-9_]{1,12}" title="Must be 1-12 alphanumeric or underscore characters"
-				       onkeyup="this.value = this.value.toLowerCase();"
-				       name="username">
-			</div>
-			<button type="submit" class="btn btn-warning btn-lg">Submit</button>
-		</form>
-	</div>
+	<% if (message.length > 0) { %>
+		<div class="alert alert-danger"><%= message %></div>
+	<% } %>
+	
+	<form action="/username" method="post">
+		<div class="form-group">
+			<input type="text" class="form-control" 
+			       maxlength="12" required="true" pattern="[a-z0-9_]{1,12}" title="Must be 1-12 alphanumeric or underscore characters"
+			       onkeyup="this.value = this.value.toLowerCase();"
+			       name="username">
+		</div>
+		<button type="submit" class="btn btn-warning btn-lg">Submit</button>
+	</form>
+</div>
 </div>
 </body>
 </html>

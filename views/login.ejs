@@ -8,12 +8,13 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
 		body { padding-top: 80px; }
+		.jumbotron { font-size: 14px; }
+		.jumbotron h1 { font-size: 36px; }
 	</style>
 </head>
-<body>
+<body background="/content/images/ui/bg.jpg">
 <div class="container">
-<div class="col-sm-6 col-sm-offset-3">
-
+<div class="jumbotron">
 	<h1><span class="fa fa-sign-in"></span> Login</h1>
 
 	<% if (message.length > 0) { %>
@@ -30,7 +31,6 @@
 			<label>Password</label>
 			<input type="password" class="form-control" name="password">
 		</div>
-
 		<button type="submit" class="btn btn-warning btn-lg">Login</button>
 	</form>
 
@@ -38,7 +38,6 @@
 
 	<p>Need an account? <a href="/signup">Signup</a></p>
 	<p>Or go <a href="/">home</a>.</p>
-
 </div>
 </div>
 </body>

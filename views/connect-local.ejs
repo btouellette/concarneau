@@ -8,12 +8,13 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
 		body { padding-top:80px; }
+		.jumbotron { font-size: 14px; }
+		.jumbotron h1 { font-size: 36px; }
 	</style>
 </head>
-<body>
+<body background="/content/images/ui/bg.jpg">
 <div class="container">
-<div class="col-sm-6 col-sm-offset-3">
-
+<div class="jumbotron">
 	<h1><span class="fa fa-user"></span> Add Local Account</h1>
 
 	<% if (message.length > 0) { %>
@@ -30,14 +31,12 @@
 			<label>Password</label>
 			<input type="password" class="form-control" name="password">
 		</div>
-
 		<button type="submit" class="btn btn-warning btn-lg">Add Local</button>
 	</form>
 
 	<hr>
 
 	<p><a href="/profile">Go back to profile</a></p>
-
 </div>
 </div>
 </body>
