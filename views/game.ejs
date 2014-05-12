@@ -137,13 +137,12 @@
 //TODO: only show friend edit button once you have friends, same with game, make both trash can icons
 //TODO: warn if you start a game by yourself
 //TODO: add game logs to chat
-//TODO: show player names or avatars
+//TODO: show player avatars (gravatars?)
 //TODO: Modernizr and noscript redirects
 //TODO: move these variables out of the global namespace (add onclick to elements via JS)
 //TODO: zoom and pan when active tile moves if out of zoom/pan range
 //TODO: default zoom level should be dependendent on number of placed tiles
 //TODO: see if there is a way to prevent the image rerender across the board when the active tile is scaled
-//TODO: make meeple placement AFTER tile placement
 //TODO: add keyboard shortcuts ENTER = place tile, arrows = pan
 //TODO: concede button
 //TODO: list points on the board
@@ -1066,7 +1065,7 @@ $(document).ready(function() {
 		turnMarkers.enter().append('rect').attr({
 			class: 'turn-marker',
 			'fill-opacity': 0,
-			'stroke-width': 3,
+			'stroke-width': 4,
 			'stroke-linejoin': 'round',
 			rx: 7,
 			ry: 7,
@@ -1080,7 +1079,6 @@ $(document).ready(function() {
 		});
 		turnMarkers.exit().remove();
 		
-		//TODO: draw score with nicer background/styling and player names
 		// draw the players scores and remaining meeples
 		var scoreGroups = scoreArea.selectAll('g.score-group').data(reorderedPlayers);
 		var group = scoreGroups.enter().append('g').attr({
@@ -1093,11 +1091,20 @@ $(document).ready(function() {
 		});
 		group.append('text').attr({
 			class: 'point-total',
+			x: 5 + 7*(tileSize / 4.75),
+			y: function(d, i) {
+				return 5 + tileSize / 8 + i*(tileSize / 2 - 5);
+			},
+			'text-anchor': 'end'
+		});
+		group.append('text').attr({
+			class: 'player-name',
 			x: 5,
 			y: function(d, i) {
-				return 5 + (6 + tileSize / 8) + i*(tileSize / 4);
-			}
-		});
+				return 5 + tileSize / 8 + i*(tileSize / 2 - 5);
+			},
+			'text-anchor': 'start'
+		}).text(function (d) { return d.user.username; });
 		scoreGroups.select('text.point-total').text(function(d) { return d.points; }).attr({
 			style: function(d) {
 				var style = 'font-size:16px;';
@@ -1114,8 +1121,8 @@ $(document).ready(function() {
 			var array = [];
 			for(var k = 0; k < d.remainingMeeples; k++) {
 				array.push({
-					x: 20 + (k+1)*(tileSize / 4.75),
-					y: 5 + i*(tileSize / 4),
+					x: 5 + k*(tileSize / 4.75),
+					y: tileSize / 4 - 5 + i*(tileSize / 2 - 5),
 					url: '/content/images/meeples/' + d.color + '_standing.png'
 				});
 			}
