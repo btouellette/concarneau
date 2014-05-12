@@ -337,7 +337,8 @@ $(document).ready(function() {
 	$('#game-menu .fa-plus-square-o').qtip({
 		content: {
 			text: '<div id="new-game-popup">' + 
-			        '<div>Add friends to game:</div>' + 
+			        '<div>Click friends to add to game:</div>' + 
+			        '<div id="solo-notifier"><i class="fa fa-exclamation-triangle"></i> Currently playing solo</div>' + 
 			      '</div>' + 
 			      '<button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button>' + 
 			      '<button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>'
@@ -371,8 +372,9 @@ $(document).ready(function() {
 				$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-plus-square-o').css('cursor', 'pointer');
 				$('#friends-list .friend-listing').on('click', function() {
 					if($('#new-game-popup .friend-listing').length < 4) {
+						$('#solo-notifier').hide();
 						var element = $(this);
-						element.clone().attr('id', 'add-' + element.attr('id')).addClass('add-friend-listing').appendTo('#new-game-popup');
+						element.clone().attr('id', 'add-' + element.attr('id')).css('cursor', 'default').addClass('add-friend-listing').appendTo('#new-game-popup');
 					}
 				});
 			},
@@ -381,6 +383,7 @@ $(document).ready(function() {
 				$('#game-menu-selection').click();
 				$('#friends-list .fa-plus-square-o').removeClass('fa-plus-square-o').addClass('fa-user').css('cursor', '');
 				$('#friends-list .friend-listing').off('click');
+				$('#solo-notifier').delay(250).show(0);
 			},
 			render: function(e, api) {
                 $('#new-game-cancel', this).click(function(event) {
