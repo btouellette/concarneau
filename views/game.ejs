@@ -458,6 +458,18 @@ $(document).ready(function() {
 	
     var uiArea = svg.append('g').attr({ id: 'ui-area' });
     var scoreArea = uiArea.append('g').attr({ id: 'score-area' });
+    scoreArea.append('rect').attr({
+    	id: 'score-bg',
+    	rx: 15,
+    	ry: 15,
+    	width: 15 + 7*(tileSize / 4.75) + 15,
+    	x: -15,
+    	y: -15,
+    	fill: 'white',
+    	stroke: 'black',
+    	'stroke-width': 2,
+    	opacity: 0.75
+    });
     var sendMoveButton = uiArea.append('g').attr({
     	id: 'send-move-button',
     	cursor: 'pointer',
@@ -1080,6 +1092,9 @@ $(document).ready(function() {
 		turnMarkers.exit().remove();
 		
 		// draw the players scores and remaining meeples
+		scoreArea.select('#score-bg').attr({
+			height: tileSize / 4 + reorderedPlayers.length*(tileSize / 2 - 5)
+		});
 		var scoreGroups = scoreArea.selectAll('g.score-group').data(reorderedPlayers);
 		var group = scoreGroups.enter().append('g').attr({
 			class: 'score-group'
@@ -1104,16 +1119,9 @@ $(document).ready(function() {
 				return 5 + tileSize / 8 + i*(tileSize / 2 - 5);
 			},
 			'text-anchor': 'start'
-		}).text(function (d) { return d.user.username; });
-		scoreGroups.select('text.point-total').text(function(d) { return d.points; }).attr({
-			style: function(d) {
-				var style = 'font-size:16px;';
-				if(d.active) {
-					style += 'font-weight:bold;';
-				}
-				return style;
-			}
 		});
+		scoreGroups.select('text.point-total').text(function(d) { return d.points; });
+		scoreGroups.select('text.player-name').text(function (d) { return d.user.username; });
 		scoreGroups.exit().remove();
 		
 		//TODO: have the active player placed meeple move down from the remaining meeples onto the tile
