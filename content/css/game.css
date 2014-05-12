@@ -154,6 +154,12 @@ html, body
 	width: 100%;
 }
 
+#settings-menu a
+{
+	display: block;
+	
+}
+
 #game-menu
 {
 	display: block;
