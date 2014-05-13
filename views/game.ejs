@@ -434,7 +434,7 @@ $(document).ready(function() {
 		}
 	});
 	
-    var svg = d3.select('#game-svg').call(zoom);
+    var svg = d3.select('#game-svg').call(zoom).on("dblclick.zoom", null);
 	
 	var gameArea = svg.append('g').attr({ id: 'game-area' });
     var placedTiles = gameArea.append('g').attr({ id: 'placed-tiles' });
