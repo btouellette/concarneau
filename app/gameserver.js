@@ -7,6 +7,8 @@ var Tile = require('./models/tile');
 var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
+//TODO: matchmaking
+//TODO: demo mode
 //TODO: make sure updates to empty games or users don't crash the nodejs instance
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back

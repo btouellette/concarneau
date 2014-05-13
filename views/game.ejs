@@ -135,8 +135,8 @@
 //TODO: show socket status on page
 //TODO: indicate move has been sent (remove valid placements)
 //TODO: only show friend edit button once you have friends, same with game, make both trash can icons
-//TODO: warn if you start a game by yourself
 //TODO: add game logs to chat
+//TODO: show player online status
 //TODO: show player avatars (gravatars?)
 //TODO: Modernizr and noscript redirects
 //TODO: move these variables out of the global namespace (add onclick to elements via JS)
@@ -860,12 +860,14 @@ $(document).ready(function() {
     		});
     	});
     	// adding any new meeples
-    	meepleImages.enter().append('image').attr({
-        	class: 'meeple',
+    	meepleImages.enter().append('image').attr({ 
+    		class: 'meeple',
+			width: tileSize / 4,
+			height: tileSize / 4 
+		});
+    	meepleImages.attr({
         	x: function(d) { return (d.meepleOffset.x - 1/8) * tileSize; },
 			y: function(d) { return (d.meepleOffset.y - 1/8) * tileSize; },
-			width: tileSize / 4,
-			height: tileSize / 4,
 			'xlink:href': function(d) { 
 				return '/content/images/meeples/' + d.color + '_' + (d.location === 'farm' ? 'lying' : 'standing') +'.png'; 
 			},
