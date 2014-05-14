@@ -104,7 +104,7 @@ module.exports = function(server, sessionStore) {
 				});
 				socket.on('remove game', function(gameID) {
 					Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
-						if(err) { 
+						if(err || !gamestate) { 
 							console.log('remove game err: ' + err);
 						} else {
 							gamestate.populate('players.user', function(err, gamestate) {
@@ -117,29 +117,34 @@ module.exports = function(server, sessionStore) {
 				});
 				socket.on('sending move', function(gameID, move, autocomplete) {
 					Gamestate.findById(gameID, function(err, gamestate) {
-						if(err) { console.log('load find err: ' + err); }
-						if(gamestate && gamestate.userIsActive(currentUser) && move) {
+						if(err || !gamestate) { 
+							console.log('load find err: ' + err); 
+						} else if(move && gamestate.userIsActive(currentUser)) {
 							gamestate.placeTile(move, function(err, gamestate) {
-								gamestate.markModified('unusedTiles');
-								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
-								                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
-									function(err, gamestate) {
-										if(err) { console.log('send move populate err: ' + err); }
-										// get distinct list of user IDs in the game
-										var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
-											return self.indexOf(value) === index;
-										});
-										// if players are active send them the new gamestate
-										for(var i = 0; i < distinctUserIDs.length; i++) {
-											var socketArray = userToSocket[distinctUserIDs[i]];
-											if(socketArray) {
-												for(var k = 0; k < socketArray.length; k++) {
-													socketArray[k].emit('sending gamestate', gamestate, false);
+								if(err || !gamestate) {
+									console.log('place tile err: ' + err); 
+								} else {
+									gamestate.markModified('unusedTiles');
+									gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
+									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
+										function(err, gamestate) {
+											if(err) { console.log('send move populate err: ' + err); }
+											// get distinct list of user IDs in the game
+											var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+												return self.indexOf(value) === index;
+											});
+											// if players are active send them the new gamestate
+											for(var i = 0; i < distinctUserIDs.length; i++) {
+												var socketArray = userToSocket[distinctUserIDs[i]];
+												if(socketArray) {
+													for(var k = 0; k < socketArray.length; k++) {
+														socketArray[k].emit('sending gamestate', gamestate, false);
+													}
 												}
 											}
 										}
-									}
-								);
+									);
+								}
 							}, autocomplete);
 						}
 					});
