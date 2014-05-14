@@ -41,7 +41,8 @@ var MongoStore = require('connect-mongo')(express);
 
 // configuration ===============================================================
 var sessionStore = new MongoStore({
-	url: configDB.url
+	url: configDB.url,
+	auto_reconnect: true
 });
 
 mongoose.connect(configDB.url); // connect to our database
