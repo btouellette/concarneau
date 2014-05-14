@@ -550,12 +550,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			callback(null, gamestate);
 			return;
 		}
-		gamestate.save(function(err, gamestate) {
-            if(err) {
-				console.log('draw tile save err: ' + err);
-			}
-			callback(err, gamestate);
-		});
+		gamestate.save(callback);
 	});
 };
 
