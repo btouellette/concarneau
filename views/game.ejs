@@ -611,7 +611,7 @@ $(document).ready(function() {
     // listen for new gamestate data from the server
     socket.on('sending gamestate', function(gamestate, loadingGame) {
     	// update the tile count in the menu
-    	$('#game-' + gamestate._id + ' .tile-count').text('[' + gamestate.unusedTiles.length + ']');
+    	$('#game-' + gamestate._id + ' .tile-count').text('[' + (gamestate.unusedTiles.length + (gamestate.finished ? 0 : 1)) + ']');
     	// put the game listing in the correct place in the menu
         var $activeGames = $('#active-games');
         var $inactiveGames = $('#inactive-games');
@@ -943,7 +943,8 @@ $(document).ready(function() {
 			});
 			// if there are rotations make the indicator visible
 			d3.select('#active-tile-rotation-indicator').transition().duration(transitionDuration).attr({
-				opacity: d.rotations.length > 1 ? 0.45 : 0
+				opacity: d.rotations.length > 1 ? 0.45 : 0,
+				visibility: null
 			});
 			if(remainingMeeples > 0) {
 				// show outlines for any valid meeple placements and

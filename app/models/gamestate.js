@@ -16,8 +16,6 @@ var User = require('../models/user');
 // WSW         ESE
 // SW SSW S SSE SE
 
-//TODO: check logic for rotation indicator show/hide
-
 // define the schema for our game model
 var gamestateSchema = mongoose.Schema({
     name: String,
