@@ -525,7 +525,7 @@ $(document).ready(function() {
 		var gameID = game._id;
 		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
 		// add remaining tiles text
-		element += '<span class="right-side"><span class="tile-count">[' + game.unusedTiles.length + ']</span><i class="fa fa-trash-o hidden"></i></span>';
+		element += '<span class="right-side"><span class="tile-count">[' + (game.unusedTiles.length + (game.finished ? 0 : 1)) + ']</span><i class="fa fa-trash-o hidden"></i></span>';
 		// add sub divs for each user in the game
 		element += game.players.map(function(item) {
    			return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
