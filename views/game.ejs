@@ -649,9 +649,8 @@ $(document).ready(function() {
 				}
         	}
     	}
-    	// update the page title to inform the user there is something new if they weren't the one to play the move
-    	var previousPlayerIndex = activePlayerIndex === 0 ? gamestate.players.length - 1 : activePlayerIndex - 1;
-    	if(gamestate.players[previousPlayerIndex].user._id !== userID) {
+    	// update the page title to inform the user there is something new if it is their turn
+    	if(gamestate.players[activePlayerIndex].user._id === userID) {
 	    	document.title = '(!) Concarneau';
 	    	$('body').on('mousemove', function() { 
 				document.title = 'Concarneau';
@@ -706,13 +705,19 @@ $(document).ready(function() {
     	if(!active) {
    			addNewGameListing(gamestate, $inactiveGames);
     	}
-		// draw if this user triggered the new game otherwise update the page title to inform the user there is something new
+    	// get the index of the active player
+        var activePlayerIndex = 0;
+        while(!gamestate.players[activePlayerIndex].active && activePlayerIndex < gamestate.players.length) {
+        	activePlayerIndex++;
+        }
+		// draw if this user triggered the new game
+		// if it is the players turn update the page title to inform the user there is a game to play a move in
 		if(userID === startingUserID) {
 			$('#chat-header-label span').text(' Chat');
 			$('#chat-message-list').empty();
 			currentGameID = gamestate._id;
 			draw(gamestate);
-		} else {
+		} else if(gamestate.players[activePlayerIndex].user._id === userID) {
 	    	document.title = '(!) Concarneau';
 	    	$('body').on('mousemove', function() { 
 				document.title = 'Concarneau';
