@@ -716,6 +716,7 @@ $(document).ready(function() {
 		if(userID === startingUserID) {
 			$('#chat-header-label span').text(' Chat');
 			$('#chat-message-list').empty();
+     	  	$('#chat-wrapper').removeClass('hidden');
 			currentGameID = gamestate._id;
 			draw(gamestate);
 		} else if(gamestate.players[activePlayerIndex].user._id === userID) {
