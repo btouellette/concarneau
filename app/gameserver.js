@@ -1,6 +1,7 @@
 /* jslint smarttabs:true */
 var cookie = require('cookie');
 var connect = require('connect');
+var nodemailer = require('nodemailer');
 
 // load up the gamestate model
 var Tile = require('./models/tile');
@@ -14,6 +15,14 @@ var User = require('./models/user');
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
 var userToSocket = {};
+
+var smtpTransport = nodemailer.createTransport("SMTP",{
+    service: "Gmail",
+    auth: {
+        user: "concarneau.game@gmail.com",
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
 
 module.exports = function(server, sessionStore) {
 
@@ -130,19 +139,47 @@ module.exports = function(server, sessionStore) {
 								} else {
 									gamestate.markModified('unusedTiles');
 									gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
-									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
+									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL email_notifications username local.email facebook.email google.email',
 										function(err, gamestate) {
-											if(err) { console.log('send move populate err: ' + err); }
-											// get distinct list of user IDs in the game
-											var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
-												return self.indexOf(value) === index;
-											});
-											// if players are active send them the new gamestate
-											for(var i = 0; i < distinctUserIDs.length; i++) {
-												var socketArray = userToSocket[distinctUserIDs[i]];
-												if(socketArray) {
-													for(var k = 0; k < socketArray.length; k++) {
-														socketArray[k].emit('sending gamestate', gamestate, false);
+											if(err) { 
+												console.log('send move populate err: ' + err);
+											} else {
+												var activeUser, previousUser;
+												for(var j = 0; j < gamestate.players.length; j++) {
+													if(gamestate.players[j].active) {
+														activeUser = gamestate.players[j].user;
+														previousUser = gamestate.players[(j - 1 + gamestate.players.length) % gamestate.players.length].user;
+														break;
+													}
+												}
+												// send e-mail notification to user if they have opted in and the user has changed
+												if(activeUser.email_notifications && activeUser.username !== previousUser.username) {
+													var activeEmail = activeUser.local.email || activeUser.google.email || activeUser.facebook.email;
+													// send notification if we have a valid e-mail and the user doesn't have an active socket
+													if(activeEmail && !userToSocket[activeUser._id]) {
+														smtpTransport.sendMail({
+															from: "Concarneau <concarneau.game@gmail.com",
+															to: activeEmail,
+															subject: "Your turn!",
+															text: "There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com"
+														}, function(err, res) {
+															if(err) {
+																console.log('e-mail failed: ' + err);
+															}
+														});
+													}
+												}
+												// get distinct list of user IDs in the game
+												var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+													return self.indexOf(value) === index;
+												});
+												// if players are active send them the new gamestate
+												for(var i = 0; i < distinctUserIDs.length; i++) {
+													var socketArray = userToSocket[distinctUserIDs[i]];
+													if(socketArray) {
+														for(var k = 0; k < socketArray.length; k++) {
+															socketArray[k].emit('sending gamestate', gamestate, false);
+														}
 													}
 												}
 											}
@@ -159,7 +196,7 @@ module.exports = function(server, sessionStore) {
 							var friendID = user._id;
 							if(currentUser.friends.indexOf(user._id) === -1) {
 								User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err, user) {
-									if(!err) {
+									if(!err && user) {
 										socket.emit('friend added', username, friendID);
 										currentUser = user;
 									}
@@ -197,6 +234,13 @@ module.exports = function(server, sessionStore) {
 									}
 								});
 							});
+						}
+					});
+				});
+				socket.on('email notification', function(enabled) {
+					User.findByIdAndUpdate(currentUser._id, { $set: { email_notifications: enabled }} , function(err, user) {
+						if(!err && user) {
+							currentUser = user;
 						}
 					});
 				});

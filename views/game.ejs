@@ -53,6 +53,15 @@
 	<div id="settings-menu">
 		<span class="menu-header">SETTINGS</span>
 		<a href="/profile">Profile</a>
+		<div class="checkbox">
+			<label>
+				<input type="checkbox" 
+				       onclick="socket.emit('email notification', this.checked)"
+				       <%- user.email_notifications ? 'checked="true"' : '' %>
+				       <%- !(user.facebook.email || user.google.email || user.local.email) ? 'disabled' : '' %>> E-mail notifications
+			</label>
+			<%- !(user.facebook.email || user.google.email || user.local.email) ? '(requires non-Twitter login linked in Profile)' : '' %>
+		</div>
 		<a href="/logout">Logout</a>
 	</div>
 </div>

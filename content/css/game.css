@@ -247,6 +247,16 @@ html, body
 	padding-top: 3px;
 }
 
+#settings-menu .checkbox
+{
+	margin-left: 10px;
+}
+
+#settings-menu label
+{
+	vertical-align: -2px;
+}
+
 #svg-wrapper
 { 
 	background-color: green;
