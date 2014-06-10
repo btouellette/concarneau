@@ -28,7 +28,7 @@ module.exports = function(passport) {
 
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
-        User.findById(id, 'username friends activeGames local facebook google twitter email_notifications', function(err, user) {
+        User.findById(id, 'username friends activeGames local facebook google twitter email_notifications twitter_notifications', function(err, user) {
             user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles', function(err, user) {
 				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
 					done(err, user);

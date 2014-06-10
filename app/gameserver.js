@@ -2,6 +2,8 @@
 var cookie = require('cookie');
 var connect = require('connect');
 var nodemailer = require('nodemailer');
+var twit = require('twit');
+var auth = require('../config/auth');
 
 // load up the gamestate model
 var Tile = require('./models/tile');
@@ -22,6 +24,12 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
         user: "concarneau.game@gmail.com",
         pass: process.env.EMAIL_PASSWORD
     }
+});
+var twitter = new twit({
+	consumer_key: auth.twitterAuth.consumerKey,
+	consumer_secret: auth.twitterAuth.consumerSecret,
+	access_token: auth.twitterAuth.accessToken,
+	access_token_secret: auth.twitterAuth.accessTokenSecret
 });
 
 module.exports = function(server, sessionStore) {
@@ -139,7 +147,7 @@ module.exports = function(server, sessionStore) {
 								} else {
 									gamestate.markModified('unusedTiles');
 									gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
-									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL email_notifications username local.email facebook.email google.email',
+									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
 										function(err, gamestate) {
 											if(err) { 
 												console.log('send move populate err: ' + err);
@@ -152,11 +160,11 @@ module.exports = function(server, sessionStore) {
 														break;
 													}
 												}
-												// send e-mail notification to user if they have opted in and the user has changed
-												if(activeUser.email_notifications && activeUser.username !== previousUser.username) {
+												// send notification to user if the user has changed and they are not actively connected
+												if(!userToSocket[activeUser._id] && activeUser.username !== previousUser.username) {
 													var activeEmail = activeUser.local.email || activeUser.google.email || activeUser.facebook.email;
-													// send notification if we have a valid e-mail and the user doesn't have an active socket
-													if(activeEmail && !userToSocket[activeUser._id]) {
+													// send e-mail notification if we have a valid e-mail and the user has the option enabled
+													if(activeEmail && activeUser.email_notifications) {
 														smtpTransport.sendMail({
 															from: "Concarneau <concarneau.game@gmail.com",
 															to: activeEmail,
@@ -165,6 +173,14 @@ module.exports = function(server, sessionStore) {
 														}, function(err, res) {
 															if(err) {
 																console.log('e-mail failed: ' + err);
+															}
+														});
+													}
+													// send twitter notification if we have a valid twitter handle and the user has the option enabled
+													if(activeUser.twitter.username && activeUser.twitter_notifications) {
+														twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com' }, function(err, data, response) {
+															if(err) {
+																console.log('twitter failed: ' + err);
 															}
 														});
 													}
@@ -239,6 +255,13 @@ module.exports = function(server, sessionStore) {
 				});
 				socket.on('email notification', function(enabled) {
 					User.findByIdAndUpdate(currentUser._id, { $set: { email_notifications: enabled }} , function(err, user) {
+						if(!err && user) {
+							currentUser = user;
+						}
+					});
+				});
+				socket.on('twitter notification', function(enabled) {
+					User.findByIdAndUpdate(currentUser._id, { $set: { twitter_notifications: enabled }} , function(err, user) {
 						if(!err && user) {
 							currentUser = user;
 						}

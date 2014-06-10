@@ -62,6 +62,15 @@
 			</label>
 			<%- !(user.facebook.email || user.google.email || user.local.email) ? '(requires non-Twitter login linked in Profile)' : '' %>
 		</div>
+		<div class="checkbox">
+			<label>
+				<input type="checkbox" 
+				       onclick="socket.emit('twitter notification', this.checked)"
+				       <%- user.twitter_notifications ? 'checked="true"' : '' %>
+				       <%- !user.twitter.username ? 'disabled' : '' %>> Twitter notifications
+			</label>
+			<%- !user.twitter.username ? '(requires Twitter login linked in Profile)' : '' %>
+		</div>
 		<a href="/logout">Logout</a>
 	</div>
 </div>

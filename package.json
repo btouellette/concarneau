@@ -22,6 +22,7 @@
     "connect-mongo": "~0.4.0",
     "nodetime": "~0.8.15",
     "newrelic": "~1.5.2",
-    "nodemailer": "~0.6.5"
+    "nodemailer": "~0.6.5",
+    "twit": "~1.1.15"
   }
 }
