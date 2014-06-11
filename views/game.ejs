@@ -23,7 +23,7 @@
 <div id="wrapper">
 <div id="menus">
 	<div id="game-menu">
-		<span class="menu-header">GAMES <i class="fa fa-edit" onclick="enableGamesEdit(event)"> <i class="fa fa-plus-square-o"></i></i></span>
+		<span class="menu-header">GAMES <i class="fa fa-edit hidden" onclick="enableGamesEdit(event)"></i> <i class="fa fa-plus-square-o"></i></span>
 		<div id="active-games">
 			<div class="menu-sub-header">Your move:</div>
 		</div>
@@ -38,7 +38,7 @@
 		</div>-->
 	</div>
 	<div id="friends-menu">
-		<span class="menu-header">FRIENDS <i class="fa fa-edit" onclick="enableFriendsEdit(event)"></i></span>
+		<span class="menu-header">FRIENDS <i class="fa fa-edit hidden" onclick="enableFriendsEdit(event)"></i></span>
 		<form id="add-friend-form">
 			<div class="input-group">
 				<input type="text" class="form-control" id="add-friend-input" placeholder="Username" autocomplete="off">
@@ -151,8 +151,6 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
 <script>
 //TODO: show socket status on page
-//TODO: indicate move has been sent (remove valid placements and button)
-//TODO: only show friend edit button once you have friends, same with game, make both trash can icons
 //TODO: add game logs to chat
 //TODO: show player online status
 //TODO: show player avatars (gravatars?)
@@ -188,6 +186,9 @@ function enableFriendsEdit(e) {
 	$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-trash-o').css('cursor', 'pointer').on('click', function () {
 		socket.emit('remove friend', this.parentNode.id.substr(7));
 		$(this.parentNode).remove();
+	    if($('.friend-listing').length === 0) {
+	    	$('#friends-menu .fa-edit').addClass('hidden');
+	    }
 	});
 	$(window).on('click.friend-edit', function() {
 		disableFriendsEdit();	
@@ -209,8 +210,14 @@ function enableGamesEdit(e) {
 		// if we deleted the game we are viewing remove relevant svg elements
 		if(gameID === currentGameID) {
 			resetActiveTile(false);
-			$('#placed-tiles,#turn-markers,#valid-placements,#meeple-placements,#score-area').empty();
+			$('#placed-tiles,#turn-markers,#valid-placements,#meeple-placements').empty();
+			$('.score-group').remove();
+			d3.select('#score-bg').attr('opacity', 0);
 			$('#active-tile-image').remove();
+		}
+		// if there are no more games hide the edit/delete button
+		if($('.menu-game-listing').length === 0) {
+			$('#game-menu .fa-edit').addClass('hidden');
 		}
 	});
 	$(window).on('click.games-edit', function() {
@@ -500,6 +507,8 @@ $(document).ready(function() {
     }).on('click', function() {
     	if(selectedMove) {
     		socket.emit('sending move', currentGameID, selectedMove, $('#test-complete').is(':checked'));
+    		// while waiting for the next gamestate hide any tile placements and the send move button
+			d3.selectAll('#send-move-button,.tile-placements').transition().duration(transitionDuration+1500).attr('opacity', 0);
     	}
     });
     sendMoveButton.append('circle').attr({
@@ -557,6 +566,8 @@ $(document).ready(function() {
      	  	$('#chat-wrapper').removeClass('hidden');
      	  	currentGameID = gameID;
 		}).appendTo(menuGroup);
+	    // show the game delete/edit button in case it was hidden
+    	$('#game-menu .fa-edit').removeClass('hidden');
 	}
 	
     // draw the menus
@@ -608,6 +619,10 @@ $(document).ready(function() {
     	return 0;
     });
     var $friendsList = $('#friends-menu');
+    // show the friends edit button if there are friends to potentially delete
+    if(friends.length > 0) {
+    	$friendsList.find('.fa-edit').removeClass('hidden');
+    }
     for(var j = 0; j < friends.length; j++) {
     	if($friendsList.has('#friend-' + friends[j]._id).length === 0) {
     		// insert the new friend in alphabetical order by display name
@@ -765,6 +780,8 @@ $(document).ready(function() {
 				}
 			});
 		}
+		// make sure the edit button is shown
+		$('#friends-menu .fa-edit').removeClass('hidden');
 	});
 	socket.on('friend not found', function() {
 		// couldn't find a user with this username, flash an error message
@@ -932,7 +949,8 @@ $(document).ready(function() {
 		});
 		validPlacements.attr({
 			x: function(d) { return svgWidth / 2 + d.x * tileSize; },
-            y: function(d) { return svgHeight / 2 + d.y * tileSize; }
+            y: function(d) { return svgHeight / 2 + d.y * tileSize; },
+            opacity: 1
 		}).on('click', function (d, i) {
 			var $activeTile = $('#active-tile');
 			var rotationIndex;
@@ -1126,7 +1144,8 @@ $(document).ready(function() {
 		
 		// draw the players scores and remaining meeples
 		scoreArea.select('#score-bg').attr({
-			height: tileSize / 4 + reorderedPlayers.length*(tileSize / 2 - 5)
+			height: tileSize / 4 + reorderedPlayers.length*(tileSize / 2 - 5),
+			opacity: .75
 		});
 		var scoreGroups = scoreArea.selectAll('g.score-group').data(reorderedPlayers);
 		var group = scoreGroups.enter().append('g').attr({
