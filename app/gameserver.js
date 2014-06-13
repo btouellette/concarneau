@@ -178,7 +178,7 @@ module.exports = function(server, sessionStore) {
 													}
 													// send twitter notification if we have a valid twitter handle and the user has the option enabled
 													if(activeUser.twitter.username && activeUser.twitter_notifications) {
-														twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com' }, function(err, data, response) {
+														twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com?' + Math.floor(Math.random()*1000000) }, function(err, data, response) {
 															if(err) {
 																console.log('twitter failed: ' + err);
 															}
