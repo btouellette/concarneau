@@ -52,7 +52,7 @@ module.exports = function(server, sessionStore) {
 					return accept('Cookie is invalid.', false);
 				}
 			} catch (err) {
-				return accept('Error parsing session cookie', false);
+				return accept('Error parsing session cookie - ' + JSON.stringify(err), false);
 			}
 		} else {
 			return accept('No cookie transmitted.', false);
