@@ -46,14 +46,11 @@ module.exports = function(server, sessionStore) {
 	io.set('authorization', function(handshakeData, accept)  {
 		if (handshakeData.headers.cookie) {
 			try {
-				try {
-					handshakeData.cookie = cookie.parse(handshakeData.headers.cookie);
-				} catch (err) {
-					return accept('Error during initial cookie parse - ' + JSON.stringify(err), false);
-				}
+				handshakeData.cookie = cookie.parse(decodeURIComponent(handshakeData.headers.cookie));
 				try {
 					handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
 				} catch (err) {
+					console.log('Cookie info: ' + JSON.stringify(handshakeData.cookie));
 					return accept('Error during signed cookie parse - ' + JSON.stringify(err), false);
 				}
 				if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
