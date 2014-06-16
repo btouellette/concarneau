@@ -44,16 +44,19 @@ module.exports = function(server, sessionStore) {
 	var io = require('socket.io').listen(server);
 	io.set('log level', 1); // reduce logging
 	io.set('authorization', function(handshakeData, accept)  {
-		if (handshakeData.headers.cookie) {
-			try {
-				handshakeData.cookie = cookie.parse(decodeURIComponent(handshakeData.headers.cookie));
-				handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
-				if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
-					return accept('Cookie is invalid.', false);
+		if(handshakeData.headers.cookie) {
+			if(handshakeData.headers.cookie['express.sid']) {
+				try {
+					handshakeData.cookie = cookie.parse(decodeURIComponent(handshakeData.headers.cookie));
+					handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
+					if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
+						return accept('Cookie is invalid.', false);
+					}
+				} catch (err) {
+					return accept('Error parsing session cookie', false);
 				}
-			} catch (err) {
-				console.log('Cookie info: ' + JSON.stringify(handshakeData.headers.cookie));
-				return accept('Error parsing session cookie - ' + JSON.stringify(err), false);
+			} else {
+				return accept('No session ID in cookie', false);
 			}
 		} else {
 			return accept('No cookie transmitted.', false);
