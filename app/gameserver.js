@@ -47,16 +47,12 @@ module.exports = function(server, sessionStore) {
 		if (handshakeData.headers.cookie) {
 			try {
 				handshakeData.cookie = cookie.parse(decodeURIComponent(handshakeData.headers.cookie));
-				try {
-					handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
-				} catch (err) {
-					console.log('Cookie info: ' + JSON.stringify(handshakeData.cookie));
-					return accept('Error during signed cookie parse - ' + JSON.stringify(err), false);
-				}
+				handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
 				if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
 					return accept('Cookie is invalid.', false);
 				}
 			} catch (err) {
+				console.log('Cookie info: ' + JSON.stringify(handshakeData.headers.cookie));
 				return accept('Error parsing session cookie - ' + JSON.stringify(err), false);
 			}
 		} else {
