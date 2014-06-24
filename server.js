@@ -68,7 +68,7 @@ if(!process.env.C9_PROJECT) {
 app.use(compression());
 app.use(cookieParser()); // read cookies (needed for auth)
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded()); // get information from html forms
+app.use(bodyParser.urlencoded({ extended: true })); // get information from html forms
 //TODO: consider using static cache (https://github.com/isaacs/st)
 app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 /* one week caching */ }));
 
