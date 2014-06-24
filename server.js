@@ -31,13 +31,17 @@ if(process.env.HTTP_PROXY) {
 var port = process.env.PORT || 8080;
 
 // get all the tools we need
-var express    = require('express');
-var app        = express();
-var mongoose   = require('mongoose');
-var passport   = require('passport');
-var flash      = require('connect-flash');
-var configDB   = require('./config/database');
-var MongoStore = require('connect-mongo')(express);
+var express      = require('express');
+var app          = express();
+var cookieParser = require('cookie-parser');
+var bodyParser   = require('body-parser');
+var session      = require('express-session');
+var compression  = require('compression');
+var mongoose     = require('mongoose');
+var passport     = require('passport');
+var flash        = require('connect-flash');
+var configDB     = require('./config/database');
+var MongoStore   = require('connect-mongo')(session);
 
 // configuration ===============================================================
 var sessionStore = new MongoStore({
@@ -61,17 +65,16 @@ if(!process.env.C9_PROJECT) {
 		next();
 	});
 }
-//app.use(express.logger('dev')); // log every request to the console
-app.use(express.compress());
-app.use(express.cookieParser()); // read cookies (needed for auth)
-app.use(express.json());
-app.use(express.urlencoded()); // get information from html forms
+app.use(compression());
+app.use(cookieParser()); // read cookies (needed for auth)
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded()); // get information from html forms
 //TODO: consider using static cache (https://github.com/isaacs/st)
 app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 /* one week caching */ }));
 
 // required for passport
 process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET || 'ilovescotchscotchyscotchscotch';
-app.use(express.session({ secret: process.env.EXPRESS_SESSION_SECRET, key: 'express.sid', store: sessionStore })); // session secret
+app.use(session({ secret: process.env.EXPRESS_SESSION_SECRET, key: 'express.sid', store: sessionStore })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
