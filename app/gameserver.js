@@ -1,6 +1,6 @@
 /* jslint smarttabs:true */
 var cookie = require('cookie');
-var connect = require('connect');
+var cookieParser = require('cookie-parser');
 var nodemailer = require('nodemailer');
 var twit = require('twit');
 var auth = require('../config/auth');
@@ -50,7 +50,7 @@ module.exports = function(server, sessionStore) {
 				if(!handshakeData.cookie['express.sid']) {
 					next(new Error('No session ID in parsed cookie'));
 				}
-				handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
+				handshakeData.sessionID = cookieParser.signedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
 				if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
 					next(new Error('Cookie is invalid'));
 				}
