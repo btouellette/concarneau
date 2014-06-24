@@ -12,7 +12,6 @@ var User = require('./models/user');
 
 //TODO: matchmaking
 //TODO: demo mode
-//TODO: make sure updates to empty games or users don't crash the nodejs instance
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
@@ -42,27 +41,28 @@ module.exports = function(server, sessionStore) {
 	});
 
 	var io = require('socket.io').listen(server);
-	io.set('log level', 1); // reduce logging
-	io.set('authorization', function(handshakeData, accept)  {
+	// validate session cookie and populate session id if given
+	io.use(function(socket, next) {
+		var handshakeData = socket.handshake;
 		if(handshakeData.headers.cookie) {
 			try {
 				handshakeData.cookie = cookie.parse(decodeURIComponent(handshakeData.headers.cookie));
 				if(!handshakeData.cookie['express.sid']) {
-					return accept('No session ID in parsed cookie', false);
+					next(new Error('No session ID in parsed cookie'));
 				}
 				handshakeData.sessionID = connect.utils.parseSignedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
 				if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
-					return accept('Cookie is invalid.', false);
+					next(new Error('Cookie is invalid'));
 				}
 			} catch (err) {
-				return accept('Error parsing session cookie', false);
+				next(new Error('Error parsing session cookie'));
 			}
 		} else {
-			return accept('No cookie transmitted.', false);
+			next(new Error('No cookie transmitted'));
 		}
-		accept(null, true);
+		next();
 	});
-
+	// for each new connection get the session and set up server callbacks
 	io.sockets.on('connection', function (socket) {
 		// retrieve user information for user specific actions
 		sessionStore.get(socket.handshake.sessionID, function(err, session) {
