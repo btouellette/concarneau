@@ -136,7 +136,7 @@
 	<div id="chat-footer">
 		<form id="chat-message-form">
 			<div class="input-group">
-				<input id="chat-message-input" type="text" class="form-control input-sm" maxlength="100" placeholder="Type your message here...">
+				<input id="chat-message-input" type="text" class="form-control input-sm" maxlength="200" placeholder="Type your message here...">
 				<span class="input-group-btn">
 					<button class="btn btn-sm btn-info" type="submit">Send</button>
 				</span>
@@ -692,6 +692,7 @@ $(document).ready(function() {
 				$('body').off('mousemove');
 			});
     	}
+    	// if this is the first time loading this game clear the chat list and redraw all messages
 		if(loadingGame) {
 			// draw chat messages into chat box grouped by username
 			$('#chat-header-label span').text(' Chat');
@@ -707,17 +708,30 @@ $(document).ready(function() {
 					messageGroup.push(gamestate.messages[index].message);
 					index++
 				}
-				var $li = $('<li>').append($('<div class="chat-user-name">').text(username + ':'));
+				// if there is no username this is a system generated message so don't draw a username and apply the system message class
+				var $li = username === null ? $('<li>') : $('<li>').append($('<div class="chat-user-name">').text(username + ':'));
 				for(var j = 0; j < messageGroup.length; j++) {
-					$li.append($('<div class="chat-message">').text(messageGroup[j]));
+					$li.append($(username === null ? '<div class="chat-system-message">' : '<div class="chat-message">').text(messageGroup[j]));
 				}
 				$messageList.append($li);
 			}
 			$chatBody.append($messageList);
-			// scroll chat messages to botoom
+			// scroll chat messages to bottom
 			$chatBody.scrollTop($chatBody[0].scrollHeight);
 			$('#chat-footer input').val('');
      	  	$('#chat-wrapper').removeClass('hidden');
+		} else if (gamestate.messages && gamestate.messages[gamestate.messages.length - 1].username === null) {
+			// if not the first time loading this game draw any new messages from the server
+			var lastServerMessage = $('#chat-message-list .chat-system-message').last().text();
+			var i = gamestate.messages.length - 1;
+			var newMessages = [];
+			while(i >= 0 && gamestate.messages[i].username === null && gamestate.messages[i].message !== lastServerMessage) {
+				newMessages.unshift(gamestate.messages[i].message);
+				i--;
+			}
+			for(var k = 0; k < newMessages.length; k++) {
+				addMessageToChat(newMessages[k], null);
+			}
 		}
 		// only draw if we are loading or are currently viewing this game 
 		if(currentGameID === gamestate._id) {
@@ -792,41 +806,53 @@ $(document).ready(function() {
 	socket.on('message sent', function(message, username, gameID) {
 		// add any received messages for the current game to the chatbox
 		if(gameID === currentGameID) {
-			var $chatBody = $('#chat-body');
-			var scrolledToBottom = $chatBody[0].scrollHeight - $chatBody.scrollTop() == $chatBody.outerHeight();
-			// add the message either to the username group if it hasn't changed or create a new one
-			if($('.chat-user-name').last().text() === username + ':') {
-				$('#chat-message-list li').last().append($('<div class="chat-message">').text(message));
-			} else {
-				$('#chat-message-list').append(
-					$('<li>').append(
-						$('<div class="chat-user-name">').text(username + ':')
-					).append(
-						$('<div class="chat-message">').text(message)
-					)
-				);
-			}
-			// scroll the chat list down if the user was already at the bottom of it
-			// otherwise inform of the new message until they scroll down
-			if(scrolledToBottom && !$chatBody.is(':hidden')) {
-				$chatBody.scrollTop($chatBody[0].scrollHeight);
-			} else {
-				$('#chat-header-label span').text(' Chat (!)');
-				$('#chat-toggle a').on('click.update-header', function() {
-					$('#chat-header-label span').text(' Chat');
-					$(this).off('click.update-header');
-				})
-				$chatBody.bind('scroll', function(e) {
-					var $chatBody = $(e.currentTarget);
-					var scrolledToBottom = $chatBody[0].scrollHeight - $chatBody.scrollTop() == $chatBody.outerHeight();
-					if(scrolledToBottom) {
-						$('#chat-header-label span').text(' Chat');
-						$chatBody.off('scroll');
-					}
-				});
-			}
+			addMessageToChat(message, username);
 		}
 	});
+	
+	function addMessageToChat(message, username) {
+		var $chatBody = $('#chat-body');
+		var scrolledToBottom = $chatBody[0].scrollHeight - $chatBody.scrollTop() == $chatBody.outerHeight();
+		// add the message either to the username group if it hasn't changed (and the last message was a chat not a system message) or create a new one
+		if(username !== null &&
+		   $chatBody.find('.chat-user-name').last().text() === username + ':' && 
+		   $chatBody.find('div').last().hasClass('chat-message')) {
+			$('#chat-message-list li').last().append($('<div class="chat-message">').text(message));
+		} else if(username !== null) {
+			$('#chat-message-list').append(
+				$('<li>').append(
+					$('<div class="chat-user-name">').text(username + ':')
+				).append(
+					$('<div class="chat-message">').text(message)
+				)
+			);
+		} else {
+			$('#chat-message-list').append(
+				$('<li>').append(
+					$('<div class="chat-system-message">').text(message)
+				)
+			);
+		}
+		// scroll the chat list down if the user was already at the bottom of it
+		// otherwise inform of the new message until they scroll down
+		if(scrolledToBottom && !$chatBody.is(':hidden')) {
+			$chatBody.scrollTop($chatBody[0].scrollHeight);
+		} else {
+			$('#chat-header-label span').text(' Chat (!)');
+			$('#chat-toggle a').on('click.update-header', function() {
+				$('#chat-header-label span').text(' Chat');
+				$(this).off('click.update-header');
+			})
+			$chatBody.bind('scroll', function(e) {
+				var $chatBody = $(e.currentTarget);
+				var scrolledToBottom = $chatBody[0].scrollHeight - $chatBody.scrollTop() == $chatBody.outerHeight();
+				if(scrolledToBottom) {
+					$('#chat-header-label span').text(' Chat');
+					$chatBody.off('scroll');
+				}
+			});
+		}
+	}
     
     function draw(gamestate) {
         svgHeight = $('#svg-wrapper').height();

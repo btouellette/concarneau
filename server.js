@@ -4,8 +4,8 @@
 
 // set up ======================================================================
 
-// if this is a c9 project configure appropriately
-if(process.env.C9_PROJECT) {
+// if this is a c9 project using argv rather than environment variable run configurations configure appropriately
+if(process.env.C9_PROJECT && !process.env.MONGOLAB_URI) {
     require('./config/c9');
 }
 
@@ -20,15 +20,15 @@ if(process.env.NODETIME_ACCOUNT_KEY) {
   });
 }
 
+var port = process.env.PORT || 8080;
+
 // if we're behind an http proxy set up all requests to go through it
 if(process.env.HTTP_PROXY) {
 	var parsedURL = require('url').parse(process.env.HTTP_PROXY);
 	var host = parsedURL && parsedURL.hostname ? parsedURL.hostname : '127.0.0.1';
-	var port = parsedURL && parsedURL.port ? parseInt(parsedURL.port, 10) : 8080;
+	port = parsedURL && parsedURL.port ? parseInt(parsedURL.port, 10) : 8080;
 	require('./config/proxy')(host, port);
 }
-
-var port = process.env.PORT || 8080;
 
 // get all the tools we need
 var express      = require('express');
@@ -55,6 +55,7 @@ require('./config/passport')(passport); // pass passport for configuration
 
 // set up our express application
 app.set('view engine', 'ejs'); // set up ejs for templating
+
 if(!process.env.C9_PROJECT) {
 	// redirect to https if the request isn't secured
 	app.set('trust proxy', true);
@@ -64,6 +65,9 @@ if(!process.env.C9_PROJECT) {
 		}
 		next();
 	});
+} else {
+	// temporary for C9 beta which does not correctly set the working directory TODO: remove once bug is fixed
+	app.set('views', '/home/ubuntu/workspace/views');
 }
 app.use(compression());
 app.use(cookieParser()); // read cookies (needed for auth)
