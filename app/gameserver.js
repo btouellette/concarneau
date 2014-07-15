@@ -67,7 +67,7 @@ module.exports = function(server, sessionStore) {
 		// retrieve user information for user specific actions
 		sessionStore.get(socket.handshake.sessionID, function(err, session) {
 			if(err || !session) {
-				console.log("couldn't retrieve session");
+				console.log("couldn't retrieve session - error: " + err + ' - sessionid: ' + socket.handshake.sessionID);
 				return;
 			}
 			User.findById(session.passport.user, function(err, currentUser) {
