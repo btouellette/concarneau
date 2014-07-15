@@ -46,7 +46,7 @@ module.exports = function(app, passport, mongoose) {
 			if(/^[a-z0-9_]{1,12}$/.test(username)) {
 				User.findByIdAndUpdate(req.user._id, { $set: { username: username }}, function(err) {
 					if(err) {
-						if(err.lastErrorObject.code === 11001) {
+						if(err.lastErrorObject && err.lastErrorObject.code === 11001) {
 							req.flash('usernameMessage', 'Username already taken');
 						} else {
 							req.flash('usernameMessage', err.errmsg);
