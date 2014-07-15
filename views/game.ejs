@@ -720,7 +720,9 @@ $(document).ready(function() {
 			$chatBody.scrollTop($chatBody[0].scrollHeight);
 			$('#chat-footer input').val('');
      	  	$('#chat-wrapper').removeClass('hidden');
-		} else if (gamestate.messages && gamestate.messages[gamestate.messages.length - 1].username === null) {
+		} else if (gamestate.messages &&
+		           gamestate.messages.length > 0 &&
+		           gamestate.messages[gamestate.messages.length - 1].username === null) {
 			// if not the first time loading this game draw any new messages from the server
 			var lastServerMessage = $('#chat-message-list .chat-system-message').last().text();
 			var i = gamestate.messages.length - 1;
