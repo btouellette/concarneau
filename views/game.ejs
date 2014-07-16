@@ -1192,6 +1192,16 @@ $(document).ready(function() {
 			'text-anchor': 'end'
 		});
 		group.append('text').attr({
+			class: 'player-name-outline',
+			x: 5,
+			y: function(d, i) {
+				return 5 + tileSize / 8 + i*(tileSize / 2 - 5);
+			},
+			'text-anchor': 'start',
+			stroke: 'black',
+			'stroke-width': 2.5
+		});
+		group.append('text').attr({
 			class: 'player-name',
 			x: 5,
 			y: function(d, i) {
@@ -1200,7 +1210,17 @@ $(document).ready(function() {
 			'text-anchor': 'start'
 		});
 		scoreGroups.select('text.point-total').text(function(d) { return d.points; });
-		scoreGroups.select('text.player-name').text(function (d) { return d.user.username; });
+		scoreGroups.select('text.player-name-outline').text(function (d) { return d.user.username; });
+		scoreGroups.select('text.player-name').attr({ 
+			fill: function(d) {
+				if(d.color === 'purple') {
+					return 'fuchsia';
+				} else if (d.color === 'blue') {
+					return 'royalblue';
+				}
+				return d.color;
+			}
+		}).text(function (d) { return d.user.username; });
 		scoreGroups.exit().remove();
 		
 		//TODO: have the active player placed meeple move down from the remaining meeples onto the tile
