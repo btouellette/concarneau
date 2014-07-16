@@ -53,7 +53,8 @@ var gamestateSchema = mongoose.Schema({
             placement: {
                 locationType: String, // 'road', 'city', 'farm', or 'cloister'
                 index: Number // which element of tiles[].roads/cities/farms (external schema)
-            }
+            },
+            scored: Boolean // whether the meeple has already had score assigned for it (only used at game end, otherwise the meeple is removed when it is scored)
         }],
         northTileIndex: Number, // references placedTiles
         southTileIndex: Number,
@@ -94,15 +95,14 @@ gamestateSchema.methods.userIsActive = function(user) {
 
 function completeGame(gamestate) {
 	// score and remove all currently placed meeples
-	var i = 0;
-	while(i < gamestate.placedTiles.length) {
+	for(var i = 0; i < gamestate.placedTiles.length; i++) {
 		var tile = gamestate.placedTiles[i];
-		if(tile.meeples.length !== 0) {
-			// console.log('finalizing meeple=>');
-			// console.log(JSON.stringify(tile.meeples[0]));
-			checkAndFinalizeFeature(tile, tile.meeples[0].placement.index, tile.meeples[0].placement.locationType, true, gamestate);
-		} else {
-			i++;
+		for(var k = 0; k < tile.meeples.length; k++) {
+			if(!tile.meeples[k].scored) {
+				// console.log('finalizing meeple=>');
+				// console.log(JSON.stringify(tile.meeples[k]));
+				checkAndFinalizeFeature(tile, tile.meeples[k].placement.index, tile.meeples[k].placement.locationType, true, gamestate);
+			}
 		}
 	}
 	gamestate.finished = true;
@@ -1053,25 +1053,33 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			for(var i = 0; i < featureInfo.tilesWithMeeples.length; i++) {
 				// find the player this meeple belongs to
 				var playerIndex = featureInfo.tilesWithMeeples[i].placedTile.meeples[featureInfo.tilesWithMeeples[i].meepleIndex].playerIndex;
-				// remove the meeple from the placed tile
-				featureInfo.tilesWithMeeples[i].placedTile.meeples.splice(featureInfo.tilesWithMeeples[i].meepleIndex, 1);
+				// if the game is over just mark these meeples as scored, otherwise pick them up (remove them)
+				if(gameFinished) {
+					featureInfo.tilesWithMeeples[i].placedTile.meeples[featureInfo.tilesWithMeeples[i].meepleIndex].scored = true;
+				} else {
+					// remove the meeple from the placed tile
+					featureInfo.tilesWithMeeples[i].placedTile.meeples.splice(featureInfo.tilesWithMeeples[i].meepleIndex, 1);
+				}
 				// increase this players count of meeples on this feature
 				if(playersWithMeeples.indexOf(playerIndex) === -1) {
 					playersWithMeeples.push(playerIndex);
 					meepleCount[playerIndex] = 0;
 				}
 				meepleCount[playerIndex]++;
+				// and update the max number of meeples if needed (for checking feature ownership)
 				if(meepleCount[playerIndex] > maxNumberOfMeeples) {
 					maxNumberOfMeeples = meepleCount[playerIndex];
 				}
 			}
 			// score meeples on this feature for each player with the max number of meeples
-			// refund all removed meeples
 			var scoringPlayers = [];
 			var scoredPoints = featureInfo.points * (featureType === 'city' && !gameFinished ? 2 : 1);
 			for(var k = 0; k < gamestate.players.length; k++) {
 				if(meepleCount[k]) {
-					gamestate.players[k].remainingMeeples += meepleCount[k];
+					// refund all scored meeples if the game isn't over
+					if(!gameFinished) {
+						gamestate.players[k].remainingMeeples += meepleCount[k];
+					}
 					if(meepleCount[k] === maxNumberOfMeeples) {
 						gamestate.players[k].points += scoredPoints;
 						scoringPlayers.push(gamestate.players[k]);
