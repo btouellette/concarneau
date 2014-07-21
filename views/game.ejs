@@ -163,6 +163,8 @@
 //TODO: list points on the board
 //TODO: activatable overlay showing count of tiles that could fit in a space
 //TODO: add welcome popup explaining buttons and linking to rules if 0 games and 0 friends, allow to view again from settings
+//TODO: scoreboard/game record
+//TODO: You win! or You lost! alert when game is finished (with rematch button)
 var userGames = <%- JSON.stringify(user.activeGames) %>;
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
@@ -397,7 +399,7 @@ $(document).ready(function() {
 				$('#friends-menu-selection').click();
 				$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-plus-square-o').css('cursor', 'pointer');
 				$('#friends-list .friend-listing').on('click', function() {
-					if($('#new-game-popup .friend-listing').length < 4) {
+					if($('#new-game-popup .friend-listing').length < 5) {
 						$('#solo-notifier').hide();
 						var element = $(this);
 						element.clone().attr('id', 'add-' + element.attr('id')).css('cursor', 'default').addClass('add-friend-listing').appendTo('#new-game-popup');

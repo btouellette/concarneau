@@ -34,9 +34,14 @@ var twitter = new twit({
 module.exports = function(server, sessionStore) {
 
 	// if the tile db is empty load in the tiles,
-	Tile.count({}, function(err, count) {
-		if(count === 0) {
-			Tile.loadTiles();
+	Tile.count({ expansion: 'base-game' }, function(err, count) {
+		if(!err && count === 0) {
+			Tile.loadTilesBase();
+		}
+	});
+	Tile.count({ expansion: 'inns-and-cathedrals' }, function(err, count) {
+		if(!err && count === 0) {
+			Tile.loadTilesIAC();
 		}
 	});
 

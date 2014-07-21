@@ -25,6 +25,7 @@ var gamestateSchema = mongoose.Schema({
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         points: Number,
         remainingMeeples: Number,
+        hasLargeMeeple: Boolean,
         active: Boolean,
         color: String,
         acknowledgedGameEnd: Boolean
@@ -54,6 +55,7 @@ var gamestateSchema = mongoose.Schema({
                 locationType: String, // 'road', 'city', 'farm', or 'cloister'
                 index: Number // which element of tiles[].roads/cities/farms (external schema)
             },
+            large: Boolean, // whether this is the large 2x meeple from Inns & Cathedrals
             scored: Boolean // whether the meeple has already had score assigned for it (only used at game end, otherwise the meeple is removed when it is scored)
         }],
         northTileIndex: Number, // references placedTiles
@@ -693,7 +695,7 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, callb
     Q.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
 		// choose a random player to start
 		var startingPlayer = Math.floor(Math.random()*newGame.players.length);
-		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
+		var colors = ['blue', 'green', 'purple', 'red', 'yellow', 'gray'];
 		for(var i = 0; i < newGame.players.length; i++) {
 			newGame.players[i].points = 0;
 			newGame.players[i].remainingMeeples = 7;
@@ -751,15 +753,28 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 			x: move.placement.x,
 			y: move.placement.y
 		};
+		// validate that the player has the proper type of meeple for placement
 		if(move.meeple) {
-			activePlayer.remainingMeeples -= 1;
-			newTile.meeples = [{
-				playerIndex: activePlayerIndex,
-				placement: {
-					locationType: move.meeple.type,
-					index: move.meeple.index
-				}
-			}];
+			if(move.meeple.large && activePlayer.hasLargeMeeple) {
+				activePlayer.hasLargeMeeple = false;
+				newTile.meeples = [{
+					playerIndex: activePlayerIndex,
+					placement: {
+						locationType: move.meeple.type,
+						index: move.meeple.index
+					},
+					large: true
+				}];
+			} else if(!move.meeple.large && activePlayer.remainingMeeples > 0) {
+				activePlayer.remainingMeeples -= 1;
+				newTile.meeples = [{
+					playerIndex: activePlayerIndex,
+					placement: {
+						locationType: move.meeple.type,
+						index: move.meeple.index
+					}
+				}];
+			}
 		}
 		// create links between the new tile and existing placed tiles
 		for(var i5 = 0; i5 < gamestate.placedTiles.length; i5++) {
@@ -922,7 +937,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 				};
 				// only add points for cities and roads if this is the first time encountering the tile
 				if(featureType === 'city') {
-					results.points = currentTile.tile.doublePoints ? 2 : 1;
+					results.points = currentTile.tile.doublePoints === true || currentTile.tile.doublePoints === featureIndex  ? 2 : 1;
 				} else if(featureType === 'road') {
 					results.points = 1;
 				}
@@ -987,6 +1002,12 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			var currentFeature = currentTile.tile[pluralType][featureIndex];
 			// console.log('found feature ' + (featureType === 'city' ? 'cities' : featureType + 's') + ',' + featureIndex + '=>' + JSON.stringify(currentFeature));
 			// console.log('==========================');
+			// if this tile has an inn or a cathedral mark it as such in the results
+			if(featureType === 'city' && currentTile.tile.cathedral) {
+				results.cathedral = true;
+			} else if(featureType === 'road' && currentFeature.inn) {
+				results.inn = true;
+			}
 			// for each side this feature has try and extend to connected tiles searching for
 			// meeples to record, points to score, or to detect incompleteness
 			for(var j = 0; j < currentFeature.directions.length; j++) {
@@ -1020,9 +1041,11 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 				} else {
 					// console.log('moving: ' + rotatedDirection);
 					// console.log('==========================');
-					// traverse over to it summing up completeness, points, and meeples
+					// traverse over to it summing up inn/cathedral status, completeness, points, and meeples
 					var connectedIndex = getFeatureIndex(connectedTile, featureType, flippedDirection);
 					var neighborResults = getFeatureInfo(connectedTile, connectedIndex, featureType, checked);
+					results.cathedral = results.cathedral || neighborResults.cathedral;
+					results.inn = results.inn || neighborResults.inn;
 					results.complete = results.complete && neighborResults.complete;
 					results.points = results.points + neighborResults.points;
 					for(var z = 0; z < neighborResults.tilesWithMeeples.length; z++) {
@@ -1053,12 +1076,19 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			for(var i = 0; i < featureInfo.tilesWithMeeples.length; i++) {
 				// find the player this meeple belongs to
 				var playerIndex = featureInfo.tilesWithMeeples[i].placedTile.meeples[featureInfo.tilesWithMeeples[i].meepleIndex].playerIndex;
+				var meepleIsLarge = featureInfo.tilesWithMeeples[i].placedTile.meeples[featureInfo.tilesWithMeeples[i].meepleIndex].large;
 				// if the game is over just mark these meeples as scored, otherwise pick them up (remove them)
 				if(gameFinished) {
 					featureInfo.tilesWithMeeples[i].placedTile.meeples[featureInfo.tilesWithMeeples[i].meepleIndex].scored = true;
 				} else {
 					// remove the meeple from the placed tile
 					featureInfo.tilesWithMeeples[i].placedTile.meeples.splice(featureInfo.tilesWithMeeples[i].meepleIndex, 1);
+					// refund scored meeples if the game isn't over
+					if(meepleIsLarge) {
+						gamestate.players[playerIndex].hasLargeMeeple = true;
+					} else {
+						gamestate.players[playerIndex].remainingMeeples += 1;
+					}
 				}
 				// increase this players count of meeples on this feature
 				if(playersWithMeeples.indexOf(playerIndex) === -1) {
@@ -1066,6 +1096,9 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 					meepleCount[playerIndex] = 0;
 				}
 				meepleCount[playerIndex]++;
+				if(meepleIsLarge) {
+					meepleCount[playerIndex]++;
+				}
 				// and update the max number of meeples if needed (for checking feature ownership)
 				if(meepleCount[playerIndex] > maxNumberOfMeeples) {
 					maxNumberOfMeeples = meepleCount[playerIndex];
@@ -1073,13 +1106,25 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			}
 			// score meeples on this feature for each player with the max number of meeples
 			var scoringPlayers = [];
-			var scoredPoints = featureInfo.points * (featureType === 'city' && !gameFinished ? 2 : 1);
+			var scoredPoints = featureInfo.points;
+			// if this is an uncomplete road with an inn or an uncomplete city with a cathedral zero the points
+			if(!featureInfo.complete && (featureInfo.cathedral || featureInfo.inn)) {
+				scoredPoints *= 0;
+			}
+			// if this is a complete city with a cathedral triple the points
+			if(featureInfo.complete && featureInfo.cathedral) {
+				scoredPoints *= 3;
+			}
+			// if this is a complete city without a cathedral double the points
+			if(featureInfo.complete && featureType === 'city' && !featureInfo.cathedral) {
+				scoredPoints *= 2;
+			}
+			// if this is a complete road with an inn double the points
+			if(featureInfo.complete && featureInfo.inn) {
+				scoredPoints *= 2;
+			}
 			for(var k = 0; k < gamestate.players.length; k++) {
 				if(meepleCount[k]) {
-					// refund all scored meeples if the game isn't over
-					if(!gameFinished) {
-						gamestate.players[k].remainingMeeples += meepleCount[k];
-					}
 					if(meepleCount[k] === maxNumberOfMeeples) {
 						gamestate.players[k].points += scoredPoints;
 						scoringPlayers.push(gamestate.players[k]);
@@ -1094,6 +1139,11 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			var message = scoringPlayers.map(function(player) {
 				return player.user.username + ' (' + player.points + ')';
 			}).join(' and ') + ' scored ' + scoredPoints + ' for ' + (featureType === 'farm' ? ' a ' : gameFinished ? 'an uncomplete ' : 'a completed ') + featureType;
+			if(featureInfo.cathedral) {
+				message += ' with a cathedral';
+			} else if(featureInfo.inn) {
+				message += ' with an inn';
+			}
 			gamestate.messages.push({ username: null, message: message });
 		}
 	}
