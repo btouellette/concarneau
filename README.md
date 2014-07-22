@@ -1,6 +1,6 @@
 # Concarneau
 
-Multiplayer web game using the same rules as Carcassone
+Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.
 
 ## Instructions
 
