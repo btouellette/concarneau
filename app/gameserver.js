@@ -36,12 +36,12 @@ module.exports = function(server, sessionStore) {
 	// if the tile db is empty load in the tiles,
 	Tile.count({ expansion: 'base-game' }, function(err, count) {
 		if(!err && count === 0) {
-			Tile.loadTilesBase();
+			Tile.loadTiles();
 		}
 	});
 	Tile.count({ expansion: 'inns-and-cathedrals' }, function(err, count) {
-		if(!err && count === 0) {
-			Tile.loadTilesIAC();
+		if(count === 0) {
+			Tile.loadTiles();
 		}
 	});
 
@@ -89,12 +89,12 @@ module.exports = function(server, sessionStore) {
 						userToSocket[currentUser._id].splice(userToSocket[currentUser._id].indexOf(socket), 1);
 					}
 				});
-				socket.on('new game', function(friends) {
+				socket.on('new game', function(friends, expansions) {
 					// pull the user information from the db again in case it has changed since the socket was established
 					User.findById(currentUser._id, function(err, currentUser) {
 						if(err) { console.log('new game find user err: ' + err); }
 						var gamestate = new Gamestate(); // create a new gamestate
-						gamestate.initializeNewGame(currentUser, friends, function() {
+						gamestate.initializeNewGame(currentUser, friends, expansions, function() {
 							gamestate.populate('placedTiles.tile activeTile.tile players.user',
 							                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset imageURL username',
 								function(err, gamestate) {

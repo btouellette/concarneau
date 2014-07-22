@@ -310,3 +310,13 @@ html, body
 	width: 100%;
 	height: 100%;
 }
+
+#expansion-header
+{
+	padding-top: 5px;
+}
+
+.expansion-label
+{
+	margin-bottom: 0;
+}
