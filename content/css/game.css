@@ -47,7 +47,7 @@ html, body
 	background-color: white;
 	top: 0;
 	left: 0;
-	bottom: 100px;
+	bottom: 125px;
 	width: 225px;
 	overflow-y: auto;
 }
@@ -55,7 +55,7 @@ html, body
 #menu-selection
 {
 	position: absolute;
-	bottom: 65px;
+	bottom: 90px;
 	height: 32px;
 }
 
@@ -77,7 +77,7 @@ html, body
 	position: absolute;
 	left: 5px;
 	bottom: 0;
-	height: 50px;
+	height: 78px;
 	margin-bottom: 2px;
 }
 
@@ -86,6 +86,11 @@ html, body
 	display: inline-block;
 	height: 25px;
 	vertical-align: bottom;
+}
+
+#author-info div
+{
+	padding-top: 1px;
 }
 
 #chat-wrapper
@@ -285,9 +290,19 @@ html, body
 
 .btc-qr
 {
-    display: block;
+	display: block;
     margin-left: auto;
     margin-right: auto;
+}
+
+#expansion-header
+{
+	padding-top: 5px;
+}
+
+.expansion-label
+{
+	margin-bottom: 0;
 }
 
 .iconmelon,
