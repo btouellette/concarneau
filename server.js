@@ -44,6 +44,8 @@ var configDB     = require('./config/database');
 var MongoStore   = require('connect-mongo')(session);
 
 // configuration ===============================================================
+//TODO: having issues if web connections come in before this is established
+//      https://github.com/kcbanner/connect-mongo/issues/80
 var sessionStore = new MongoStore({
 	url: configDB.url,
 	auto_reconnect: true
