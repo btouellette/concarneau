@@ -845,6 +845,10 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 			break;
 		}
 	}
+	//TODO: remove this eventually, just used for transition to new meepleType flag in move
+	if(move && move.meeple && !move.meeple.meepleType) {
+		move.meeple.meepleType = move.meeple.large ? 'large' : 'normal';
+	}
 	// validate tile and meeple placement
 	for(var i2 = 0; i2 < gamestate.activeTile.validPlacements.length; i2++) {
 		var placement = gamestate.activeTile.validPlacements[i2];
