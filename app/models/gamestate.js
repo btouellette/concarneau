@@ -77,9 +77,6 @@ var gamestateSchema = mongoose.Schema({
 });
 
 function getMeepleFlagFromType(meepleType) {
-	if(meepleType === undefined) {
-		return 'hasLargeMeeple';
-	}
 	return 'has' + meepleType.charAt(0).toUpperCase() + meepleType.slice(1) + 'Meeple';
 }
 
@@ -861,7 +858,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					if(!move.meeple) {
 						validPlacement = true;
 					} else if((move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) ||
-					          activePlayer[getMeepleFlagFromType(move.meeple.meepleType)]) {
+					          (move.meeple.meepleType !== 'normal' && activePlayer[getMeepleFlagFromType(move.meeple.meepleType)])) {
 					    var meepleFieldName = 'meeples';
 			          	if(move.meeple.meepleType !== 'normal' && move.meeple.meepleType !== 'large') {
 			          		meepleFieldName = move.meeple.meepleType;
@@ -891,7 +888,6 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 		};
 		// validate that the player has the proper type of meeple for placement
 		if(move.meeple) {
-			var meepleFlagName = getMeepleFlagFromType(move.meeple.meepleType);
 			if(move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) {
 				activePlayer.remainingMeeples -= 1;
 				newTile.meeples = [{
@@ -902,16 +898,19 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					},
 					meepleType: move.meeple.meepleType
 				}];
-			} else if(activePlayer[meepleFlagName] === true) {
-				activePlayer[meepleFlagName] = false;
-				newTile.meeples = [{
-					playerIndex: activePlayerIndex,
-					placement: {
-						locationType: move.meeple.locationType,
-						index: move.meeple.index
-					},
-					meepleType: move.meeple.meepleType
-				}];
+			} else if(move.meeple.meepleType !== 'normal') {
+				var meepleFlagName = getMeepleFlagFromType(move.meeple.meepleType);
+				if(activePlayer[meepleFlagName] === true) {
+					activePlayer[meepleFlagName] = false;
+					newTile.meeples = [{
+						playerIndex: activePlayerIndex,
+						placement: {
+							locationType: move.meeple.locationType,
+							index: move.meeple.index
+						},
+						meepleType: move.meeple.meepleType
+					}];
+				}
 			}
 		}
 		// create links between the new tile and existing placed tiles
