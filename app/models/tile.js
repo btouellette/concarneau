@@ -33,6 +33,7 @@ var tileSchema = mongoose.Schema({
     cloister: Boolean,
     doublePoints: mongoose.Schema.Types.Mixed, // true if all cities are double points, false if none, if only one city is double this will be the index of the double city
     cathedral: Boolean,
+    goods: String, // goods are 'wine', 'wheat', and 'fabric' (from Traders and Builders expansion)
     imageURL: String,
     expansion: String,
     count: Number,
@@ -510,8 +511,8 @@ tileSchema.statics.loadTilesIAC = function() {
 			eastEdge: 'field',
 			roads: [{ directions: ['S'], meepleOffset: { x: 1/2, y: 5/8 }}],
 			cities: [{ directions: ['N'], meepleOffset: { x: 1/2, y: 1/8 }}],
-			farms: [{ directions: ['ENE','ESE','SSE'], meepleOffset: { x: 3/8, y: 3/4 }, adjacentCityIndices: [0]},
-			        { directions: ['WNW','WSW','SSW'], meepleOffset: { x: 7/8, y: 7/8 }, adjacentCityIndices: [0]}],
+			farms: [{ directions: ['ENE','ESE','SSE'], meepleOffset: { x: 1/8, y: 5/8 }, adjacentCityIndices: [0]},
+			        { directions: ['WNW','WSW','SSW'], meepleOffset: { x: 7/8, y: 5/8 }, adjacentCityIndices: [0]}],
 			imageURL: '/content/images/tiles/inns-and-cathedrals/CFR.png',
 			expansion: 'inns-and-cathedrals',
 			count: 1
@@ -520,7 +521,7 @@ tileSchema.statics.loadTilesIAC = function() {
 			southEdge: 'city',
 			westEdge: 'road',
 			eastEdge: 'road',
-			roads: [{ directions: ['W'], meepleOffset: { x: 3/8, y: 1/2 }},
+			roads: [{ directions: ['W'], meepleOffset: { x: 1/8, y: 1/2 }},
 			        { directions: ['E'], meepleOffset: { x: 7/8, y: 1/2 }}],
 			cities: [{ directions: ['N'], meepleOffset: { x: 1/2, y: 1/8 }},
 			         { directions: ['S'], meepleOffset: { x: 1/2, y: 7/8 }}],
@@ -593,7 +594,7 @@ tileSchema.statics.loadTilesIAC = function() {
 			roads: [{ directions: ['W','S'], meepleOffset: { x: 1/4, y: 1/2 }, inn: true }],
 			cities: [],
 			farms: [{ directions: ['WNW','NNW','NNE','ENE','ESE','SSE'], meepleOffset: { x: 1/4, y: 1/4 }},
-			        { directions: ['WSW','SSW'], meepleOffset: { x: 1/2, y: 3/4 }}],
+			        { directions: ['WSW','SSW'], meepleOffset: { x: 1/4, y: 3/4 }}],
 			imageURL: '/content/images/tiles/inns-and-cathedrals/Rr.i.png',
 			expansion: 'inns-and-cathedrals',
 			count: 1
@@ -629,7 +630,7 @@ tileSchema.statics.loadTilesIAC = function() {
 			southEdge: 'road',
 			westEdge: 'road',
 			eastEdge: 'road',
-			roads: [{ directions: ['W','N'], meepleOffset: { x: 1/4, y: 1/4 }},
+			roads: [{ directions: ['W','N'], meepleOffset: { x: 3/8, y: 3/8 }},
 			        { directions: ['S','E'], meepleOffset: { x: 3/4, y: 3/4 }}],
 			cities: [],
 			farms: [{ directions: ['WNW','NNW'], meepleOffset: { x: 1/4, y: 1/4 }},
