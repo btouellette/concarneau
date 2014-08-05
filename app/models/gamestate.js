@@ -77,6 +77,9 @@ var gamestateSchema = mongoose.Schema({
 });
 
 function getMeepleFlagFromType(meepleType) {
+	if(meepleType === undefined) {
+		return 'hasLargeMeeple';
+	}
 	return 'has' + meepleType.charAt(0).toUpperCase() + meepleType.slice(1) + 'Meeple';
 }
 
