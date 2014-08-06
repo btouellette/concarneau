@@ -1232,23 +1232,22 @@ $(document).ready(function() {
 		});
 		meepleOutlines.exit().remove();
 
-		//TODO: can't move backwards through players to assign color with traders and builders
 		// draw outlines indicating the last tile each player placed
 		var markers = [];
-		// first find the index of the active player
-		var index = 0;
-		while(gamestate.players[index].active !== undefined && !gamestate.players[index].active) {
-			index++;
-		}
-		// for each tile placed assign x and y of the tile and move backwards through the players to assign color
-		for(var k = 1; k <= Math.min(gamestate.players.length, gamestate.placedTiles.length - 1); k++) {
-			if(gamestate.placedTiles.length - k > 0) {
-				markers.push({
-					x: gamestate.placedTiles[gamestate.placedTiles.length - k].x,
-					y: gamestate.placedTiles[gamestate.placedTiles.length - k].y,
-					color: gamestate.players[(index - k + gamestate.players.length) % gamestate.players.length].color
-				});
+		var markedPlayers = [];
+		// move backwards through the tiles creating a marker for each tile placed (until every player has at least one)
+		// for each tile placed assign x and y of the tile and color of the placing player
+		var k = gamestate.placedTiles.length - 1;
+		while(k > 0 && markedPlayers.length < gamestate.players.length) {
+			if(markedPlayers.indexOf(gamestate.placedTiles[k].playerIndex) === -1) {
+				markedPlayers.push(gamestate.placedTiles[k].playerIndex);
 			}
+			markers.push({
+				x: gamestate.placedTiles[k].x,
+				y: gamestate.placedTiles[k].y,
+				color: gamestate.players[gamestate.placedTiles[k].playerIndex].color
+			});
+			k--;	
 		}
 		
 		var turnMarkers = turnMarkerArea.selectAll('rect.turn-marker').data(markers);
