@@ -72,7 +72,8 @@ var gamestateSchema = mongoose.Schema({
         westTileIndex: Number,
         eastTileIndex: Number,
         x: Number,
-        y: Number
+        y: Number,
+        playerIndex: Number // which player placed this tile
     }]
 });
 
@@ -888,7 +889,8 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 			tile: gamestate.activeTile.tile,
 			rotation: move.rotation,
 			x: move.placement.x,
-			y: move.placement.y
+			y: move.placement.y,
+			playerIndex: activePlayerIndex
 		};
 		// validate that the player has the proper type of meeple for placement
 		if(move.meeple) {
@@ -1226,6 +1228,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			// the points only go to the player(s) with the most meeples on the feature
 			var meepleCount = {};
 			var playersWithMeeples = [];
+			var playersWithPigMeeple = [];
 			var maxNumberOfMeeples = 1;
 			for(var i = 0; i < featureInfo.tilesWithMeeples.length; i++) {
 				// find the player this meeple belongs to
@@ -1244,6 +1247,10 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 						gamestate.players[playerIndex][getMeepleFlagFromType(meepleType)] = true;
 					}
 				}
+				// if this is a farm record the players with a pig meeple
+				if(featureType === 'farm' && meepleType === 'pig') {
+					playersWithPigMeeple.push(playerIndex);
+				}
 				// increase this players count of meeples on this feature
 				if(playersWithMeeples.indexOf(playerIndex) === -1) {
 					playersWithMeeples.push(playerIndex);
@@ -1261,6 +1268,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			}
 			// score meeples on this feature for each player with the max number of meeples
 			var scoringPlayers = [];
+			var scoringPlayersWithPig = [];
 			var scoredPoints = featureInfo.points;
 			// if this is an uncomplete road with an inn or an uncomplete city with a cathedral zero the points
 			if(!featureInfo.complete && (featureInfo.cathedral || featureInfo.inn)) {
@@ -1281,8 +1289,14 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			for(var k = 0; k < gamestate.players.length; k++) {
 				if(meepleCount[k]) {
 					if(meepleCount[k] === maxNumberOfMeeples) {
-						gamestate.players[k].points += scoredPoints;
-						scoringPlayers.push(gamestate.players[k]);
+						// if this player has a pig meeple on the farm score it as 4 points per city not 3
+						if(featureType === 'farm' && playersWithPigMeeple.indexOf(k) !== -1) {
+							gamestate.players[k].points += scoredPoints * 4 / 3;
+							scoringPlayersWithPig.push(gamestate.players[k]);
+						} else {
+							gamestate.players[k].points += scoredPoints;
+							scoringPlayers.push(gamestate.players[k]);
+						}
 						// console.log('=======');
 						// console.log('scoring ' + featureInfo.points * (featureType === 'city' && !gameFinished ? 2 : 1) + ' points for player ' + k + ' ' + featureType);
 						// console.log('-------');
@@ -1292,15 +1306,24 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			}
 			
 			// create the message to add to the chatlog to record the scoring
-			var message = scoringPlayers.map(function(player) {
-				return player.user.username + ' (' + player.points + ')';
-			}).join(' and ') + ' scored ' + scoredPoints + ' for ' + (featureType === 'farm' ? ' a ' : gameFinished ? 'an uncomplete ' : 'a completed ') + featureType;
-			if(featureInfo.cathedral) {
-				message += ' with a cathedral';
-			} else if(featureInfo.inn) {
-				message += ' with an inn';
+			var message;
+			if(scoringPlayers.length > 0) {
+				message = scoringPlayers.map(function(player) {
+					return player.user.username + ' (' + player.points + ')';
+				}).join(' and ') + ' scored ' + scoredPoints + ' for ' + (featureType === 'farm' ? ' a ' : gameFinished ? 'an uncomplete ' : 'a completed ') + featureType;
+				if(featureInfo.cathedral) {
+					message += ' with a cathedral';
+				} else if(featureInfo.inn) {
+					message += ' with an inn';
+				}
+				gamestate.messages.push({ username: null, message: message });
 			}
-			gamestate.messages.push({ username: null, message: message });
+			if(scoringPlayersWithPig.length > 0) {
+				message = scoringPlayersWithPig.map(function(player) {
+					return player.user.username + ' (' + player.points + ')';
+				}).join(' and ') + ' scored ' + (scoredPoints * 4 / 3) + ' for a farm with a pig';
+				gamestate.messages.push({ username: null, message: message });
+			}
 			
 			// assign any trade goods on a city to the player who completed the city (active player)
 			if(featureInfo.complete && featureType === 'city' && featureInfo.goods.length > 0) {
