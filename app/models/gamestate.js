@@ -115,8 +115,7 @@ function completeGame(gamestate) {
 		var tile = gamestate.placedTiles[i];
 		for(var k = 0; k < tile.meeples.length; k++) {
 			if(!tile.meeples[k].scored &&
-			   tile.meeples[k].meepleType !== 'pig' && 
-			   tile.meeples[k].meepleType !== 'builder') {
+			   (tile.meeples[k].meepleType === 'normal' || tile.meeples[k].meepleType === 'large')) {
 				// console.log('finalizing meeple=>');
 				// console.log(JSON.stringify(tile.meeples[k]));
 				checkAndFinalizeFeature(tile, tile.meeples[k].placement.index, tile.meeples[k].placement.locationType, true, gamestate);
@@ -864,13 +863,11 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 						validPlacement = true;
 					} else if((move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) ||
 					          (move.meeple.meepleType !== 'normal' && activePlayer[getMeepleFlagFromType(move.meeple.meepleType)])) {
-					    var meepleFieldName = 'meeples';
-			          	if(move.meeple.meepleType !== 'normal' && move.meeple.meepleType !== 'large') {
-			          		meepleFieldName = move.meeple.meepleType;
-			          	}
-						for(var i4 = 0; i4 < placement.rotations[i3][meepleFieldName].length; i4++) {
-							if(placement.rotations[i3][meepleFieldName][i4].locationType === move.meeple.locationType &&
-							   placement.rotations[i3][meepleFieldName][i4].index === move.meeple.index) {
+					    var meepleType = move.meeple.meepleType === 'large' ? 'normal' : move.meeple.meepleType;
+						for(var i4 = 0; i4 < placement.rotations[i3].meeples.length; i4++) {
+							if(placement.rotations[i3].meeples[i4].meepleType === meepleType &&
+							   placement.rotations[i3].meeples[i4].locationType === move.meeple.locationType &&
+							   placement.rotations[i3].meeples[i4].index === move.meeple.index) {
 								validPlacement = true;
 								break;
 							}
@@ -943,17 +940,43 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 		// and then add it to the placed tiles
 		gamestate.placedTiles.push(newTile);
 		gamestate.populate('placedTiles.tile players.user', function(err, gamestate) {
+			var builderActivated = false;
+			var featureInfo, meepleIndex, meepleTile;
 			var newlyPlacedTile = gamestate.placedTiles[gamestate.placedTiles.length - 1];
 			// console.log('gamestate before cities =>' + JSON.stringify(gamestate));
 			// console.log('==========================');
 			// check for cities with meeples on them connected to the active tile which may have been completed by the placement
 			for(var i = 0; i < newlyPlacedTile.tile.cities.length; i++) {
+				// if not placing a builder in this move check for an activated builder on this feature
+				if(move.meeple === undefined || move.meeple.meepleType !== 'builder') {
+					featureInfo = getFeatureInfo(newlyPlacedTile, i, 'city', gamestate);
+					for(var i1 = 0; i1 < featureInfo.tilesWithMeeples.length; i1++) {
+						meepleIndex = featureInfo.tilesWithMeeples[i1].meepleIndex;
+						meepleTile = featureInfo.tilesWithMeeples[i1].placedTile;
+						if(meepleTile.meeples[meepleIndex].meepleType === 'builder' && meepleTile.meeples[meepleIndex].playerIndex === activePlayerIndex) {
+							builderActivated = true;
+							break;
+						}
+					}
+				}
 				checkAndFinalizeFeature(newlyPlacedTile, i, 'city', false, gamestate);
 			}
 			// console.log('gamestate after cities =>' + JSON.stringify(gamestate));
 			// console.log('==========================');
 			// and check for roads
 			for(var k = 0; k < newlyPlacedTile.tile.roads.length; k++) {
+				// if not placing a builder in this move check for an activated builder on this feature
+				if(move.meeple === undefined || move.meeple.meepleType !== 'builder') {
+					featureInfo = getFeatureInfo(newlyPlacedTile, k, 'road', gamestate);
+					for(var k1 = 0; k1 < featureInfo.tilesWithMeeples.length; k1++) {
+						meepleIndex = featureInfo.tilesWithMeeples[k1].meepleIndex;
+						meepleTile = featureInfo.tilesWithMeeples[k1].placedTile;
+						if(meepleTile.meeples[meepleIndex].meepleType === 'builder' && meepleTile.meeples[meepleIndex].playerIndex === activePlayerIndex) {
+							builderActivated = true;
+							break;
+						}
+					}
+				}
 				checkAndFinalizeFeature(newlyPlacedTile, k, 'road', false, gamestate);
 			}
 			// check for any completed cloisters caused by the tile placement both on this tile and on any nearby tiles
@@ -1011,9 +1034,11 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 			}
 			// console.log('gamestate after cloisters =>' + JSON.stringify(gamestate));
 			// console.log('==========================');
-			// change the active player
-			gamestate.players[activePlayerIndex].active = false;
-			gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
+			// change the active player if the builder wasn't activated (or if it was and the active player already had an extra turn)
+			if(!builderActivated || gamestate.placedTiles[gamestate.placedTiles.length - 2].playerIndex === activePlayerIndex) {
+				gamestate.players[activePlayerIndex].active = false;
+				gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
+			}
 			gamestate.drawTile(callback, autocomplete);
 		});
 	}
