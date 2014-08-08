@@ -360,12 +360,7 @@ function changeMeepleMode(newMode) {
 			d3.selectAll('#meeple-placements .placed-meeple').attr('visibility', 'hidden');
 		}
 	}
-	if(newMode === 'normal') {
-	} else if(newMode === 'large') {
-	} else if(newMode === 'pig') {
-	} else if(newMode === 'builder') {
-	}
-	var size = newMode === 'large' ? tileSize * 3 / 8 : tileSize / 4;
+	var size = newMode !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4;
 	d3.selectAll('#meeple-placements image').attr({
 		width: size,
 		height: size,
@@ -1068,12 +1063,12 @@ $(document).ready(function() {
     	// adding any new meeples
     	meepleImages.enter().append('image').attr({ 
     		class: 'meeple',
-			width: function(d) { return d.meepleType === 'large' ? tileSize * 3 / 8 : tileSize / 4 },
-			height: function(d) { return d.meepleType === 'large' ? tileSize * 3 / 8 : tileSize / 4; }
+			width: function(d) { return d.meepleType !== 'normal' ? tileSize * 3 / 8 : tileSize / 4 },
+			height: function(d) { return d.meepleType !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4; }
 		});
     	meepleImages.attr({
-        	x: function(d) { return tileSize * d.meepleOffset.x - (d.meepleType === 'large' ? tileSize * 3 / 8 : tileSize / 4) / 2; },
-			y: function(d) { return tileSize * d.meepleOffset.y - (d.meepleType === 'large' ? tileSize * 3 / 8 : tileSize / 4) / 2; },
+        	x: function(d) { return tileSize * d.meepleOffset.x - (d.meepleType !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4) / 2; },
+			y: function(d) { return tileSize * d.meepleOffset.y - (d.meepleType !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4) / 2; },
 			'xlink:href': function(d) { 
 				return '/content/images/meeples/' + d.color + '_' + (d.meepleType !== 'normal' && d.meepleType !== 'large' ? d.meepleType : (d.location === 'farm' ? 'lying' : 'standing')) +'.png'; 
 			},

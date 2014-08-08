@@ -174,7 +174,7 @@ function completeGame(gamestate) {
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 	// console.log('drawing new tile');
-	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
+	this.populate('unusedTiles placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
 		// if we're out of tiles score/complete game
 		if(gamestate.unusedTiles.length === 0 || autocomplete) {
 			completeGame(gamestate);
@@ -216,6 +216,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
 			// splice a random unused tile into the active tile
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
+			//activeTile = gamestate.activeTile.tile;
 			// make sure mongoose sees the field as changed to save later
 			gamestate.markModified('unusedTiles');
 			// find out all the places we can place it
@@ -720,27 +721,38 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 					// if this rotation has already been placed 
 					if(currentRotation.rotation === item.rotation) {
 						matched = true;
-						// only keep meeple placements that are valid in both tile placements
-						// since non-normal meeples don't have disqualifying conditions (only qualifying ones aka an existing active meeple) allow if there isn't an identical entry
-						currentRotation.meeples = currentRotation.meeples.filter(function(meeple) {
-							if(meeple.meepleType !== 'normal') {
-								for(var j = 0; j < item.meeples.length; j++) {
-									if(item.meeples[j].meepleType === meeple.meepleType &&
-									   item.meeples[j].locationType === meeple.locationType &&
-									   item.meeples[j].index === meeple.index) {
-										return false;
-									}
+						// since non-normal meeples don't have disqualifying conditions (only qualifying ones aka an existing active meeple) allow all unless they would be duplicates
+						for(var j = 0; j < item.meeples.length; j++) {
+							var newMeeple = item.meeples[j];
+							if(newMeeple.meepleType !== 'normal') {
+								var duplicated = false;
+								for(var k = 0; k < currentRotation.meeples.length; k++) {
+									var existingMeeple = currentRotation.meeples[k];
+									if(existingMeeple.meepleType === newMeeple.meepleType &&
+									   existingMeeple.locationType === newMeeple.locationType &&
+									   existingMeeple.index === newMeeple.index) {
+									   	duplicated = true;
+									   	break;
+							   		}
 								}
-								return true;
-							} else {
-								for(var k = 0; k < item.meeples.length; k++) {
-									if(item.meeples[k].meepleType === meeple.meepleType &&
-									   item.meeples[k].locationType === meeple.locationType &&
-									   item.meeples[k].index === meeple.index) {
+								if(!duplicated) {
+									currentRotation.meeples.push(newMeeple);
+								}
+							}
+						}
+						// only keep normal meeple placements that are valid in both tile placements
+						currentRotation.meeples = currentRotation.meeples.filter(function(meeple, index) {
+							if(meeple.meepleType === 'normal') {
+								for(var i = 0; i < item.meeples.length; i++) {
+									if(item.meeples[i].meepleType === meeple.meepleType &&
+									   item.meeples[i].locationType === meeple.locationType &&
+									   item.meeples[i].index === meeple.index) {
 										return true;
 									}
 								}
 								return false;
+							} else {
+								return true;
 							}
 						});
 						break;
@@ -1170,8 +1182,8 @@ function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, check
 		// console.log('found feature ' + (featureType === 'city' ? 'cities' : featureType + 's') + ',' + featureIndex + '=>' + JSON.stringify(currentFeature));
 		// console.log('==========================');
 		// if this tile has trade goods on it add them to a list of all the trade goods
-		if(featureType === 'city' && currentTile.tile.goods) {
-			results.goods.push(currentTile.tile.goods);
+		if(featureType === 'city' && currentFeature.goods) {
+			results.goods.push(currentFeature.goods);
 		}
 		// if this tile has an inn or a cathedral mark it as such in the results
 		if(featureType === 'city' && currentTile.tile.cathedral) {
@@ -1381,6 +1393,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 					goodsMessage += groupedGoods[good] + ' ' + good;
 				}
 				goodsMessage = activePlayer.user.username + ' picked up ' + goodsMessage;
+				gamestate.messages.push({ username: null, message: goodsMessage });
 			}
 		}
 	}
