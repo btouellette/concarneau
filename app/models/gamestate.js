@@ -145,21 +145,21 @@ function completeGame(gamestate) {
 				if(fabricMessage !== '') {
 					fabricMessage += ' and ';
 				}
-				fabricMessage += gamestate.players[l].user.username + '(' + gamestate.players[l].points + ')';
+				fabricMessage += gamestate.players[l].user.username + ' (' + gamestate.players[l].points + ')';
 			}
 			if(gamestate.players[l].goods.wine === maxGoods.wine) {
 				gamestate.players[l].points += 10;
 				if(wineMessage !== '') {
 					wineMessage += ' and ';
 				}
-				wineMessage += gamestate.players[l].user.username + '(' + gamestate.players[l].points + ')';
+				wineMessage += gamestate.players[l].user.username + ' (' + gamestate.players[l].points + ')';
 			}
 			if(gamestate.players[l].goods.wheat === maxGoods.wheat) {
 				gamestate.players[l].points += 10;
 				if(wheatMessage !== '') {
 					wheatMessage += ' and ';
 				}
-				wheatMessage += gamestate.players[l].user.username + '(' + gamestate.players[l].points + ')';
+				wheatMessage += gamestate.players[l].user.username + ' (' + gamestate.players[l].points + ')';
 			}
 		}
 		fabricMessage += ' scored 10 points for having the most fabric tokens';
