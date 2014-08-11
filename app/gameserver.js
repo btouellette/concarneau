@@ -39,12 +39,12 @@ module.exports = function(server, sessionStore) {
 		}
 	});
 	Tile.count({ expansion: 'inns-and-cathedrals' }, function(err, count) {
-		if(count === 0) {
+		if(!err && count === 0) {
 			Tile.loadTilesIAC();
 		}
 	});
 	Tile.count({ expansion: 'traders-and-builders' }, function(err, count) {
-		if(count === 0) {
+		if(!err && count === 0) {
 			Tile.loadTilesTAB();
 		}
 	});

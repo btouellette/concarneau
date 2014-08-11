@@ -174,7 +174,7 @@ function completeGame(gamestate) {
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 	// console.log('drawing new tile');
-	this.populate('unusedTiles placedTiles.tile activeTile.tile players.user', function(err, gamestate) {
+	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		// if we're out of tiles score/complete game
 		if(gamestate.unusedTiles.length === 0 || autocomplete) {
 			completeGame(gamestate);
