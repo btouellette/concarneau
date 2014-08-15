@@ -48,6 +48,11 @@ module.exports = function(server, sessionStore) {
 			Tile.loadTilesTAB();
 		}
 	});
+	Tile.count({ expansion: 'the-tower' }, function(err, count) {
+		if(!err && count === 0) {
+			Tile.loadTilesTT();
+		}
+	});
 
 	var io = require('socket.io').listen(server);
 	// validate session cookie and populate session id if given
@@ -100,7 +105,7 @@ module.exports = function(server, sessionStore) {
 						var gamestate = new Gamestate(); // create a new gamestate
 						gamestate.initializeNewGame(currentUser, friends, expansions, function() {
 							gamestate.populate('placedTiles.tile activeTile.tile players.user',
-							                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset imageURL username',
+							                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset tower.offset imageURL username',
 								function(err, gamestate) {
 									if(err) { console.log('new game populate err: ' + err); }
 									// get distinct list of user IDs in the game
@@ -126,7 +131,7 @@ module.exports = function(server, sessionStore) {
 						if(err) { console.log('load find err: ' + err); }
 						if(gamestate && gamestate.userIsInGame(currentUser)) {
 							gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user', 
-							                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL username',
+							                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL username',
 								function(err, gamestate) {
 									if(err) { console.log('load populate err: ' + err); }
 									socket.emit('sending gamestate', gamestate, true);
@@ -159,7 +164,7 @@ module.exports = function(server, sessionStore) {
 								} else {
 									gamestate.markModified('unusedTiles');
 									gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
-									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
+									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
 										function(err, gamestate) {
 											if(err) { 
 												console.log('send move populate err: ' + err);

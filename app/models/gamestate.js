@@ -36,7 +36,12 @@ var gamestateSchema = mongoose.Schema({
         	fabric: Number,
         	wine: Number,
         	wheat: Number
-        }
+        },
+        towers: Number,
+        capturedMeeples: [{
+        	meepleType: String,
+        	playerIndex: Number
+        }]
     }],
     unusedTiles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tile' }],
     activeTile: {
@@ -67,6 +72,12 @@ var gamestateSchema = mongoose.Schema({
             meepleType: String, // 'normal', 'large', 'pig', 'builder', etc for different types of meeples
             scored: Boolean // whether the meeple has already had score assigned for it (only used at game end, otherwise the meeple is removed when it is scored)
         }],
+        tower: {
+        	height: Number, // number of tower floors placed on this tower
+        	completed: Boolean,
+        	meepleType: String, // 'normal' or 'large', only followers can be used to complete a tower
+        	playerIndex: Number // which player completed this tower
+        },
         northTileIndex: Number, // references placedTiles
         southTileIndex: Number,
         westTileIndex: Number,
@@ -836,6 +847,14 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 					wheat: 0
 				};
 			}
+			if(expansions.indexOf('the-tower') !== -1) {
+				newGame.players[i].towers = newGame.players.length === 1 ? 30 : // if playing solo let them have all the tower pieces
+				                            newGame.players.length === 2 ? 10 :
+				                            newGame.players.length === 3 ? 9 :
+				                            newGame.players.length === 4 ? 7 :
+				                            newGame.players.length === 5 ? 6 :
+				                                                           5;
+			}
 			newGame.players[i].active = (i === startingPlayer);
 			// choose a random remaining color for this player
 			newGame.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
@@ -846,77 +865,87 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 
 //TODO: remove all autocomplete
 gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
-	var gamestate = this;
-	var validPlacement = false;
-	// get the active player
-	var activePlayer, activePlayerIndex;
-	for(var i1 = 0; i1 < gamestate.players.length; i1++) {
-		if(gamestate.players[i1].active) {
-			activePlayer = gamestate.players[i1];
-			activePlayerIndex = i1;
-			break;
+	/* move: {
+	 *     placement: {    // x and y of where the tile is to be placed
+	 *         x: Number,
+	 *         y: Number,
+	 *     },
+	 *     rotation: Number, // number of clockwise 90° rotations
+	 *     meeple: {
+	 *         meepleType: String, // 'normal', 'large', 'pig', etc
+	 *         locationType: String, 
+	 *         index: Number
+	 *     },
+	 *     tower: {
+	 *         meepleType: String, // 'normal' or 'large', only set if tower is being completed instead of added to
+	 *         tileIndex: Number, // index of tile tower or completing meeple is being placed on
+	 *         capture: {
+	 *             tileIndex: Number, // index in placedTiles of tile whose meeple is being captured
+	 *             meepleIndex: Number, // index in placedTiles.meeples of meeple being captured
+	 *             exchangeType: String
+	 *         }
+	 *     }
+	 * }
+	 */
+	this.populate('activeTile.tile players.user', function(err, gamestate) {
+		var validPlacement = false;
+		// get the active player
+		var activePlayer, activePlayerIndex;
+		for(var i1 = 0; i1 < gamestate.players.length; i1++) {
+			if(gamestate.players[i1].active) {
+				activePlayer = gamestate.players[i1];
+				activePlayerIndex = i1;
+				break;
+			}
 		}
-	}
-	//TODO: remove this eventually, just used for transition to new meepleType flag in move
-	if(move && move.meeple && !move.meeple.meepleType) {
-		move.meeple.meepleType = move.meeple.large ? 'large' : 'normal';
-	}
-	// validate tile and meeple placement
-	for(var i2 = 0; i2 < gamestate.activeTile.validPlacements.length; i2++) {
-		var placement = gamestate.activeTile.validPlacements[i2];
-		if(placement.x === move.placement.x && 
-		   placement.y === move.placement.y) {
-			for(var i3 = 0; i3 < placement.rotations.length; i3++) {
-				if(placement.rotations[i3].rotation === move.rotation) {
-					// the placement is valid if this x/y/rotation was previously added to the active tiles valid placements
-					// and either there wasn't a meeple placed
-					// or there was a meeple placed and the user has at least 1 normal meeple or the has(MeepleType)Meeple flag is true for their player
-					if(!move.meeple) {
-						validPlacement = true;
-					} else if((move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) ||
-					          (move.meeple.meepleType !== 'normal' && activePlayer[getMeepleFlagFromType(move.meeple.meepleType)])) {
-					    var meepleType = move.meeple.meepleType === 'large' ? 'normal' : move.meeple.meepleType;
-						for(var i4 = 0; i4 < placement.rotations[i3].meeples.length; i4++) {
-							if(placement.rotations[i3].meeples[i4].meepleType === meepleType &&
-							   placement.rotations[i3].meeples[i4].locationType === move.meeple.locationType &&
-							   placement.rotations[i3].meeples[i4].index === move.meeple.index) {
-								validPlacement = true;
-								break;
+		// if move is using older move format still (due to cached page) convert it to the new format
+		if(move && move.meeple && !move.meeple.meepleType) {
+			move.meeple.meepleType = move.meeple.large ? 'large' : 'normal';
+		}
+		// validate tile and meeple placement
+		for(var i2 = 0; i2 < gamestate.activeTile.validPlacements.length; i2++) {
+			var placement = gamestate.activeTile.validPlacements[i2];
+			if(placement.x === move.placement.x && 
+			   placement.y === move.placement.y) {
+				for(var i3 = 0; i3 < placement.rotations.length; i3++) {
+					if(placement.rotations[i3].rotation === move.rotation) {
+						// the placement is valid if this x/y/rotation was previously added to the active tiles valid placements
+						// and either there wasn't a meeple placed
+						// or there was a meeple placed and the user has at least 1 normal meeple or the has(MeepleType)Meeple flag is true for their player
+						if(!move.meeple) {
+							validPlacement = true;
+						} else if((move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) ||
+						          (move.meeple.meepleType !== 'normal' && activePlayer[getMeepleFlagFromType(move.meeple.meepleType)])) {
+						    var meepleType = move.meeple.meepleType === 'large' ? 'normal' : move.meeple.meepleType;
+							for(var i4 = 0; i4 < placement.rotations[i3].meeples.length; i4++) {
+								if(placement.rotations[i3].meeples[i4].meepleType === meepleType &&
+								   placement.rotations[i3].meeples[i4].locationType === move.meeple.locationType &&
+								   placement.rotations[i3].meeples[i4].index === move.meeple.index) {
+									validPlacement = true;
+									break;
+								}
 							}
 						}
+						break;
 					}
-					break;
 				}
+				break;
 			}
-			break;
 		}
-	}
-	if(validPlacement) {
-		// add tile creating proper north/south/east/west links to the existing placed tiles
-		var newTile = {
-			_id: mongoose.Types.ObjectId(),
-			tile: gamestate.activeTile.tile,
-			rotation: move.rotation,
-			x: move.placement.x,
-			y: move.placement.y,
-			playerIndex: activePlayerIndex
-		};
-		// validate that the player has the proper type of meeple for placement
-		if(move.meeple) {
-			if(move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) {
-				activePlayer.remainingMeeples -= 1;
-				newTile.meeples = [{
-					playerIndex: activePlayerIndex,
-					placement: {
-						locationType: move.meeple.locationType,
-						index: move.meeple.index
-					},
-					meepleType: move.meeple.meepleType
-				}];
-			} else if(move.meeple.meepleType !== 'normal') {
-				var meepleFlagName = getMeepleFlagFromType(move.meeple.meepleType);
-				if(activePlayer[meepleFlagName] === true) {
-					activePlayer[meepleFlagName] = false;
+		if(validPlacement) {
+			// add tile creating proper north/south/east/west links to the existing placed tiles
+			var newTile = {
+				_id: mongoose.Types.ObjectId(),
+				tile: gamestate.activeTile.tile,
+				rotation: move.rotation,
+				x: move.placement.x,
+				y: move.placement.y,
+				playerIndex: activePlayerIndex
+			};
+			// validate that the player has the proper type of meeple for placement
+			if(move.meeple) {
+				if(move.meeple.meepleType === 'normal' && activePlayer.remainingMeeples > 0) {
+					activePlayer.remainingMeeples -= 1;
 					newTile.meeples = [{
 						playerIndex: activePlayerIndex,
 						placement: {
@@ -925,135 +954,231 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 						},
 						meepleType: move.meeple.meepleType
 					}];
+				} else if(move.meeple.meepleType !== 'normal') {
+					var meepleFlagName = getMeepleFlagFromType(move.meeple.meepleType);
+					if(activePlayer[meepleFlagName] === true) {
+						activePlayer[meepleFlagName] = false;
+						newTile.meeples = [{
+							playerIndex: activePlayerIndex,
+							placement: {
+								locationType: move.meeple.locationType,
+								index: move.meeple.index
+							},
+							meepleType: move.meeple.meepleType
+						}];
+					}
 				}
 			}
-		}
-		// create links between the new tile and existing placed tiles
-		for(var i5 = 0; i5 < gamestate.placedTiles.length; i5++) {
-			var placedTile = gamestate.placedTiles[i5];
-			if(placedTile.x === newTile.x) {
-				if(placedTile.y === newTile.y - 1) {
-					newTile.northTileIndex = i5;
-					placedTile.southTileIndex = gamestate.placedTiles.length;
-				} else if(placedTile.y === newTile.y + 1) {
-					newTile.southTileIndex = i5;
-					placedTile.northTileIndex = gamestate.placedTiles.length;
-				}
-			} else if(placedTile.y === newTile.y) {
-				if(placedTile.x === newTile.x - 1) {
-					newTile.westTileIndex = i5;
-					placedTile.eastTileIndex = gamestate.placedTiles.length;
-				} else if(placedTile.x === newTile.x + 1) {
-					newTile.eastTileIndex = i5;
-					placedTile.westTileIndex = gamestate.placedTiles.length;
+			// set up the base tower with no tokens if this tile has a tower
+			if(newTile.tile.tower) {
+				newTile.tower = {
+					height: 0,
+					completed: false
+				};
+			}
+			// if the user sent in a move with a tower placement or completion
+			if(move && move.tower && !move.meeple) {
+ 				var tower = gamestate.placedTiles[move.tower.tileIndex].tower;
+	 			// if a tower is being completed by a meeple
+	 			if(move.tower.meepleType) {
+	 				// if the player has the appropriate meeple remove it
+	 				var towerCompleted = false;
+					if(move.tower.meepleType === 'normal' && activePlayer.remainingMeeples > 0) {
+						activePlayer.remainingMeeples -= 1;
+						towerCompleted = true;
+					} else if(move.tower.meepleType !== 'normal' && move.tower.meepleType !== 'builder' && move.tower.meepleType !== 'pig') {
+						var towerMeepleFlagName = getMeepleFlagFromType(move.tower.meepleType);
+						if(activePlayer[towerMeepleFlagName] === true) {
+							activePlayer[towerMeepleFlagName] = false;
+							towerCompleted = true;
+						}
+					}
+	 				// and mark the tower as complete
+					if(towerCompleted) {
+		 				tower.completed = true;
+		 				tower.meepleType = move.tower.meepleType;
+		 				tower.playerIndex = activePlayerIndex;
+					}
+	 			} else if(activePlayer.towers > 0) {
+	 				// a tower floor is being placed so increase the tower height and remove one of their tokens
+	 				tower.height += 1;
+	 				activePlayer.towers -= 1;
+	 				// if a meeple was captured remove it and check for exchanges
+	 				if(move.tower.capture) {
+	 					var capturedMeeple = gamestate.placedTiles[tower.capture.tileIndex].meeples.splice(tower.capture.meepleIndex, 1)[0];
+	 					// add a message about the capture to the game messages
+	 					var message = activePlayer.user.username + ' captured a ' + capturedMeeple.meepleType + ' meeple from ' + gamestate.players[capturedMeeple.playerIndex].user.username;
+	 					gamestate.messages.push({ username: null, message: message });
+	 					// exchange this meeple if possible
+	 					var meepleIndexForExchange;
+	 					var playerBeingCapturedFrom = gamestate.players[capturedMeeple.playerIndex];
+	 					for(var i = 0; i < playerBeingCapturedFrom.capturedMeeples.length; i++) {
+	 						var meepleForExchange = playerBeingCapturedFrom.capturedMeeples[i];
+	 						if(move.tower.capture.exchangeType === meepleForExchange.meepleType) {
+	 							// if this meeple is the type specified by the user get it
+	 							meepleIndexForExchange = i;
+	 						} else if(move.tower.capture.exchangeType === undefined) {
+ 								// if the user didn't specify a type to capture
+	 							if(meepleIndexForExchange === undefined) {
+	 								// capture the first meeple we find
+	 								meepleIndexForExchange = i;
+	 							} else if(playerBeingCapturedFrom.capturedMeeples[meepleIndexForExchange].meepleType === 'normal' &&
+	 							          playerBeingCapturedFrom.capturedMeeples[i].meepleType === 'large') {
+									// and if we are currently getting a normal meeple back and find a large one get that instead
+	 								meepleIndexForExchange = i;          	
+								}
+	 						}
+	 					}
+	 					// if we found a meeple to exchange refund both players their meeples and remove them, otherwise record the meeple as captured
+	 					//TODO: validate that this doesn't need any markModified calls to store to backend
+	 					if(meepleIndexForExchange) {
+							if(capturedMeeple.meepleType === 'normal') {
+								gamestate.players[capturedMeeple.playerIndex].remainingMeeples++;
+							} else {
+								gamestate.players[capturedMeeple.playerIndex][getMeepleFlagFromType(capturedMeeple.meepleType)] = true;
+							}
+							var returnedMeeple = playerBeingCapturedFrom.capturedMeeples.splice(meepleIndexForExchange, 1)[0];
+							if(returnedMeeple.meepleType === 'normal') {
+								gamestate.players[returnedMeeple.playerIndex].remainingMeeples++;
+							} else {
+								gamestate.players[returnedMeeple.playerIndex][getMeepleFlagFromType(returnedMeeple.meepleType)] = true;
+							}
+	 					} else {
+		 					activePlayer.capturedMeeples.push({ 
+		 						playerIndex: capturedMeeple.playerIndex, 
+		 						meepleType: capturedMeeple.meepleType 
+		 					});
+	 					}
+	 				}
+	 			}
+			}
+			// create links between the new tile and existing placed tiles
+			for(var i5 = 0; i5 < gamestate.placedTiles.length; i5++) {
+				var placedTile = gamestate.placedTiles[i5];
+				if(placedTile.x === newTile.x) {
+					if(placedTile.y === newTile.y - 1) {
+						newTile.northTileIndex = i5;
+						placedTile.southTileIndex = gamestate.placedTiles.length;
+					} else if(placedTile.y === newTile.y + 1) {
+						newTile.southTileIndex = i5;
+						placedTile.northTileIndex = gamestate.placedTiles.length;
+					}
+				} else if(placedTile.y === newTile.y) {
+					if(placedTile.x === newTile.x - 1) {
+						newTile.westTileIndex = i5;
+						placedTile.eastTileIndex = gamestate.placedTiles.length;
+					} else if(placedTile.x === newTile.x + 1) {
+						newTile.eastTileIndex = i5;
+						placedTile.westTileIndex = gamestate.placedTiles.length;
+					}
 				}
 			}
-		}
-		// and then add it to the placed tiles
-		gamestate.placedTiles.push(newTile);
-		gamestate.populate('placedTiles.tile players.user', function(err, gamestate) {
-			var builderActivated = false;
-			var featureInfo, meepleIndex, meepleTile;
-			var newlyPlacedTile = gamestate.placedTiles[gamestate.placedTiles.length - 1];
-			// console.log('gamestate before cities =>' + JSON.stringify(gamestate));
-			// console.log('==========================');
-			// check for cities with meeples on them connected to the active tile which may have been completed by the placement
-			for(var i = 0; i < newlyPlacedTile.tile.cities.length; i++) {
-				// if not placing a builder in this move check for an activated builder on this feature
-				if(move.meeple === undefined || move.meeple.meepleType !== 'builder') {
-					featureInfo = getFeatureInfo(newlyPlacedTile, i, 'city', gamestate);
-					for(var i1 = 0; i1 < featureInfo.tilesWithMeeples.length; i1++) {
-						meepleIndex = featureInfo.tilesWithMeeples[i1].meepleIndex;
-						meepleTile = featureInfo.tilesWithMeeples[i1].placedTile;
-						if(meepleTile.meeples[meepleIndex].meepleType === 'builder' && meepleTile.meeples[meepleIndex].playerIndex === activePlayerIndex) {
-							builderActivated = true;
-							break;
+			// and then add it to the placed tiles
+			gamestate.placedTiles.push(newTile);
+			gamestate.populate('placedTiles.tile players.user', function(err, gamestate) {
+				var builderActivated = false;
+				var featureInfo, meepleIndex, meepleTile;
+				var newlyPlacedTile = gamestate.placedTiles[gamestate.placedTiles.length - 1];
+				// console.log('gamestate before cities =>' + JSON.stringify(gamestate));
+				// console.log('==========================');
+				// check for cities with meeples on them connected to the active tile which may have been completed by the placement
+				for(var i = 0; i < newlyPlacedTile.tile.cities.length; i++) {
+					// if not placing a builder in this move check for an activated builder on this feature
+					if(move.meeple === undefined || move.meeple.meepleType !== 'builder') {
+						featureInfo = getFeatureInfo(newlyPlacedTile, i, 'city', gamestate);
+						for(var i1 = 0; i1 < featureInfo.tilesWithMeeples.length; i1++) {
+							meepleIndex = featureInfo.tilesWithMeeples[i1].meepleIndex;
+							meepleTile = featureInfo.tilesWithMeeples[i1].placedTile;
+							if(meepleTile.meeples[meepleIndex].meepleType === 'builder' && meepleTile.meeples[meepleIndex].playerIndex === activePlayerIndex) {
+								builderActivated = true;
+								break;
+							}
+						}
+					}
+					checkAndFinalizeFeature(newlyPlacedTile, i, 'city', false, gamestate);
+				}
+				// console.log('gamestate after cities =>' + JSON.stringify(gamestate));
+				// console.log('==========================');
+				// and check for roads
+				for(var k = 0; k < newlyPlacedTile.tile.roads.length; k++) {
+					// if not placing a builder in this move check for an activated builder on this feature
+					if(move.meeple === undefined || move.meeple.meepleType !== 'builder') {
+						featureInfo = getFeatureInfo(newlyPlacedTile, k, 'road', gamestate);
+						for(var k1 = 0; k1 < featureInfo.tilesWithMeeples.length; k1++) {
+							meepleIndex = featureInfo.tilesWithMeeples[k1].meepleIndex;
+							meepleTile = featureInfo.tilesWithMeeples[k1].placedTile;
+							if(meepleTile.meeples[meepleIndex].meepleType === 'builder' && meepleTile.meeples[meepleIndex].playerIndex === activePlayerIndex) {
+								builderActivated = true;
+								break;
+							}
+						}
+					}
+					checkAndFinalizeFeature(newlyPlacedTile, k, 'road', false, gamestate);
+				}
+				// check for any completed cloisters caused by the tile placement both on this tile and on any nearby tiles
+				var northTile, northwestTile, northEastTile, westTile, eastTile, southTile, southwestTile, southeastTile;
+				if(newlyPlacedTile.northTileIndex !== undefined) {
+					northTile = gamestate.placedTiles[newlyPlacedTile.northTileIndex];
+					if(northTile.tile.cloister) {
+						checkAndFinalizeFeature(northTile, 1, 'cloister', false, gamestate);
+					}
+					if(northTile.westTileIndex !== undefined) {
+						northwestTile = gamestate.placedTiles[northTile.westTileIndex];
+						if(northwestTile.tile.cloister) {
+							checkAndFinalizeFeature(northwestTile, 1, 'cloister', false, gamestate);
+						}
+					}
+					if(northTile.eastTileIndex !== undefined) {
+						northEastTile = gamestate.placedTiles[northTile.eastTileIndex];
+						if(northEastTile.tile.cloister) {
+							checkAndFinalizeFeature(northEastTile, 1, 'cloister', false, gamestate);
 						}
 					}
 				}
-				checkAndFinalizeFeature(newlyPlacedTile, i, 'city', false, gamestate);
-			}
-			// console.log('gamestate after cities =>' + JSON.stringify(gamestate));
-			// console.log('==========================');
-			// and check for roads
-			for(var k = 0; k < newlyPlacedTile.tile.roads.length; k++) {
-				// if not placing a builder in this move check for an activated builder on this feature
-				if(move.meeple === undefined || move.meeple.meepleType !== 'builder') {
-					featureInfo = getFeatureInfo(newlyPlacedTile, k, 'road', gamestate);
-					for(var k1 = 0; k1 < featureInfo.tilesWithMeeples.length; k1++) {
-						meepleIndex = featureInfo.tilesWithMeeples[k1].meepleIndex;
-						meepleTile = featureInfo.tilesWithMeeples[k1].placedTile;
-						if(meepleTile.meeples[meepleIndex].meepleType === 'builder' && meepleTile.meeples[meepleIndex].playerIndex === activePlayerIndex) {
-							builderActivated = true;
-							break;
+				if(newlyPlacedTile.southTileIndex !== undefined) {
+					southTile = gamestate.placedTiles[newlyPlacedTile.southTileIndex];
+					if(southTile.tile.cloister) {
+						checkAndFinalizeFeature(southTile, 1, 'cloister', false, gamestate);
+					}
+					if(southTile.westTileIndex !== undefined) {
+						southwestTile = gamestate.placedTiles[southTile.westTileIndex];
+						if(southwestTile.tile.cloister) {
+							checkAndFinalizeFeature(southwestTile, 1, 'cloister', false, gamestate);
+						}
+					}
+					if(southTile.eastTileIndex !== undefined) {
+						southeastTile = gamestate.placedTiles[southTile.eastTileIndex];
+						if(southeastTile.tile.cloister) {
+							checkAndFinalizeFeature(southeastTile, 1, 'cloister', false, gamestate);
 						}
 					}
 				}
-				checkAndFinalizeFeature(newlyPlacedTile, k, 'road', false, gamestate);
-			}
-			// check for any completed cloisters caused by the tile placement both on this tile and on any nearby tiles
-			var northTile, northwestTile, northEastTile, westTile, eastTile, southTile, southwestTile, southeastTile;
-			if(newlyPlacedTile.northTileIndex !== undefined) {
-				northTile = gamestate.placedTiles[newlyPlacedTile.northTileIndex];
-				if(northTile.tile.cloister) {
-					checkAndFinalizeFeature(northTile, 1, 'cloister', false, gamestate);
-				}
-				if(northTile.westTileIndex !== undefined) {
-					northwestTile = gamestate.placedTiles[northTile.westTileIndex];
-					if(northwestTile.tile.cloister) {
-						checkAndFinalizeFeature(northwestTile, 1, 'cloister', false, gamestate);
+				if(newlyPlacedTile.eastTileIndex !== undefined) {
+					eastTile = gamestate.placedTiles[newlyPlacedTile.eastTileIndex];
+					if(eastTile.tile.cloister) {
+						checkAndFinalizeFeature(eastTile, 1, 'cloister', false, gamestate);
 					}
 				}
-				if(northTile.eastTileIndex !== undefined) {
-					northEastTile = gamestate.placedTiles[northTile.eastTileIndex];
-					if(northEastTile.tile.cloister) {
-						checkAndFinalizeFeature(northEastTile, 1, 'cloister', false, gamestate);
+				if(newlyPlacedTile.westTileIndex !== undefined) {
+					westTile = gamestate.placedTiles[newlyPlacedTile.westTileIndex];
+					if(westTile.tile.cloister) {
+						checkAndFinalizeFeature(westTile, 1, 'cloister', false, gamestate);
 					}
 				}
-			}
-			if(newlyPlacedTile.southTileIndex !== undefined) {
-				southTile = gamestate.placedTiles[newlyPlacedTile.southTileIndex];
-				if(southTile.tile.cloister) {
-					checkAndFinalizeFeature(southTile, 1, 'cloister', false, gamestate);
+				if(newlyPlacedTile.tile.cloister) {
+					checkAndFinalizeFeature(newlyPlacedTile, 1, 'cloister', false, gamestate);
 				}
-				if(southTile.westTileIndex !== undefined) {
-					southwestTile = gamestate.placedTiles[southTile.westTileIndex];
-					if(southwestTile.tile.cloister) {
-						checkAndFinalizeFeature(southwestTile, 1, 'cloister', false, gamestate);
-					}
+				// console.log('gamestate after cloisters =>' + JSON.stringify(gamestate));
+				// console.log('==========================');
+				// change the active player if the builder wasn't activated (or if it was and the active player already had an extra turn)
+				if(!builderActivated || gamestate.placedTiles[gamestate.placedTiles.length - 2].playerIndex === activePlayerIndex) {
+					gamestate.players[activePlayerIndex].active = false;
+					gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
 				}
-				if(southTile.eastTileIndex !== undefined) {
-					southeastTile = gamestate.placedTiles[southTile.eastTileIndex];
-					if(southeastTile.tile.cloister) {
-						checkAndFinalizeFeature(southeastTile, 1, 'cloister', false, gamestate);
-					}
-				}
-			}
-			if(newlyPlacedTile.eastTileIndex !== undefined) {
-				eastTile = gamestate.placedTiles[newlyPlacedTile.eastTileIndex];
-				if(eastTile.tile.cloister) {
-					checkAndFinalizeFeature(eastTile, 1, 'cloister', false, gamestate);
-				}
-			}
-			if(newlyPlacedTile.westTileIndex !== undefined) {
-				westTile = gamestate.placedTiles[newlyPlacedTile.westTileIndex];
-				if(westTile.tile.cloister) {
-					checkAndFinalizeFeature(westTile, 1, 'cloister', false, gamestate);
-				}
-			}
-			if(newlyPlacedTile.tile.cloister) {
-				checkAndFinalizeFeature(newlyPlacedTile, 1, 'cloister', false, gamestate);
-			}
-			// console.log('gamestate after cloisters =>' + JSON.stringify(gamestate));
-			// console.log('==========================');
-			// change the active player if the builder wasn't activated (or if it was and the active player already had an extra turn)
-			if(!builderActivated || gamestate.placedTiles[gamestate.placedTiles.length - 2].playerIndex === activePlayerIndex) {
-				gamestate.players[activePlayerIndex].active = false;
-				gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
-			}
-			gamestate.drawTile(callback, autocomplete);
-		});
-	}
+				gamestate.drawTile(callback, autocomplete);
+			});
+		}
+	});
 };
 
 function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, checked) {
@@ -1344,7 +1469,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			
 			// create the message to add to the chatlog to record the scoring
 			var message;
-			if(scoringPlayers.length > 0) {
+			if(scoringPlayers.length > 0 && scoredPoints > 0) {
 				message = scoringPlayers.map(function(player) {
 					return player.user.username + ' (' + player.points + ')';
 				}).join(' and ') + ' scored ' + scoredPoints + ' for ' + (featureType === 'farm' ? ' a ' : gameFinished ? 'an uncomplete ' : 'a completed ') + featureType;
