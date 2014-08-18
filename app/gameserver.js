@@ -163,6 +163,7 @@ module.exports = function(server, sessionStore) {
 									console.log('place tile err: ' + err); 
 								} else {
 									gamestate.markModified('unusedTiles');
+									gamestate.markModified('activeTile.tile');
 									gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
 									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
 										function(err, gamestate) {
