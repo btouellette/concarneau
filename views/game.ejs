@@ -277,6 +277,8 @@ function resetActiveTile(withTransition) {
 	// hide any placed meeples and their outlines
 	$('#meeple-placements').attr('visibility', 'hidden');
 	$('#meeple-placements image').attr('visibility', 'hidden');
+	// hide the tower placements
+	$('.tower-outline,.placed-tower').attr('visibility', 'hidden');
 	// change back to default meeple placement mode
 	changeMeepleMode();
 	// show the meeples in the score area as they are no longer placed
@@ -431,6 +433,12 @@ function updateMeeplePlacements(withTransition) {
 			return 'rotate(' + -selectedMove.rotation * 90 + ')';
 		}
 	});
+	// rotate the tower outline on the active tile
+	d3.selectAll('#active-tile image.tower-outline,#active-tile image.placed-tower').transition().duration(withTransition ? transitionDuration : 0).attr({
+		transform: function(d) {
+			return 'translate(' + (d.offset.x - 1/2) * tileSize + ',' + (d.offset.y - 1/2) * tileSize + ') rotate(' + -selectedMove.rotation * 90 + ')';
+		}
+	});
 }
 
 $(document).ready(function() {
@@ -496,6 +504,9 @@ $(document).ready(function() {
 			      '</label></div>' + 
 			      '<div><label class="expansion-label">' + 
 			        '<input type="checkbox" id="traders-and-builders-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp2.pdf">Traders and Builders</a>' + 
+			      '</label></div>' + 
+			      '<div><label class="expansion-label">' + 
+			        '<input type="checkbox" id="the-tower-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp4.pdf">The Tower</a>' + 
 			      '</label></div>' + 
 			      <% } %>
 			      ''
@@ -669,6 +680,7 @@ $(document).ready(function() {
     		opacity: 1
 		});
 		d3.select('#meeple-placements').attr('visibility', null);
+		d3.selectAll('.tower-outline').attr('visibility', null);
     });
     confirmButton.append('circle').attr({
     	cy: 5 + tileSize / 2,
@@ -1048,6 +1060,8 @@ $(document).ready(function() {
         var tileGroup = placedTilePieces.selectAll('g.placed-tile').data(gamestate.placedTiles);
         tileGroup.enter().append('g').attr({
         	class: 'placed-tile'
+        }).append('g').attr({
+        	class: 'tower-pieces'
         });
         tileGroup.attr({
         	transform: function(d) { 
@@ -1094,6 +1108,107 @@ $(document).ready(function() {
         // and removing any meeples that have been picked up
         meepleImages.exit().remove();
         
+        var towerVerticalSize = tileSize / 12;
+        var placedTileTowers = tileGroup.select('g.tower-pieces').selectAll('image.tower').data(function(d, i) {
+        	if(!d.tower) {
+        		return [];
+        	}
+        	var towerData = [];
+        	for(var i = 0; i < d.tower.height; i++) {
+        		towerData.push({
+        			offset: d.tile.tower.offset,
+        			tileRotation: d.rotation,
+        			towerHeight: i
+        		});
+        	}
+        	return towerData;
+        });
+        placedTileTowers.enter().append('image').attr({
+        	class: 'tower',
+        	width: tileSize / 3,
+        	height: tileSize / 3,
+        	'xlink:href': '/content/images/meeples/tower.png'
+        });
+        placedTileTowers.attr({
+        	x: function(d) { return d.offset.x * tileSize - tileSize / 6; },
+        	y: function(d) { return d.offset.y * tileSize - tileSize / 6 - towerVerticalSize * d.towerHeight; },
+			transform: function(d) { 
+				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')'; 
+			}
+        });
+        placedTileTowers.exit().remove();
+        
+        function towerOutlineClicked(d, i) {
+			// hide any placed meeples
+			$('.placed-tower,.placed-meeple').attr('visibility', 'hidden');
+			// show all meeples from the score area
+			$('.score-group image').removeAttr('visibility');
+			// show the placed tower
+			$(this).siblings('.placed-tower').removeAttr('visibility');
+			delete selectedMove.meeple;
+        	selectedMove.tower = {
+        		tileIndex: d.tileIndex
+        	};
+        }
+        
+        // then draw outlines for tower placement
+        var placedTileTowerOutlines = tileGroup.selectAll('image.tower-outline').data(function(d, i) {
+        	if(!d.tile.tower || d.tower.completed) {
+        		return [];
+        	}
+    		return [{
+    			offset: d.tile.tower.offset,
+    			tileRotation: d.rotation,
+    			tileIndex: i,
+    			towerHeight: d.tower.height
+    		}];
+        });
+        // add any new outlines
+        placedTileTowerOutlines.enter().append('image').attr({
+        	class: 'tower-outline',
+        	width: tileSize / 3,
+        	height: tileSize / 3,
+        	'xlink:href': '/content/images/meeples/outline_tower.png',
+        	visibility: 'hidden'
+        }).on('click', towerOutlineClicked);
+        placedTileTowerOutlines.attr({
+        	x: function(d) { return d.offset.x * tileSize - tileSize / 6; },
+        	y: function(d) { return d.offset.y * tileSize - tileSize / 6 - towerVerticalSize * d.towerHeight; },
+			transform: function(d) { 
+				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')'; 
+			}
+        });
+        placedTileTowerOutlines.exit().remove();
+        
+        // then draw tower icons which will appear over the outline if selected
+        var placedTileTowerPlacements = tileGroup.selectAll('image.placed-tower').data(function(d, i) {
+        	if(!d.tile.tower || d.tower.completed) {
+        		return [];
+        	}
+    		return [{
+    			offset: d.tile.tower.offset,
+    			tileRotation: d.rotation,
+    			tileIndex: i,
+    			towerHeight: d.tower.height
+    		}];
+        })
+        // add any new outlines
+        placedTileTowerPlacements.enter().append('image').attr({
+        	class: 'placed-tower',
+        	width: tileSize / 3,
+        	height: tileSize / 3,
+        	'xlink:href': '/content/images/meeples/tower.png'
+        });
+        placedTileTowerPlacements.attr({
+        	x: function(d) { return d.offset.x * tileSize - tileSize / 6; },
+        	y: function(d) { return d.offset.y * tileSize - tileSize / 6 - towerVerticalSize * d.towerHeight; },
+			transform: function(d) { 
+				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')'; 
+			},
+        	visibility: 'hidden'
+        });
+        placedTileTowerPlacements.exit().remove();
+        
     	// draw the active tile
     	var activeTileImage = activeTileImageContainer.selectAll('#active-tile-image').data(gamestate.activeTile.tile ? [gamestate.activeTile.tile] : []);
         activeTileImage.enter().insert('image', '#active-tile-rotation-indicator').attr({
@@ -1111,6 +1226,60 @@ $(document).ready(function() {
         activeTileImage.exit().remove();
 		//TODO: show discarded tiles being tossed
 		
+        // then draw an outline for tower placement on the active tile
+        var activeTileTowerOutline = activeTileImageContainer.selectAll('image.tower-outline').data(function(d) {
+        	if(!gamestate.activeTile.tile || !gamestate.activeTile.tile.tower) {
+        		return [];
+        	}
+    		return [{
+    			offset: gamestate.activeTile.tile.tower.offset,
+    			tileIndex: $('.placed-tile').length
+    		}];
+        })
+        // add any new tower outlines needed
+        activeTileTowerOutline.enter().append('image').attr({
+        	class: 'tower-outline',
+        	width: tileSize / 3,
+        	height: tileSize / 3,
+        	'xlink:href': '/content/images/meeples/outline_tower.png',
+        	visibility: 'hidden'
+        }).on('click', towerOutlineClicked);
+        // update the location of the tower outlines based on the offset value
+        activeTileTowerOutline.attr({
+        	x: -tileSize / 6,
+        	y: -tileSize / 6,
+			transform: function(d) {
+				return 'translate(' + (d.offset.x - 1/2) * tileSize + ',' + (d.offset.y - 1/2) * tileSize + ')';
+			}
+        });
+        activeTileTowerOutline.exit().remove();
+        
+        // then draw placed (on top of outline) towers on the active tile
+        var activeTileTowerPlacement = activeTileImageContainer.selectAll('image.placed-tower').data(function(d) {
+        	if(!gamestate.activeTile.tile || !gamestate.activeTile.tile.tower) {
+        		return [];
+        	}
+    		return [{
+    			offset: gamestate.activeTile.tile.tower.offset
+    		}];
+        })
+        // add any new outlines
+        activeTileTowerPlacement.enter().append('image').attr({
+        	class: 'placed-tower',
+        	width: tileSize / 3,
+        	height: tileSize / 3,
+        	'xlink:href': '/content/images/meeples/tower.png'
+        });
+        activeTileTowerPlacement.attr({
+        	x: -tileSize / 6,
+        	y: -tileSize / 6,
+			transform: function(d) {
+				return 'translate(' + (d.offset.x - 1/2) * tileSize + ',' + (d.offset.y - 1/2) * tileSize + ')';
+			},
+        	visibility: 'hidden'
+        });
+        activeTileTowerPlacement.exit().remove();
+        
 		// draw the places where the active tile can be placed
 		var validPlacements = placements.selectAll('image.tile-placements').data(userIsActive ? gamestate.activeTile.validPlacements : []);
 		validPlacements.enter().append('image').attr({
@@ -1222,6 +1391,9 @@ $(document).ready(function() {
 			$(this).siblings('.placed-meeple').first().removeAttr('visibility');
 			// hide the appropriate meeple from the score area
 			$('#score-group-' + meepleColor + ' image.' + meeplePlacementMode + '-meeple').first().attr('visibility', 'hidden');
+			// hide any placed towers
+			$('.placed-tower').attr('visibility', 'hidden');
+			delete selectedMove.tower;
 			selectedMove.meeple = {
 				locationType: d.locationType,
 				index: d.index,
@@ -1484,6 +1656,56 @@ $(document).ready(function() {
 			visibility: null
 		});
 		builderMeeple.exit().remove();
+		
+		var towerMeeples = scoreGroups.selectAll('g.tower-meeple-group').data(function(d, i) {
+			var results = [];
+			if(gamestate.expansions.indexOf('the-tower') !== -1) {
+				if(d.towers > 0) {
+					results = [{ 
+						x: scoreBoardX,
+						y: i*(tileSize / 2 - 5) + tileSize / 14,
+						url: '/content/images/meeples/tower.png',
+						row: i,
+						count: d.towers
+					}];
+				}
+				// increment the position indicator if this is the last player we're drawing this for
+				if(i === gamestate.players.length - 1) {
+					scoreBoardX += largePieceWidth;
+				}
+			}
+			return results;
+		});
+		var towerMeeplesGroup = towerMeeples.enter().append('g').attr({
+			class: 'tower-meeple-group'
+		});
+		towerMeeplesGroup.append('image').attr({
+			class: 'tower-meeple',
+			y: function(d) { return d.y; },
+			width: largePieceWidth,
+			height: largePieceWidth,
+			'xlink:href': function(d) { return d.url; },
+			cursor: function(d) { 
+				return d.row === 0 ? 'pointer' : null; 
+			}
+		}).on('click', function(d) {
+			// if the meeple on the first row is clicked move into tower meeple placement mode
+			if(d.row === 0) { 
+				changeMeepleMode('tower');
+			}
+    		d3.event.stopPropagation();
+		});
+		towerMeeplesGroup.append('text').attr({
+			y: function(d) { return d.y + 7; },
+			'text-anchor': 'middle'
+		});
+		towerMeeples.select('image').attr({
+			x: function(d) { return d.x; }
+		});
+		towerMeeples.select('text').attr({
+			x: function(d) { return d.x + largePieceWidth / 2 + 13; }
+		}).text(function (d) { return d.count; });
+		towerMeeples.exit().remove();
 		
 		var goodsTokenScores = scoreGroups.selectAll('g.goods-token-scores').data(function(d, i) {
 			var results = [];
