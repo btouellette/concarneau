@@ -970,12 +970,36 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 				}
 			}
 			// set up the base tower with no tokens if this tile has a tower
-			if(newTile.tile.tower) {
+			// since mongoose creates the entire schema structure check a primitive for undefined rather than "tile.tower"
+			if(newTile.tile.tower.offset.x) {
 				newTile.tower = {
 					height: 0,
 					completed: false
 				};
 			}
+			// create links between the new tile and existing placed tiles
+			for(var i5 = 0; i5 < gamestate.placedTiles.length; i5++) {
+				var placedTile = gamestate.placedTiles[i5];
+				if(placedTile.x === newTile.x) {
+					if(placedTile.y === newTile.y - 1) {
+						newTile.northTileIndex = i5;
+						placedTile.southTileIndex = gamestate.placedTiles.length;
+					} else if(placedTile.y === newTile.y + 1) {
+						newTile.southTileIndex = i5;
+						placedTile.northTileIndex = gamestate.placedTiles.length;
+					}
+				} else if(placedTile.y === newTile.y) {
+					if(placedTile.x === newTile.x - 1) {
+						newTile.westTileIndex = i5;
+						placedTile.eastTileIndex = gamestate.placedTiles.length;
+					} else if(placedTile.x === newTile.x + 1) {
+						newTile.eastTileIndex = i5;
+						placedTile.westTileIndex = gamestate.placedTiles.length;
+					}
+				}
+			}
+			// and then add it to the placed tiles
+			gamestate.placedTiles.push(newTile);
 			// if the user sent in a move with a tower placement or completion
 			if(move && move.tower && !move.meeple) {
  				var tower = gamestate.placedTiles[move.tower.tileIndex].tower;
@@ -1052,29 +1076,6 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	 				}
 	 			}
 			}
-			// create links between the new tile and existing placed tiles
-			for(var i5 = 0; i5 < gamestate.placedTiles.length; i5++) {
-				var placedTile = gamestate.placedTiles[i5];
-				if(placedTile.x === newTile.x) {
-					if(placedTile.y === newTile.y - 1) {
-						newTile.northTileIndex = i5;
-						placedTile.southTileIndex = gamestate.placedTiles.length;
-					} else if(placedTile.y === newTile.y + 1) {
-						newTile.southTileIndex = i5;
-						placedTile.northTileIndex = gamestate.placedTiles.length;
-					}
-				} else if(placedTile.y === newTile.y) {
-					if(placedTile.x === newTile.x - 1) {
-						newTile.westTileIndex = i5;
-						placedTile.eastTileIndex = gamestate.placedTiles.length;
-					} else if(placedTile.x === newTile.x + 1) {
-						newTile.eastTileIndex = i5;
-						placedTile.westTileIndex = gamestate.placedTiles.length;
-					}
-				}
-			}
-			// and then add it to the placed tiles
-			gamestate.placedTiles.push(newTile);
 			gamestate.populate('placedTiles.tile players.user', function(err, gamestate) {
 				var builderActivated = false;
 				var featureInfo, meepleIndex, meepleTile;
