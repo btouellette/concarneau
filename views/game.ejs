@@ -329,8 +329,10 @@ function resetActiveTile(withTransition) {
 
 function changeMeepleMode(newMode) {
 	if(newMode === undefined) {
-		// activate the meeple placement mode for the first existing meeple if there is one
-		var firstFoundMeepleClass = $('.score-group:first image[class$="-meeple"]').first().attr('class');
+		// activate the meeple placement mode for the first (minimum x value) existing meeple if there is one
+		var firstFoundMeepleClass = $('.score-group:first image[class$="-meeple"]').sort(function(a, b) { 
+			return parseFloat(a.attributes.x.value) > parseFloat(b.attributes.x.value);
+		}).first().attr('class');
 		if(!firstFoundMeepleClass) {
 			return;
 		}
