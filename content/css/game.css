@@ -335,3 +335,8 @@ html, body
 {
 	margin-bottom: 0;
 }
+
+.turn-marker
+{
+	pointer-events: none;
+}
