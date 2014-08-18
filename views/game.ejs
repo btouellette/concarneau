@@ -172,6 +172,9 @@
 //TODO: add welcome popup explaining buttons and linking to rules if 0 games and 0 friends, allow to view again from settings
 //TODO: scoreboard/game record
 //TODO: You win! or You lost! alert when game is finished (with rematch button)
+//TODO: if there is a choice about which meeple to exchange from tower captures prompt the user to choose and populate meeple.tower.capture.exchangeType
+//TODO: keep win/loss stats
+
 var userGames = <%- JSON.stringify(user.activeGames) %>;
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
@@ -219,10 +222,10 @@ function enableGamesEdit(e) {
 		// if we deleted the game we are viewing remove relevant svg elements
 		if(gameID === currentGameID) {
 			resetActiveTile(false);
-			$('#placed-tiles,#turn-markers,#valid-placements,#meeple-placements').empty();
-			$('.score-group').remove();
-			d3.select('#score-bg').attr('opacity', 0);
+			$('#placed-tile-images,#placed-tile-pieces,#turn-markers,#valid-placements,#meeple-placements').empty();
 			$('#active-tile-image').remove();
+			$('.score-group').remove();
+			$('#score-bg').attr('opacity', 0);
 		}
 		// if there are no more games hide the edit/delete button
 		if($('.menu-game-listing').length === 0) {
@@ -593,7 +596,8 @@ $(document).ready(function() {
     var svg = d3.select('#game-svg').call(zoom).on("dblclick.zoom", null);
 	
 	var gameArea = svg.append('g').attr({ id: 'game-area' });
-    var placedTiles = gameArea.append('g').attr({ id: 'placed-tiles' });
+    var placedTileImages = gameArea.append('g').attr({ id: 'placed-tile-images' });
+    var placedTilePieces = gameArea.append('g').attr({ id: 'placed-tile-pieces' });
     var turnMarkerArea = gameArea.append('g').attr({ id: 'turn-markers' });
 	var placements = gameArea.append('g').attr({ id: 'valid-placements' });
     var activeTileContainer = gameArea.append('g').attr({ id: 'active-tile' });
@@ -1021,15 +1025,27 @@ $(document).ready(function() {
 		var userIsActive = reorderedPlayers[0].active;
     	
         // for all newly placed tiles add a group for the placed tile and its meeples
-        var tileGroup = placedTiles.selectAll('g.placed-tile').data(gamestate.placedTiles);
-        tileGroup.enter().append('g').attr({
-        	class: 'placed-tile'
-    	}).append('image').attr({
-    		class: 'tile-image',
-            x: 0,
+        var placedTileImage = placedTileImages.selectAll('image.placed-tile-image').data(gamestate.placedTiles);
+        placedTileImage.enter().append('image').attr({
+        	class: 'placed-tile-image',
+        	x: 0,
             y: 0,
             width: tileSize,
             height: tileSize
+    	});
+        placedTileImage.attr({
+        	transform: function(d) { 
+        		var x = svgWidth / 2 + d.x * tileSize;
+        		var y = svgHeight / 2 + d.y * tileSize;
+        		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
+    		},
+            'xlink:href': function(d) { return d.tile.imageURL; }
+        });
+        placedTileImage.exit().remove();
+        
+        var tileGroup = placedTilePieces.selectAll('g.placed-tile').data(gamestate.placedTiles);
+        tileGroup.enter().append('g').attr({
+        	class: 'placed-tile'
         });
         tileGroup.attr({
         	transform: function(d) { 
@@ -1038,11 +1054,8 @@ $(document).ready(function() {
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
     		}
         });
-        // then draw the tile image
-        placedTiles.selectAll('image.tile-image').data(gamestate.placedTiles).attr({
-            'xlink:href': function(d) { return d.tile.imageURL; }
-        });
         tileGroup.exit().remove();
+        
         // then draw the meeples placed on the tiles
         var meepleImages = tileGroup.selectAll('image.meeple').data(function(d) {
     		return d.meeples.map(function(item) { 
@@ -1161,19 +1174,20 @@ $(document).ready(function() {
 		validPlacements.exit().remove();
 		
 		// draw the potential meeple placement for the active tile
-		var allMeepleLocations = [];
-		if(gamestate.activeTile.tile) {
-			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.roads.map(function(item, index) { item.locationType = 'road'; item.index = index; return item; }));
-			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.farms.map(function(item, index) { item.locationType = 'farm'; item.index = index; return item; }));
-			allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.cities.map(function(item, index) { item.locationType = 'city'; item.index = index; return item; }));
-			if(gamestate.activeTile.tile.cloister) {
-				allMeepleLocations = allMeepleLocations.concat([{ locationType: 'cloister', index: 1, meepleOffset: { x: 1/2, y: 1/2 }}]);
-			}
-		}
-		// if there were none of a certain type remove all undefined elements added to the array
-		allMeepleLocations = allMeepleLocations.filter(function(n) { return n !== undefined; });
 		// draw the outlines on which meeples can be placed
-		var meepleOutlines = meeplePlacements.selectAll('g.outline-group').data(allMeepleLocations);
+		var meepleOutlines = meeplePlacements.selectAll('g.outline-group').data(function() {
+			var allMeepleLocations = [];
+			if(gamestate.activeTile.tile) {
+				allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.roads.map(function(item, index) { item.locationType = 'road'; item.index = index; return item; }));
+				allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.farms.map(function(item, index) { item.locationType = 'farm'; item.index = index; return item; }));
+				allMeepleLocations = allMeepleLocations.concat(gamestate.activeTile.tile.cities.map(function(item, index) { item.locationType = 'city'; item.index = index; return item; }));
+				if(gamestate.activeTile.tile.cloister) {
+					allMeepleLocations = allMeepleLocations.concat([{ locationType: 'cloister', index: 0, meepleOffset: gamestate.activeTile.tile.cloister.meepleOffset }]);
+				}
+			}
+			// if there were none of a certain type remove all undefined elements added to the array
+			return allMeepleLocations.filter(function(n) { return n !== undefined; });
+		});
 		var meepleGroup = meepleOutlines.enter().append('g').attr({
 			class: 'outline-group'
 		});
