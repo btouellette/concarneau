@@ -341,7 +341,20 @@ function changeMeepleMode(newMode) {
 		newMode = firstFoundMeepleClass.slice(0,-7);
 	}
 	
-	// do nothing if the mode doesn't actually change
+	// update all meeple placements (outlines and actual meeples) with the appropriate size and image
+	var size = newMode !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4;
+	d3.selectAll('#meeple-placements image').attr({
+		width: size,
+		height: size,
+		x: -size / 2,
+		y: -size / 2,
+		'xlink:href': function(d) {
+			var suffix = newMode === 'normal' || newMode === 'large' ? (d.locationType === 'farm' ? 'lying' : 'standing') : newMode;
+			return this.attributes.href.value.replace(/_[^\.]*/, '_' + suffix);
+		}
+	});
+	
+	// do nothing else if the mode doesn't actually change
 	if(newMode === meeplePlacementMode) {
 		return;
 	}
@@ -367,17 +380,6 @@ function changeMeepleMode(newMode) {
 			d3.selectAll('#meeple-placements .placed-meeple').attr('visibility', 'hidden');
 		}
 	}
-	var size = newMode !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4;
-	d3.selectAll('#meeple-placements image').attr({
-		width: size,
-		height: size,
-		x: -size / 2,
-		y: -size / 2,
-		'xlink:href': function(d) {
-			var suffix = newMode === 'normal' || newMode === 'large' ? (d.locationType === 'farm' ? 'lying' : 'standing') : newMode;
-			return this.attributes.href.value.replace(/_[^\.]*/, '_' + suffix);
-		}
-	});
 	meeplePlacementMode = newMode;
 	updateMeeplePlacements(false);
 }
