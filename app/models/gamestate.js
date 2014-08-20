@@ -711,7 +711,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				currentPlacement.meeples.push({
 					meepleType: 'normal',
 					locationType: 'cloister',
-					index: 1
+					index: 0
 				});
 			}
 		}
