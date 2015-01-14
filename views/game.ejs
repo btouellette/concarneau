@@ -1410,6 +1410,14 @@ $(document).ready(function() {
 			},
 			visibility: 'hidden'
 		}).on('click', function(d, i) {
+			// due to a regression in Firefox 34 (https://bugzilla.mozilla.org/show_bug.cgi?id=1119698) these events are firing incorrectly
+			// detect event firing on hidden element and redirect the click event manually
+			if($(this).attr('visibility') === 'hidden') {
+				var event = document.createEvent('SVGEvents');
+				event.initEvent('click', true, true);
+				d3.select(this.parentNode).select('.meeple-outline').node().dispatchEvent(event);
+				return;
+			}
 			// when a visible meeple is clicked hide it and remove it from the move
 			$(this).attr('visibility', 'hidden');
 			$('#score-group-' + meepleColor + ' image').removeAttr('visibility');
