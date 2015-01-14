@@ -2,6 +2,8 @@
 
 Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.
 
+Running at https://concarneau.herokuapp.com
+
 ## Instructions
 
 If you would like to download the code and try it for yourself:
