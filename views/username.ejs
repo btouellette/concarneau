@@ -2,15 +2,23 @@
 <html>
 <head>
 	<title>Concarneau</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link rel="apple-touch-icon" href="/content/images/tiles/base-game/RCr.png">
+    <link rel="apple-touch-startup-image" href="/content/images/ui/bg.jpg">
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
-		body { padding-top: 80px; }
+		body { padding-top: 40px; }
 		input { text-transform: lowercase; }
 		.jumbotron { font-size: 14px; }
 		.jumbotron h1 { font-size: 36px; }
+
+        @media (min-width: 768px) {
+            body { padding-top: 80px; }
+        }
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
@@ -19,14 +27,14 @@
 	<h3><span class="fa fa-user"></span> Choose a username</h3>
 	<p>This will be used for other users to find and play with you</p>
 	<p>Must be alphanumeric or underscore and 1-12 characters</p>
-		
+
 	<% if (message.length > 0) { %>
 		<div class="alert alert-danger"><%= message %></div>
 	<% } %>
-	
+
 	<form action="/username" method="post">
 		<div class="form-group">
-			<input type="text" class="form-control" 
+			<input type="text" class="form-control"
 			       maxlength="12" required="true" pattern="[a-z0-9_]{1,12}" title="Must be 1-12 alphanumeric or underscore characters"
 			       onkeyup="this.value = this.value.toLowerCase();"
 			       name="username">
@@ -35,5 +43,6 @@
 	</form>
 </div>
 </div>
+<script src="/content/js/standalone.js"></script>
 </body>
 </html>

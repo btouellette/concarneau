@@ -12,6 +12,10 @@
     }
 	</script>
     <title>Concarneau</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link rel="apple-touch-icon" href="/content/images/tiles/base-game/RCr.png">
+    <link rel="apple-touch-startup-image" href="/content/images/ui/bg.jpg">
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" type='text/css'>
@@ -20,22 +24,34 @@
     <link rel="stylesheet" href="/content/css/game.css" type='text/css'>
 </head>
 <body>
+<input type="checkbox" id="menu-checkbox" checked />
 <div id="wrapper">
+<label id="menu-open" for="menu-checkbox">
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+</label>
+<label id="menu-close" for="menu-checkbox">
+    <i class="fa fa-times"></i>
+</label>
+<label id="menu-overlay" for="menu-checkbox"></label>
 <div id="menus">
 	<div id="game-menu">
 		<span class="menu-header">GAMES <i class="fa fa-edit hidden" onclick="enableGamesEdit(event)"></i> <i class="fa fa-plus-square-o"></i></span>
-		<div id="active-games">
-			<div class="menu-sub-header">Your move:</div>
-		</div>
-		<div id="inactive-games">
-			<div class="menu-sub-header">Waiting on move:</div>
-		</div>
-		<div id="finished-games">
-			<div class="menu-sub-header">Finished:</div>
-		</div>
-		<!--<div>
-			<input type="checkbox" id="test-complete" />
-		</div>-->
+        <div id="list-games">
+            <div id="active-games">
+                <div class="menu-sub-header">Your move:</div>
+            </div>
+            <div id="inactive-games">
+                <div class="menu-sub-header">Waiting on move:</div>
+            </div>
+            <div id="finished-games">
+                <div class="menu-sub-header">Finished:</div>
+            </div>
+        </div>
+        <!--<div>
+            <input type="checkbox" id="test-complete" />
+        </div>-->
 	</div>
 	<div id="friends-menu">
 		<span class="menu-header">FRIENDS <i class="fa fa-edit hidden" onclick="enableFriendsEdit(event)"></i></span>
@@ -55,7 +71,7 @@
 		<a href="/profile">Profile</a>
 		<div class="checkbox">
 			<label>
-				<input type="checkbox" 
+				<input type="checkbox"
 				       onclick="socket.emit('email notification', this.checked)"
 				       <%- user.email_notifications ? 'checked="true"' : '' %>
 				       <%- !(user.facebook.email || user.google.email || user.local.email) ? 'disabled' : '' %>> E-mail notifications
@@ -64,7 +80,7 @@
 		</div>
 		<div class="checkbox">
 			<label>
-				<input type="checkbox" 
+				<input type="checkbox"
 				       onclick="socket.emit('twitter notification', this.checked)"
 				       <%- user.twitter_notifications ? 'checked="true"' : '' %>
 				       <%- !user.twitter.username ? 'disabled' : '' %>> Twitter notifications
@@ -114,7 +130,7 @@
 		<span>Buy the game?</span>
 		<a href="http://amzn.to/1pd6fg3"><img id="amazon-link" height="25" width="25" src="/content/images/ui/amazon_logo.png" /></a>
 	</div>
-	
+
 </div>
 <div id="svg-wrapper">
 	<svg id="game-svg" width="100%" height="100%">
@@ -152,6 +168,7 @@
 	</div>
 </div>
 </div>
+<script src="/content/js/standalone.js"></script>
 <script src="https://cdn.socket.io/socket.io-1.0.6.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"></script>
@@ -203,7 +220,7 @@ function enableFriendsEdit(e) {
 	    }
 	});
 	$(window).on('click.friend-edit', function() {
-		disableFriendsEdit();	
+		disableFriendsEdit();
 	});
 	e.stopPropagation();
 }
@@ -233,7 +250,7 @@ function enableGamesEdit(e) {
 		}
 	});
 	$(window).on('click.games-edit', function() {
-		disableGamesEdit();	
+		disableGamesEdit();
 	});
 	e.stopPropagation();
 }
@@ -272,7 +289,7 @@ function disableGamesEdit() {
         threshold: 150
     };
 })(jQuery);
-	
+
 function resetActiveTile(withTransition) {
 	// hide any placed meeples and their outlines
 	$('#meeple-placements').attr('visibility', 'hidden');
@@ -287,7 +304,7 @@ function resetActiveTile(withTransition) {
 	$('#active-tile').removeData('rotationIndex').removeData('placementIndex');
 	// remove any selected move
 	selectedMove = null;
-	
+
 	if(withTransition) {
 		var startingScale = reverseScale;
 		var startingTranslationX = reverseTranslation[0];
@@ -295,16 +312,16 @@ function resetActiveTile(withTransition) {
 		d3.selectAll('#confirm-button,#send-move-button').transition().duration(transitionDuration).attr('opacity', 0);
 		d3.selectAll('#confirm-button,#send-move-button').transition().delay(transitionDuration).attr('visibility', 'hidden');
 		d3.selectAll('#confirm-button > *').transition().delay(transitionDuration).attr('visibility', null);
-		d3.select('#active-tile').transition().duration(transitionDuration).attr({ 
+		d3.select('#active-tile').transition().duration(transitionDuration).attr({
 			transform: 'scale(' + reverseScale + ') translate(' + (reverseTranslation[0] + (svgWidth - tileSize - 5)) + ',' + (reverseTranslation[1] + 5) + ')'
 		}).select('#active-tile-rotation').attr({
 			transform: 'rotate(0)'
 		}).each('end', function() {
 			// check to see if zoom or pan has happened since this transition began and redraw if so
-			if(reverseScale !== startingScale || 
+			if(reverseScale !== startingScale ||
 			   reverseTranslation[0] !== startingTranslationX ||
 			   reverseTranslation[1] !== startingTranslationY) {
-				resetActiveTile(true);   	
+				resetActiveTile(true);
 	   		}
 		});
 		d3.select('#active-tile-rotation-indicator').transition().duration(transitionDuration).attr({
@@ -317,7 +334,7 @@ function resetActiveTile(withTransition) {
 			visibility: 'hidden'
 		});
 		d3.selectAll('#confirm-button > *').attr('visibility', null);
-		d3.select('#active-tile').attr({ 
+		d3.select('#active-tile').attr({
 			transform: 'scale(' + reverseScale + ') translate(' + (reverseTranslation[0] + (svgWidth - tileSize - 5)) + ',' + (reverseTranslation[1] + 5) + ')'
 		}).select('#active-tile-rotation').attr({
 			transform: 'rotate(0)'
@@ -332,7 +349,7 @@ function resetActiveTile(withTransition) {
 function changeMeepleMode(newMode) {
 	if(newMode === undefined) {
 		// activate the meeple placement mode for the first (minimum x value) existing meeple if there is one
-		var firstFoundMeepleClass = $('.score-group:first image[class$="-meeple"]').sort(function(a, b) { 
+		var firstFoundMeepleClass = $('.score-group:first image[class$="-meeple"]').sort(function(a, b) {
 			return parseFloat(a.attributes.x.value) > parseFloat(b.attributes.x.value);
 		}).first().attr('class');
 		if(!firstFoundMeepleClass) {
@@ -340,7 +357,7 @@ function changeMeepleMode(newMode) {
 		}
 		newMode = firstFoundMeepleClass.slice(0,-7);
 	}
-	
+
 	// update all meeple placements (outlines and actual meeples) with the appropriate size and image
 	var size = newMode !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4;
 	d3.selectAll('#meeple-placements image').attr({
@@ -353,17 +370,17 @@ function changeMeepleMode(newMode) {
 			return this.attributes.href.value.replace(/_[^\.]*/, '_' + suffix);
 		}
 	});
-	
+
 	// do nothing else if the mode doesn't actually change
 	if(newMode === meeplePlacementMode) {
 		return;
 	}
-	
+
 	// show clickable cursor on deactivating mode, show default cursor on activating mode
 	var firstScoreGroup = d3.select('.score-group');
 	firstScoreGroup.selectAll('.' + meeplePlacementMode + '-meeple').attr({ cursor: 'pointer' });
 	firstScoreGroup.selectAll('.' + newMode + '-meeple').attr({ cursor: null });
-	
+
 	if(selectedMove && selectedMove.meeple) {
 		// unhide (pick up) all meeples to start with
 		firstScoreGroup.selectAll('image').attr('visibility', null);
@@ -404,7 +421,7 @@ function updateMeeplePlacements(withTransition) {
 			}
 			return 'hidden';
 		},
-		transform: function() { 
+		transform: function() {
 			return 'rotate(' + -selectedMove.rotation * 90 + ')';
 		}
 	});
@@ -431,7 +448,7 @@ function updateMeeplePlacements(withTransition) {
 			// and hide this placed meeple
 			return 'hidden';
 		},
-		transform: function() { 
+		transform: function() {
 			return 'rotate(' + -selectedMove.rotation * 90 + ')';
 		}
 	});
@@ -446,7 +463,7 @@ function updateMeeplePlacements(withTransition) {
 $(document).ready(function() {
 	// maybe avoid getting some spam with this
 	$('#author-name').replaceWith('<a href="mailto:' + 'btouellette+concarneau' + '@' + 'gmail.com' + '">Brian Ouellette</a>');
-	
+
 	$('#btc-donate').qtip({
 		prerender: true,
 		content: {
@@ -458,7 +475,7 @@ $(document).ready(function() {
 		position: {
 			my: 'bottom center',
 			at: 'top center',
-			viewport: $(window), 
+			viewport: $(window),
             adjust: {
                 method: 'shift'
             }
@@ -475,7 +492,7 @@ $(document).ready(function() {
             render: function(event, api) {
             	$(this).attr('id', 'btc-popup');
                 // detect when it was clicked and store it
-                api.elements.target.click(function(e) { 
+                api.elements.target.click(function(e) {
                     api.wasClicked = !api.wasClicked;
                 });
             },
@@ -490,26 +507,26 @@ $(document).ready(function() {
             }
         }
 	});
-	
+
 	$('#game-menu .fa-plus-square-o').qtip({
 		content: {
-			text: '<div id="new-game-popup">' + 
-			        '<div>Click friends to add to game:</div>' + 
-			        '<div id="solo-notifier"><i class="fa fa-exclamation-triangle"></i> Currently playing solo</div>' + 
-			      '</div>' + 
-			      '<button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button>' + 
+			text: '<div id="new-game-popup">' +
+			        '<div>Click friends to add to game:</div>' +
+			        '<div id="solo-notifier"><i class="fa fa-exclamation-triangle"></i> Currently playing solo</div>' +
+			      '</div>' +
+			      '<button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button>' +
 			      '<button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>' +
 			      <% if (/*['gatskee','crmack','novamute','mom','werxes','greatgatskee','blakestock','evan'].indexOf(user.username) !== -1*/ true) { %>
 			      '<div id="expansion-header">Expansions:</div>' +
-			      '<div><label class="expansion-label">' + 
-			        '<input type="checkbox" id="inns-and-cathedrals-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp1.pdf">Inns and Cathedrals</a>' + 
-			      '</label></div>' + 
-			      '<div><label class="expansion-label">' + 
-			        '<input type="checkbox" id="traders-and-builders-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp2.pdf">Traders and Builders</a>' + 
-			      '</label></div>' + 
-			      //'<div><label class="expansion-label">' + 
-			      //  '<input type="checkbox" id="the-tower-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp4.pdf">The Tower</a>' + 
-			      //'</label></div>' + 
+			      '<div><label class="expansion-label">' +
+			        '<input type="checkbox" id="inns-and-cathedrals-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp1.pdf">Inns and Cathedrals</a>' +
+			      '</label></div>' +
+			      '<div><label class="expansion-label">' +
+			        '<input type="checkbox" id="traders-and-builders-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp2.pdf">Traders and Builders</a>' +
+			      '</label></div>' +
+			      //'<div><label class="expansion-label">' +
+			      //  '<input type="checkbox" id="the-tower-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp4.pdf">The Tower</a>' +
+			      //'</label></div>' +
 			      <% } %>
 			      ''
 		},
@@ -522,7 +539,7 @@ $(document).ready(function() {
 		position: {
 			my: 'left center',
 			at: 'center right',
-			viewport: $(window), 
+			viewport: $(window),
             adjust: {
                 method: 'shift',
                 x: 225
@@ -581,7 +598,7 @@ $(document).ready(function() {
 		e.preventDefault();
 		socket.emit('add friend', $('#add-friend-input').val());
 	});
-	
+
 	$('#chat-message-form').on('submit', function(e) {
 		e.preventDefault();
 		var input = $('#chat-message-input');
@@ -597,7 +614,7 @@ $(document).ready(function() {
 	document.body.insertBefore(c.responseXML.firstChild, document.body.firstChild);
 
     var lastGamestate;
-    
+
     var zoom = d3.behavior.zoom().scaleExtent([0.25, 1]).on('zoom', function() {
     	//d3.event.sourceEvent.preventDefault();
 		reverseScale = 1/d3.event.scale;
@@ -607,9 +624,9 @@ $(document).ready(function() {
 			resetActiveTile(false);
 		}
 	});
-	
+
     var svg = d3.select('#game-svg').call(zoom).on("dblclick.zoom", null);
-	
+
 	var gameArea = svg.append('g').attr({ id: 'game-area' });
     var placedTileImages = gameArea.append('g').attr({ id: 'placed-tile-images' });
     var placedTilePieces = gameArea.append('g').attr({ id: 'placed-tile-pieces' });
@@ -629,11 +646,11 @@ $(document).ready(function() {
     	opacity: 0,
     	'pointer-events': 'none'
     });
-    var meeplePlacements = activeTileImageContainer.append('g').attr({ 
-    	id: 'meeple-placements', 
-    	visibility: 'hidden' 
+    var meeplePlacements = activeTileImageContainer.append('g').attr({
+    	id: 'meeple-placements',
+    	visibility: 'hidden'
 	});
-	
+
     var uiArea = svg.append('g').attr({ id: 'ui-area' });
     var scoreArea = uiArea.append('g').attr({ id: 'score-area' });
     scoreArea.append('rect').attr({
@@ -697,7 +714,7 @@ $(document).ready(function() {
     	x: $('#svg-wrapper').width() - 5 - tileSize / 2 - 16,
     	y: 5 + tileSize / 2 - 16
     });
-    
+
 	function addNewGameListing(game, menuGroup) {
 		var gameID = game._id;
 		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
@@ -712,12 +729,13 @@ $(document).ready(function() {
    		$(element).click(function() {
      	  	socket.emit('load game', gameID);
      	  	$('#chat-wrapper').removeClass('hidden');
+            $('#menu-checkbox').attr('checked', false);
      	  	currentGameID = gameID;
 		}).appendTo(menuGroup);
 	    // show the game delete/edit button in case it was hidden
     	$('#game-menu .fa-edit').removeClass('hidden');
 	}
-	
+
     // draw the menus
     var $gameListings = $('#game-menu');
     var $activeGames = $('#active-games');
@@ -782,7 +800,7 @@ $(document).ready(function() {
     		}
     	}
     }
-    
+
     // reset the active tile if the user clicks the background and isn't doing a zoom/pan
     d3.select('#game-background').on('click', function() {
     	if (d3.event.defaultPrevented === false) {
@@ -790,7 +808,7 @@ $(document).ready(function() {
 		}
 	});
     // update the SVG on resize
-    $(window).on("debouncedresize", function () { if(lastGamestate) { draw(lastGamestate); }});  
+    $(window).on("debouncedresize", function () { if(lastGamestate) { draw(lastGamestate); }});
     // listen for new gamestate data from the server
     socket.on('sending gamestate', function(gamestate, loadingGame) {
     	// update the tile count in the menu
@@ -835,7 +853,7 @@ $(document).ready(function() {
     	// update the page title to inform the user there is something new if it is their turn
     	if(gamestate.players[activePlayerIndex].user._id === userID) {
 	    	document.title = '(!) Concarneau';
-	    	$('body').on('mousemove', function() { 
+	    	$('body').on('mousemove', function() {
 				document.title = 'Concarneau';
 				$('body').off('mousemove');
 			});
@@ -884,7 +902,7 @@ $(document).ready(function() {
 				addMessageToChat(newMessages[k], null);
 			}
 		}
-		// only draw if we are loading or are currently viewing this game 
+		// only draw if we are loading or are currently viewing this game
 		if(currentGameID === gamestate._id) {
 			draw(gamestate);
 		}
@@ -920,7 +938,7 @@ $(document).ready(function() {
 			draw(gamestate);
 		} else if(gamestate.players[activePlayerIndex].user._id === userID) {
 	    	document.title = '(!) Concarneau';
-	    	$('body').on('mousemove', function() { 
+	    	$('body').on('mousemove', function() {
 				document.title = 'Concarneau';
 				$('body').off('mousemove');
 			});
@@ -960,13 +978,13 @@ $(document).ready(function() {
 			addMessageToChat(message, username);
 		}
 	});
-	
+
 	function addMessageToChat(message, username) {
 		var $chatBody = $('#chat-body');
 		var scrolledToBottom = $chatBody[0].scrollHeight - $chatBody.scrollTop() == $chatBody.outerHeight();
 		// add the message either to the username group if it hasn't changed (and the last message was a chat not a system message) or create a new one
 		if(username !== null &&
-		   $chatBody.find('.chat-user-name').last().text() === username + ':' && 
+		   $chatBody.find('.chat-user-name').last().text() === username + ':' &&
 		   $chatBody.find('div').last().hasClass('chat-message')) {
 			$('#chat-message-list li').last().append($('<div class="chat-message">').text(message));
 		} else if(username !== null) {
@@ -1004,7 +1022,7 @@ $(document).ready(function() {
 			});
 		}
 	}
-    
+
     function draw(gamestate) {
         svgHeight = $('#svg-wrapper').height();
         svgWidth = $('#svg-wrapper').width();
@@ -1012,9 +1030,9 @@ $(document).ready(function() {
         if (svgWidth === 0 || svgHeight === 0) {
             return;
         }
-        
+
     	lastGamestate = gamestate;
-    	
+
     	// position the buttons under the active tile image in the upper right
     	d3.selectAll('#confirm-button > circle,#send-move-button > circle').attr({
     		cx: svgWidth - 5 - tileSize / 2
@@ -1022,9 +1040,9 @@ $(document).ready(function() {
     	d3.selectAll('#confirm-button > use,#send-move-button > use').attr({
     		x: svgWidth - 5 - tileSize / 2 - 16
     	});
-    	
+
     	resetActiveTile(false);
-    	
+
 		// rotate the player array such that this player is on top
 		// go through the entire array to ensure that if this player is in the game multiple times the active version is on top
 		var playerCount = gamestate.players.length;
@@ -1039,7 +1057,7 @@ $(document).ready(function() {
 		var meepleColor = reorderedPlayers[0].color;
 		var remainingMeeples = reorderedPlayers[0].remainingMeeples;
 		var userIsActive = reorderedPlayers[0].active;
-    	
+
         // for all newly placed tiles add a group for the placed tile and its meeples
         var placedTileImage = placedTileImages.selectAll('image.placed-tile-image').data(gamestate.placedTiles);
         placedTileImage.enter().append('image').attr({
@@ -1050,7 +1068,7 @@ $(document).ready(function() {
             height: tileSize
     	});
         placedTileImage.attr({
-        	transform: function(d) { 
+        	transform: function(d) {
         		var x = svgWidth / 2 + d.x * tileSize;
         		var y = svgHeight / 2 + d.y * tileSize;
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
@@ -1058,7 +1076,7 @@ $(document).ready(function() {
             'xlink:href': function(d) { return d.tile.imageURL; }
         });
         placedTileImage.exit().remove();
-        
+
         var tileGroup = placedTilePieces.selectAll('g.placed-tile').data(gamestate.placedTiles);
         tileGroup.enter().append('g').attr({
         	class: 'placed-tile'
@@ -1066,24 +1084,24 @@ $(document).ready(function() {
         	class: 'tower-pieces'
         });
         tileGroup.attr({
-        	transform: function(d) { 
+        	transform: function(d) {
         		var x = svgWidth / 2 + d.x * tileSize;
         		var y = svgHeight / 2 + d.y * tileSize;
         		return 'rotate(' + 90 * d.rotation + ',' + (x + tileSize / 2) + ',' + (y + tileSize / 2) + ') translate(' + x + ',' + y + ')';
     		}
         });
         tileGroup.exit().remove();
-        
+
         // then draw the meeples placed on the tiles
         var meepleImages = tileGroup.selectAll('image.meeple').data(function(d) {
-    		return d.meeples.map(function(item) { 
+    		return d.meeples.map(function(item) {
         		return {
         			color: gamestate.players[item.playerIndex].color,
         			rotation: d.rotation,
         			location: item.placement.locationType,
         			meepleType: item.meepleType,
         			meepleOffset:
-            			item.placement.locationType === 'cloister' ? 
+            			item.placement.locationType === 'cloister' ?
 	            			{ x: 1/2, y: 1/2 } :
 	            		item.placement.locationType === 'city' ?
 	            			d.tile['cities'][item.placement.index].meepleOffset :
@@ -1092,7 +1110,7 @@ $(document).ready(function() {
     		});
     	});
     	// adding any new meeples
-    	meepleImages.enter().append('image').attr({ 
+    	meepleImages.enter().append('image').attr({
     		class: 'meeple',
 			width: function(d) { return d.meepleType !== 'normal' ? tileSize * 3 / 8 : tileSize / 4 },
 			height: function(d) { return d.meepleType !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4; }
@@ -1100,16 +1118,16 @@ $(document).ready(function() {
     	meepleImages.attr({
         	x: function(d) { return tileSize * d.meepleOffset.x - (d.meepleType !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4) / 2; },
 			y: function(d) { return tileSize * d.meepleOffset.y - (d.meepleType !== 'normal'  ? tileSize * 3 / 8 : tileSize / 4) / 2; },
-			'xlink:href': function(d) { 
-				return '/content/images/meeples/' + d.color + '_' + (d.meepleType !== 'normal' && d.meepleType !== 'large' ? d.meepleType : (d.location === 'farm' ? 'lying' : 'standing')) +'.png'; 
+			'xlink:href': function(d) {
+				return '/content/images/meeples/' + d.color + '_' + (d.meepleType !== 'normal' && d.meepleType !== 'large' ? d.meepleType : (d.location === 'farm' ? 'lying' : 'standing')) +'.png';
 			},
-			transform: function(d) { 
-				return 'rotate(' + d.rotation * -90 + ',' + d.meepleOffset.x * tileSize + ',' + d.meepleOffset.y * tileSize + ')'; 
+			transform: function(d) {
+				return 'rotate(' + d.rotation * -90 + ',' + d.meepleOffset.x * tileSize + ',' + d.meepleOffset.y * tileSize + ')';
 			}
         });
         // and removing any meeples that have been picked up
         meepleImages.exit().remove();
-        
+
         var towerVerticalSize = tileSize / 12;
         var placedTileTowers = tileGroup.select('g.tower-pieces').selectAll('image.tower').data(function(d, i) {
         	if(!d.tower) {
@@ -1134,12 +1152,12 @@ $(document).ready(function() {
         placedTileTowers.attr({
         	x: function(d) { return d.offset.x * tileSize - tileSize / 6; },
         	y: function(d) { return d.offset.y * tileSize - tileSize / 6 - towerVerticalSize * d.towerHeight; },
-			transform: function(d) { 
-				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')'; 
+			transform: function(d) {
+				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')';
 			}
         });
         placedTileTowers.exit().remove();
-        
+
         function towerOutlineClicked(d, i) {
 			// hide any placed meeples
 			$('.placed-tower,.placed-meeple').attr('visibility', 'hidden');
@@ -1152,7 +1170,7 @@ $(document).ready(function() {
         		tileIndex: d.tileIndex
         	};
         }
-        
+
         // then draw outlines for tower placement
         var placedTileTowerOutlines = tileGroup.selectAll('image.tower-outline').data(function(d, i) {
         	if(!d.tile.tower || d.tower.completed) {
@@ -1176,12 +1194,12 @@ $(document).ready(function() {
         placedTileTowerOutlines.attr({
         	x: function(d) { return d.offset.x * tileSize - tileSize / 6; },
         	y: function(d) { return d.offset.y * tileSize - tileSize / 6 - towerVerticalSize * d.towerHeight; },
-			transform: function(d) { 
-				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')'; 
+			transform: function(d) {
+				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')';
 			}
         });
         placedTileTowerOutlines.exit().remove();
-        
+
         // then draw tower icons which will appear over the outline if selected
         var placedTileTowerPlacements = tileGroup.selectAll('image.placed-tower').data(function(d, i) {
         	if(!d.tile.tower || d.tower.completed) {
@@ -1204,13 +1222,13 @@ $(document).ready(function() {
         placedTileTowerPlacements.attr({
         	x: function(d) { return d.offset.x * tileSize - tileSize / 6; },
         	y: function(d) { return d.offset.y * tileSize - tileSize / 6 - towerVerticalSize * d.towerHeight; },
-			transform: function(d) { 
-				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')'; 
+			transform: function(d) {
+				return 'rotate(' + d.tileRotation * -90 + ',' + d.offset.x * tileSize + ',' + d.offset.y * tileSize + ')';
 			},
         	visibility: 'hidden'
         });
         placedTileTowerPlacements.exit().remove();
-        
+
     	// draw the active tile
     	var activeTileImage = activeTileImageContainer.selectAll('#active-tile-image').data(gamestate.activeTile.tile ? [gamestate.activeTile.tile] : []);
         activeTileImage.enter().insert('image', '#active-tile-rotation-indicator').attr({
@@ -1227,7 +1245,7 @@ $(document).ready(function() {
         });
         activeTileImage.exit().remove();
 		//TODO: show discarded tiles being tossed
-		
+
         // then draw an outline for tower placement on the active tile
         var activeTileTowerOutline = activeTileImageContainer.selectAll('image.tower-outline').data(function(d) {
         	if(!gamestate.activeTile.tile || !gamestate.activeTile.tile.tower) {
@@ -1255,7 +1273,7 @@ $(document).ready(function() {
 			}
         });
         activeTileTowerOutline.exit().remove();
-        
+
         // then draw placed (on top of outline) towers on the active tile
         var activeTileTowerPlacement = activeTileImageContainer.selectAll('image.placed-tower').data(function(d) {
         	if(!gamestate.activeTile.tile || !gamestate.activeTile.tile.tower) {
@@ -1281,7 +1299,7 @@ $(document).ready(function() {
         	visibility: 'hidden'
         });
         activeTileTowerPlacement.exit().remove();
-        
+
 		// draw the places where the active tile can be placed
 		var validPlacements = placements.selectAll('image.tile-placements').data(userIsActive ? gamestate.activeTile.validPlacements : []);
 		validPlacements.enter().append('image').attr({
@@ -1308,7 +1326,7 @@ $(document).ready(function() {
 				// show all the remaining meeples in case one was temporarily placed and is returned to the pool
 				$('#score-area image').removeAttr('visibility');
 				// reset the move
-				selectedMove = { 
+				selectedMove = {
 					placement: gamestate.activeTile.validPlacements[i]
 				};
 				// and reset the meeple mode if it was set
@@ -1345,7 +1363,7 @@ $(document).ready(function() {
 			}
 		});
 		validPlacements.exit().remove();
-		
+
 		// draw the potential meeple placement for the active tile
 		// draw the outlines on which meeples can be placed
 		var meepleOutlines = meeplePlacements.selectAll('g.outline-group').data(function() {
@@ -1383,7 +1401,7 @@ $(document).ready(function() {
 			x: -tileSize / 8,
 			y: -tileSize / 8,
 			'xlink:href': function(d) {
-				return '/content/images/meeples/outline_' + (d.locationType === 'farm' ? 'lying' : 'standing') +'.png'; 
+				return '/content/images/meeples/outline_' + (d.locationType === 'farm' ? 'lying' : 'standing') +'.png';
 			},
 			visibility: 'hidden'
 		}).on('click', function(d, i) {
@@ -1406,7 +1424,7 @@ $(document).ready(function() {
 			x: -tileSize / 8,
 			y: -tileSize / 8,
 			'xlink:href': function(d) {
-				return '/content/images/meeples/' + meepleColor + '_' + (d.locationType === 'farm' ? 'lying' : 'standing') +'.png'; 
+				return '/content/images/meeples/' + meepleColor + '_' + (d.locationType === 'farm' ? 'lying' : 'standing') +'.png';
 			},
 			visibility: 'hidden'
 		}).on('click', function(d, i) {
@@ -1440,9 +1458,9 @@ $(document).ready(function() {
 				y: gamestate.placedTiles[k].y,
 				color: gamestate.players[gamestate.placedTiles[k].playerIndex].color
 			});
-			k--;	
+			k--;
 		}
-		
+
 		var turnMarkers = turnMarkerArea.selectAll('rect.turn-marker').data(markers);
 		turnMarkers.enter().append('rect').attr({
 			class: 'turn-marker',
@@ -1460,7 +1478,7 @@ $(document).ready(function() {
 			stroke: function(d) { return d.color; }
 		});
 		turnMarkers.exit().remove();
-		
+
 		// draw the players scores and remaining meeples
 		var scoreGroups = scoreArea.selectAll('g.score-group').data(reorderedPlayers);
 		var group = scoreGroups.enter().append('g').attr({
@@ -1499,7 +1517,7 @@ $(document).ready(function() {
 		});
 		scoreGroups.select('text.point-total').text(function(d) { return d.points; });
 		scoreGroups.select('text.player-name-outline').text(function (d) { return d.user.username; });
-		scoreGroups.select('text.player-name').attr({ 
+		scoreGroups.select('text.player-name').attr({
 			fill: function(d) {
 				if(d.color === 'purple') {
 					return 'fuchsia';
@@ -1510,9 +1528,9 @@ $(document).ready(function() {
 			}
 		}).text(function (d) { return d.user.username; });
 		scoreGroups.exit().remove();
-		
+
 		//TODO: have the active player placed meeple move down from the remaining meeples onto the tile
-		var availableMeeples = scoreGroups.selectAll('image.normal-meeple').data(function(d, i) { 
+		var availableMeeples = scoreGroups.selectAll('image.normal-meeple').data(function(d, i) {
 			var array = [];
 			for(var k = 0; k < d.remainingMeeples; k++) {
 				array.push({
@@ -1532,7 +1550,7 @@ $(document).ready(function() {
 			height: tileSize / 4
 		}).on('click', function(d) {
 			// if the meeple on the first row is clicked move into normal meeple placement mode
-			if(d.row === 0) { 
+			if(d.row === 0) {
 				changeMeepleMode('normal');
 			}
     		d3.event.stopPropagation();
@@ -1543,15 +1561,15 @@ $(document).ready(function() {
 			visibility: null
 		});
 		availableMeeples.exit().remove();
-		
+
 		var scoreBoardX = 5 + 6*(tileSize / 4.75) + tileSize / 4;
-		
+
 		var largePieceWidth = tileSize * 3 / 8;
 		var availableLargeMeeple = scoreGroups.selectAll('image.large-meeple').data(function(d, i) {
 			var results = [];
 			if(gamestate.expansions.indexOf('inns-and-cathedrals') !== -1) {
 				if(d.hasLargeMeeple) {
-					results = [{ 
+					results = [{
 						x: scoreBoardX,
 						y: i*(tileSize / 2 - 5) + tileSize / 14,
 						url: '/content/images/meeples/' + d.color + '_standing.png',
@@ -1570,12 +1588,12 @@ $(document).ready(function() {
 			y: function(d) { return d.y; },
 			width: largePieceWidth,
 			height: largePieceWidth,
-			cursor: function(d) { 
-				return d.row === 0 ? 'pointer' : null; 
+			cursor: function(d) {
+				return d.row === 0 ? 'pointer' : null;
 			}
 		}).on('click', function(d) {
 			// if the meeple on the first row is clicked move into large meeple placement mode
-			if(d.row === 0) { 
+			if(d.row === 0) {
 				changeMeepleMode('large');
 			}
     		d3.event.stopPropagation();
@@ -1586,12 +1604,12 @@ $(document).ready(function() {
 			visibility: null
 		});
 		availableLargeMeeple.exit().remove();
-		
+
 		var pigMeeple = scoreGroups.selectAll('image.pig-meeple').data(function(d, i) {
 			var results = [];
 			if(gamestate.expansions.indexOf('traders-and-builders') !== -1) {
 				if(d.hasPigMeeple) {
-					results = [{ 
+					results = [{
 						x: scoreBoardX,
 						y: i*(tileSize / 2 - 5) + tileSize / 14,
 						url: '/content/images/meeples/' + d.color + '_pig.png',
@@ -1610,12 +1628,12 @@ $(document).ready(function() {
 			y: function(d) { return d.y; },
 			width: largePieceWidth,
 			height: largePieceWidth,
-			cursor: function(d) { 
-				return d.row === 0 ? 'pointer' : null; 
+			cursor: function(d) {
+				return d.row === 0 ? 'pointer' : null;
 			}
 		}).on('click', function(d) {
 			// if the meeple on the first row is clicked move into pig meeple placement mode
-			if(d.row === 0) { 
+			if(d.row === 0) {
 				changeMeepleMode('pig');
 			}
     		d3.event.stopPropagation();
@@ -1626,12 +1644,12 @@ $(document).ready(function() {
 			visibility: null
 		});
 		pigMeeple.exit().remove();
-		
+
 		var builderMeeple = scoreGroups.selectAll('image.builder-meeple').data(function(d, i) {
 			var results = [];
 			if(gamestate.expansions.indexOf('traders-and-builders') !== -1) {
 				if(d.hasBuilderMeeple) {
-					results = [{ 
+					results = [{
 						x: scoreBoardX,
 						y: i*(tileSize / 2 - 5) + tileSize / 14,
 						url: '/content/images/meeples/' + d.color + '_builder.png',
@@ -1650,12 +1668,12 @@ $(document).ready(function() {
 			y: function(d) { return d.y; },
 			width: largePieceWidth,
 			height: largePieceWidth,
-			cursor: function(d) { 
-				return d.row === 0 ? 'pointer' : null; 
+			cursor: function(d) {
+				return d.row === 0 ? 'pointer' : null;
 			}
 		}).on('click', function(d) {
 			// if the meeple on the first row is clicked move into builder meeple placement mode
-			if(d.row === 0) { 
+			if(d.row === 0) {
 				changeMeepleMode('builder');
 			}
     		d3.event.stopPropagation();
@@ -1666,12 +1684,12 @@ $(document).ready(function() {
 			visibility: null
 		});
 		builderMeeple.exit().remove();
-		
+
 		var towerMeeples = scoreGroups.selectAll('g.tower-meeple-group').data(function(d, i) {
 			var results = [];
 			if(gamestate.expansions.indexOf('the-tower') !== -1) {
 				if(d.towers > 0) {
-					results = [{ 
+					results = [{
 						x: scoreBoardX,
 						y: i*(tileSize / 2 - 5) + tileSize / 14,
 						url: '/content/images/meeples/tower.png',
@@ -1695,12 +1713,12 @@ $(document).ready(function() {
 			width: largePieceWidth,
 			height: largePieceWidth,
 			'xlink:href': function(d) { return d.url; },
-			cursor: function(d) { 
-				return d.row === 0 ? 'pointer' : null; 
+			cursor: function(d) {
+				return d.row === 0 ? 'pointer' : null;
 			}
 		}).on('click', function(d) {
 			// if the meeple on the first row is clicked move into tower meeple placement mode
-			if(d.row === 0) { 
+			if(d.row === 0) {
 				changeMeepleMode('tower');
 			}
     		d3.event.stopPropagation();
@@ -1716,7 +1734,7 @@ $(document).ready(function() {
 			x: function(d) { return d.x + largePieceWidth / 2 + 13; }
 		}).text(function (d) { return d.count; });
 		towerMeeples.exit().remove();
-		
+
 		var goodsTokenScores = scoreGroups.selectAll('g.goods-token-scores').data(function(d, i) {
 			var results = [];
 			if(gamestate.expansions.indexOf('traders-and-builders') !== -1) {
@@ -1766,14 +1784,14 @@ $(document).ready(function() {
 
 		// set the default meeple mode
 		changeMeepleMode();
-	    
+
 		// resize the score background
 		scoreArea.select('#score-bg').attr({
 			height: tileSize / 4 + reorderedPlayers.length*(tileSize / 2 - 5),
 			width: scoreBoardX + 20, // 15 (amount background shifted left of x axis) + 5 (right margin)
 			opacity: .75
 		});
-	    
+
 	    //TODO: show unused tile count, clickable to show remaining tile counts
     }
 });
