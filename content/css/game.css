@@ -452,9 +452,10 @@ html, body
         display: block;
     }
 
-    #menu-open
+    #menu-open,
+    #menu-overlay
     {
-        display: none;
+        display: none !important;
     }
 
     #svg-wrapper
