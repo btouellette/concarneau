@@ -2,12 +2,20 @@
 <html>
 <head>
 	<title>Concarneau</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link rel="apple-touch-icon" href="/content/images/tiles/base-game/RCr.png">
+    <link rel="apple-touch-startup-image" href="/content/images/ui/bg.jpg">
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
-		body { padding-top: 80px; }
+        body { padding-top: 40px; }
+
+        @media (min-width: 768px) {
+            body { padding-top: 80px; }
+        }
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
@@ -23,6 +31,7 @@
 		<a href="/auth/google" class="btn btn-danger"><span class="fa fa-google-plus"></span> Google+</a>
 	</div>
 </div>
+<script src="/content/js/standalone.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -31,7 +40,7 @@
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
   ga('create', 'UA-50702481-1', 'concarneau.herokuapp.com');
   ga('send', 'pageview');
-  
+
 $(document).ready(function() {
 	// maybe avoid getting some spam with this
 	$('#author-name').replaceWith('<a href="mailto:' + 'btouellette+concarneau' + '@' + 'gmail.com' + '">Brian Ouellette</a>');

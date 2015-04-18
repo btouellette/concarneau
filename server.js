@@ -80,7 +80,14 @@ app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 /
 
 // required for passport
 process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET || 'ilovescotchscotchyscotchscotch';
-app.use(session({ secret: process.env.EXPRESS_SESSION_SECRET, key: 'express.sid', store: sessionStore })); // session secret
+app.use(session({
+    secret: process.env.EXPRESS_SESSION_SECRET,
+    cookie: {
+        maxAge: 31536000
+    },
+    key: 'express.sid',
+    store: sessionStore
+})); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session

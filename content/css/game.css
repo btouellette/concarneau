@@ -24,10 +24,10 @@
 	display: none;
 }
 
-html, body 
-{ 
-	margin: 0; 
-	padding: 0; 
+html, body
+{
+	margin: 0;
+	padding: 0;
 	overflow: hidden;
 	font-family: 'Chunkfive', 'sans-serif';
 	height: 100%;
@@ -35,308 +35,436 @@ html, body
 
 #wrapper
 {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	margin: 0;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    margin: 0;
 }
 
 #menus
 {
-	position: absolute;
-	background-color: white;
-	top: 0;
-	left: 0;
-	bottom: 125px;
-	width: 225px;
-	overflow-y: auto;
+    position: absolute;
+    background-color: white;
+    top: 0;
+    left: 0;
+    bottom: 128px;
+    width: 249px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    z-index: 2;
+    display: none;
 }
 
 #menu-selection
 {
-	position: absolute;
-	bottom: 90px;
-	height: 32px;
+    position: absolute;
+    bottom: 80px;
+    z-index: 2;
+    display: none;
+    background-color: white;
+    width: 249px;
+    padding: 5px 0;
+    text-align: center;
 }
 
 #menu-selection > div
 {
-	margin-left: 18px;
-	margin-right: 18px;
-	display: inline-block;
-	cursor: pointer;
+    margin-left: 18px;
+    margin-right: 18px;
+    display: inline-block;
+    cursor: pointer;
 }
 
 #menu-selection > div:nth-of-type(1)
 {
-	fill: #808080;
+    fill: #808080;
 }
 
 #author-info
 {
-	position: absolute;
-	left: 5px;
-	bottom: 0;
-	height: 78px;
-	margin-bottom: 2px;
+    position: absolute;
+    background-color: white;
+    left: 0;
+    bottom: 0;
+    height: 78px;
+    width: 249px;
+    margin-bottom: 2px;
+    padding: 0 5px;
+    z-index: 2;
+    display: none;
 }
 
 #author-info form
 {
-	display: inline-block;
-	height: 25px;
-	vertical-align: bottom;
+    display: inline-block;
+    height: 25px;
+    vertical-align: bottom;
 }
 
 #author-info div
 {
-	padding-top: 1px;
+    padding-top: 1px;
+}
+
+#menu-open
+{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    padding: 6px 8px;
+    background-color: transparent;
+    border: none;
+    z-index: 3;
+}
+
+#menu-open .icon-bar
+{
+    display: block;
+    width: 22px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: #333;
+}
+
+#menu-open .icon-bar + .icon-bar
+{
+    margin-top: 4px;
+}
+
+#menu-close
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0 5px;
+    background-color: transparent;
+    border: none;
+    z-index: 3;
+    font-size: 32px;
+    display: none;
+}
+
+#menu-overlay
+{
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2;
+    display: none;
+}
+
+#menu-checkbox
+{
+    display: none;
+}
+
+#menu-checkbox:checked ~ #wrapper #menu-close,
+#menu-checkbox:checked ~ #wrapper #menus,
+#menu-checkbox:checked ~ #wrapper #menu-selection,
+#menu-checkbox:checked ~ #wrapper #author-info,
+#menu-checkbox:checked ~ #wrapper #menu-overlay
+{
+    display: block;
+}
+
+#menu-checkbox:checked ~ #wrapper #menu-open
+{
+    display: none;
 }
 
 #chat-wrapper
 {
-	position: absolute;
-	bottom: 0;
-	right: 0;
-	max-width: 300px;
-	font-size: 12px;
-	margin-bottom: 0;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    max-width: 280px;
+    font-size: 12px;
+    margin-bottom: 0;
+    z-index: 1;
 }
 
 #chat-header
 {
-	position: relative;
-	padding-left: 10px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-	font-size: 14px;
-	min-width: 120px;
+    position: relative;
+    padding-left: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-size: 14px;
+    min-width: 120px;
 }
 
 #chat-header-label
 {
-	padding-top: 4px;
+    padding-top: 4px;
 }
 
 #chat-toggle
 {
-	position: absolute;
-	right: 3px;
-	bottom: 3px;
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
 }
 
 #chat-body
 {
-	padding-top: 4px;
-	padding-bottom: 4px;
-	max-height: 250px;
-	background: white;
-	overflow-y: auto;
-	word-wrap: break-word;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    max-height: 250px;
+    background: white;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    word-wrap: break-word;
 }
 
 #chat-body ul
 {
-	padding-left: 0;
+    padding-left: 0;
 }
 
 .chat-user-name
 {
-	padding-left: 5px;
-	color: lightslategray;
+    padding-left: 5px;
+    color: lightslategray;
 }
 
 .chat-message
 {
-	padding-left: 20px;
-	padding-right: 4px;
+    padding-left: 20px;
+    padding-right: 4px;
 }
 
 .chat-system-message
 {
-	padding-left: 5px;
-	padding-right: 5px;
-	color: steelblue;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: steelblue;
 }
 
 #game-menu,
 #friends-menu,
 #settings-menu
 {
-	width: 100%;
+    width: 100%;
 }
 
 #settings-menu a
 {
-	display: block;
-	
+    display: block;
+
 }
 
 #game-menu
 {
-	display: block;
+    display: block;
+}
+
+#list-games
+{
+    position: absolute;
+    top: 46px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 #friends-menu,
 #settings-menu
 {
-	display: none;
+    display: none;
 }
 
 .menu-header
 {
-	font-size: 32px;
-	margin: 0 auto;
-	display: table;
+    font-size: 32px;
+    margin: 0 auto;
+    display: block;
+    text-align: center;
+    padding-left: 35px;
 }
 
 .menu-header .fa
 {
-	font-size: 18px;
-	cursor: pointer;
+    font-size: 28px;
+    cursor: pointer;
 }
 
 .menu-sub-header
 {
-	margin-left: 5px;
-	margin-top: 4px;
-	font-size: 16px;
+    margin-left: 5px;
+    margin-top: 4px;
+    font-size: 16px;
 }
 
 .menu-game-listing
 {
-	margin-left: 10px;
-	margin-right: 10px;
-	padding-top: 3px;
-	border-radius: 5px;
-	background-color: lightblue;
-	cursor: pointer;
-	border: black 1px solid;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-top: 3px;
+    border-radius: 5px;
+    background-color: lightblue;
+    cursor: pointer;
+    border: black 1px solid;
 }
 
 .menu-game-listing .right-side
 {
-	float: right;
-	margin-right: 3px;
+    float: right;
+    margin-right: 3px;
 }
 
 .game-player-listing
 {
-	margin-left: 5px;
+    margin-left: 5px;
 }
 
 #add-friend-form
 {
-	margin-left: 10px;
-	margin-right: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 #username-alert
 {
-	margin-left: 10px;
-	margin-right: 10px;
-	padding: 6px;
-	margin-bottom: 5px;
-	opacity: 0;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 6px;
+    margin-bottom: 5px;
+    opacity: 0;
 }
 
 #friends-list
 {
-	position: absolute;
-	bottom: 0;
-	top: 118px;
-	left: 0;
-	right: 0;
-	overflow-y: auto;
-	font-size: 15px;
+    position: absolute;
+    bottom: 0;
+    top: 118px;
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 15px;
 }
 
 .friend-listing,
 #settings-menu a
 {
-	margin-left: 10px;
-	margin-right: 10px;
-	padding-top: 3px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-top: 3px;
 }
 
 #settings-menu .checkbox
 {
-	margin-left: 10px;
+    margin-left: 10px;
 }
 
 #settings-menu label
 {
-	vertical-align: -2px;
+    vertical-align: -2px;
 }
 
 #svg-wrapper
-{ 
-	background-color: green;
-	position: absolute;
-	height: 100%;
-	left: 225px;
-	right: 0;
+{
+    background-color: green;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
 }
 
 #btc-donate
 {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 .qtip
 {
-	max-width: 350px;
+    max-width: 350px;
 }
 
 .btc-qr
 {
-	display: block;
+    display: block;
     margin-left: auto;
     margin-right: auto;
 }
 
 #expansion-header
 {
-	padding-top: 5px;
+    padding-top: 5px;
 }
 
 .expansion-label
 {
-	margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .iconmelon,
 .im
 {
-	position: relative;
-	width: 32px;
-	height: 32px;
-	display: block;
-	fill: #272727;
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: block;
+    fill: #272727;
 }
 
 .iconmelon:after,
 .im:after
 {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 #expansion-header
 {
-	padding-top: 5px;
+    padding-top: 5px;
 }
 
 .expansion-label
 {
-	margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .turn-marker
 {
-	pointer-events: none;
+    pointer-events: none;
+}
+
+@media (min-width: 768px) {
+    #menus,
+    #menu-selection,
+    #author-info
+    {
+        display: block;
+    }
+
+    #menu-open,
+    #menu-overlay
+    {
+        display: none !important;
+    }
+
+    #svg-wrapper
+    {
+        left: 249px;
+    }
+
+    #chat-wrapper
+    {
+        max-width: 300px;
+    }
 }

@@ -2,14 +2,22 @@
 <html>
 <head>
 	<title>Concarneau</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link rel="apple-touch-icon" href="/content/images/tiles/base-game/RCr.png">
+    <link rel="apple-touch-startup-image" href="/content/images/ui/bg.jpg">
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
-		body { padding-top: 80px; word-wrap: break-word; }
+		body { padding-top: 40px; word-wrap: break-word; }
 		.jumbotron { font-size: 14px; }
 		.jumbotron h1 { font-size: 36px; }
+
+        @media (min-width: 768px) {
+            body { padding-top: 80px; }
+        }
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
@@ -102,5 +110,6 @@
 	</div>
 </div>
 </div>
+<script src="/content/js/standalone.js"></script>
 </body>
 </html>
