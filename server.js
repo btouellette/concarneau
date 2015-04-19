@@ -82,9 +82,7 @@ app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 /
 process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET || 'ilovescotchscotchyscotchscotch';
 app.use(session({
     secret: process.env.EXPRESS_SESSION_SECRET,
-    cookie: {
-        maxAge: 31536000
-    },
+    cookie: { maxAge: 31536000 },
     key: 'express.sid',
     store: sessionStore
 })); // session secret

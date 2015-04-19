@@ -13,6 +13,7 @@
 	</script>
     <title>Concarneau</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <link rel="apple-touch-icon" href="/content/images/tiles/base-game/RCr.png">
     <link rel="apple-touch-startup-image" href="/content/images/ui/bg.jpg">
@@ -26,12 +27,12 @@
 <body>
 <input type="checkbox" id="menu-checkbox" checked />
 <div id="wrapper">
-<label id="menu-open" for="menu-checkbox">
+<label id="menu-open" for="menu-checkbox" onclick="openMenu()">
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
 </label>
-<label id="menu-close" for="menu-checkbox">
+<label id="menu-close" for="menu-checkbox" class="hidden">
     <i class="fa fa-times"></i>
 </label>
 <label id="menu-overlay" for="menu-checkbox"></label>
@@ -209,6 +210,10 @@ function menuClick(menuToOpen, button) {
 	$(menuToOpen).show();
 	$('#menu-selection > div').css('fill','#272727');
 	$(button).css('fill','#808080');
+}
+
+function openMenu() {
+	$("#menu-close").removeClass('hidden');
 }
 
 function enableFriendsEdit(e) {
@@ -542,7 +547,7 @@ $(document).ready(function() {
 			viewport: $(window),
             adjust: {
                 method: 'shift',
-                x: 225
+                x: 249
             }
 		},
 		show: {
