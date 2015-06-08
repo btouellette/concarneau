@@ -831,7 +831,10 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
     Q.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
 		// choose a random player to start
 		var startingPlayer = Math.floor(Math.random()*newGame.players.length);
-		var colors = ['blue', 'green', 'purple', 'red', 'yellow', 'gray'];
+		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
+		if(newGame.players.length > 5) {
+			colors.push('gray');
+		}
 		for(var i = 0; i < newGame.players.length; i++) {
 			newGame.players[i].points = 0;
 			newGame.players[i].remainingMeeples = 7;
