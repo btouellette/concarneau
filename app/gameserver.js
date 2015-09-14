@@ -85,6 +85,9 @@ module.exports = function(server, sessionStore) {
 				return;
 			}
 			User.findById(session.passport.user, function(err, currentUser) {
+				if(err) {
+					console.log("user retrieval failed - error: " + err);
+				}
 				if(userToSocket[currentUser._id]) {
 					userToSocket[currentUser._id].push(socket);
 				} else {

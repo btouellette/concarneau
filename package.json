@@ -15,7 +15,7 @@
     "passport-twitter": "~1.0.2",
     "passport-google-oauth": "~0.1.5",
     "connect-flash": "~0.1.1",
-    "connect-mongo": "~0.4.1",
+    "connect-mongo": "~0.8.2",
     "bcrypt-nodejs": "latest",
     "tunnel": "0.0.3",
     "socket.io": "~1.0.6",

@@ -48,7 +48,7 @@ var MongoStore   = require('connect-mongo')(session);
 //      https://github.com/kcbanner/connect-mongo/issues/80
 var sessionStore = new MongoStore({
 	url: configDB.url,
-	autoReconnect: true
+	auto_reconnect: true
 });
 
 mongoose.connect(configDB.url); // connect to our database
