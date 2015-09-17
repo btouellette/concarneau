@@ -87,207 +87,210 @@ module.exports = function(server, sessionStore) {
 			User.findById(session.passport.user, function(err, currentUser) {
 				if(err) {
 					console.log("user retrieval failed - error: " + err);
-				}
-				if(userToSocket[currentUser._id]) {
-					userToSocket[currentUser._id].push(socket);
+				} else if(currentUser === null) {
+					console.log("current user null - session user: " + session.passport.user);
 				} else {
-					userToSocket[currentUser._id] = [socket];
-				}
-				socket.on('disconnect', function() {
-					// on disconnect remove update subscriptions
-					if(userToSocket[currentUser._id].length === 1) {
-						delete userToSocket[currentUser._id];
+					if(userToSocket[currentUser._id]) {
+						userToSocket[currentUser._id].push(socket);
 					} else {
-						userToSocket[currentUser._id].splice(userToSocket[currentUser._id].indexOf(socket), 1);
+						userToSocket[currentUser._id] = [socket];
 					}
-				});
-				socket.on('new game', function(friends, expansions) {
-					// pull the user information from the db again in case it has changed since the socket was established
-					User.findById(currentUser._id, function(err, currentUser) {
-						if(err) { console.log('new game find user err: ' + err); }
-						var gamestate = new Gamestate(); // create a new gamestate
-						gamestate.initializeNewGame(currentUser, friends, expansions, function() {
-							gamestate.populate('placedTiles.tile activeTile.tile players.user',
-							                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset tower.offset imageURL username',
-								function(err, gamestate) {
-									if(err) { console.log('new game populate err: ' + err); }
-									// get distinct list of user IDs in the game
-									var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
-										return self.indexOf(value) === index;
-									});
-									// if players are active send them the new game
-									for(var i = 0; i < distinctUserIDs.length; i++) {
-										var socketArray = userToSocket[distinctUserIDs[i]];
-										if(socketArray) {
-											for(var k = 0; k < socketArray.length; k++) {
-												socketArray[k].emit('game started', gamestate, currentUser._id);
+					socket.on('disconnect', function() {
+						// on disconnect remove update subscriptions
+						if(userToSocket[currentUser._id].length === 1) {
+							delete userToSocket[currentUser._id];
+						} else {
+							userToSocket[currentUser._id].splice(userToSocket[currentUser._id].indexOf(socket), 1);
+						}
+					});
+					socket.on('new game', function(friends, expansions) {
+						// pull the user information from the db again in case it has changed since the socket was established
+						User.findById(currentUser._id, function(err, currentUser) {
+							if(err) { console.log('new game find user err: ' + err); }
+							var gamestate = new Gamestate(); // create a new gamestate
+							gamestate.initializeNewGame(currentUser, friends, expansions, function() {
+								gamestate.populate('placedTiles.tile activeTile.tile players.user',
+								                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset tower.offset imageURL username',
+									function(err, gamestate) {
+										if(err) { console.log('new game populate err: ' + err); }
+										// get distinct list of user IDs in the game
+										var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+											return self.indexOf(value) === index;
+										});
+										// if players are active send them the new game
+										for(var i = 0; i < distinctUserIDs.length; i++) {
+											var socketArray = userToSocket[distinctUserIDs[i]];
+											if(socketArray) {
+												for(var k = 0; k < socketArray.length; k++) {
+													socketArray[k].emit('game started', gamestate, currentUser._id);
+												}
 											}
 										}
 									}
-								}
-							);
+								);
+							});
 						});
 					});
-				});
-				socket.on('load game', function(gameID) {
-					Gamestate.findById(gameID, function(err, gamestate) {
-						if(err) { console.log('load find err: ' + err); }
-						if(gamestate && gamestate.userIsInGame(currentUser)) {
-							gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user', 
-							                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL username',
-								function(err, gamestate) {
-									if(err) { console.log('load populate err: ' + err); }
-									socket.emit('sending gamestate', gamestate, true);
-								}
-							);
-						}
+					socket.on('load game', function(gameID) {
+						Gamestate.findById(gameID, function(err, gamestate) {
+							if(err) { console.log('load find err: ' + err); }
+							if(gamestate && gamestate.userIsInGame(currentUser)) {
+								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user', 
+								                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL username',
+									function(err, gamestate) {
+										if(err) { console.log('load populate err: ' + err); }
+										socket.emit('sending gamestate', gamestate, true);
+									}
+								);
+							}
+						});
 					});
-				});
-				socket.on('remove game', function(gameID) {
-					Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
-						if(err || !gamestate) { 
-							console.log('remove game err: ' + err);
-						} else {
-							gamestate.populate('players.user', function(err, gamestate) {
-								for(var i = 0; i < gamestate.players.length; i++) {
-									User.findByIdAndUpdate(gamestate.players[i].user, { $pull: { activeGames: gamestate._id }}).exec();
-								}	
-							});
-						}
+					socket.on('remove game', function(gameID) {
+						Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
+							if(err || !gamestate) { 
+								console.log('remove game err: ' + err);
+							} else {
+								gamestate.populate('players.user', function(err, gamestate) {
+									for(var i = 0; i < gamestate.players.length; i++) {
+										User.findByIdAndUpdate(gamestate.players[i].user, { $pull: { activeGames: gamestate._id }}).exec();
+									}	
+								});
+							}
+						});
 					});
-				});
-				socket.on('sending move', function(gameID, move, autocomplete) {
-					Gamestate.findById(gameID, function(err, gamestate) {
-						if(err || !gamestate) { 
-							console.log('load find err: ' + err); 
-						} else if(move && gamestate.userIsActive(currentUser)) {
-							gamestate.placeTile(move, function(err, gamestate) {
-								if(err || !gamestate) {
-									console.log('place tile err: ' + err); 
-								} else {
-									gamestate.markModified('unusedTiles');
-									gamestate.markModified('activeTile.tile');
-									gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
-									                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
-										function(err, gamestate) {
-											if(err) { 
-												console.log('send move populate err: ' + err);
-											} else {
-												var activeUser, previousUser;
-												for(var j = 0; j < gamestate.players.length; j++) {
-													if(gamestate.players[j].active) {
-														activeUser = gamestate.players[j].user;
-														previousUser = gamestate.players[(j - 1 + gamestate.players.length) % gamestate.players.length].user;
-														break;
+					socket.on('sending move', function(gameID, move, autocomplete) {
+						Gamestate.findById(gameID, function(err, gamestate) {
+							if(err || !gamestate) { 
+								console.log('load find err: ' + err); 
+							} else if(move && gamestate.userIsActive(currentUser)) {
+								gamestate.placeTile(move, function(err, gamestate) {
+									if(err || !gamestate) {
+										console.log('place tile err: ' + err); 
+									} else {
+										gamestate.markModified('unusedTiles');
+										gamestate.markModified('activeTile.tile');
+										gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
+										                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
+											function(err, gamestate) {
+												if(err) { 
+													console.log('send move populate err: ' + err);
+												} else {
+													var activeUser, previousUser;
+													for(var j = 0; j < gamestate.players.length; j++) {
+														if(gamestate.players[j].active) {
+															activeUser = gamestate.players[j].user;
+															previousUser = gamestate.players[(j - 1 + gamestate.players.length) % gamestate.players.length].user;
+															break;
+														}
 													}
-												}
-												// send notification to user if the user has changed and they are not actively connected
-												if(!userToSocket[activeUser._id] && activeUser.username !== previousUser.username) {
-													var activeEmail = activeUser.local.email || activeUser.google.email || activeUser.facebook.email;
-													// send e-mail notification if we have a valid e-mail and the user has the option enabled
-													if(activeEmail && activeUser.email_notifications) {
-														smtpTransport.sendMail({
-															from: "Concarneau <concarneau.game@gmail.com",
-															to: activeEmail,
-															subject: "Your turn!",
-															text: "There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com"
-														}, function(err, res) {
-															if(err) {
-																console.log('e-mail failed: ' + err);
+													// send notification to user if the user has changed and they are not actively connected
+													if(!userToSocket[activeUser._id] && activeUser.username !== previousUser.username) {
+														var activeEmail = activeUser.local.email || activeUser.google.email || activeUser.facebook.email;
+														// send e-mail notification if we have a valid e-mail and the user has the option enabled
+														if(activeEmail && activeUser.email_notifications) {
+															smtpTransport.sendMail({
+																from: "Concarneau <concarneau.game@gmail.com",
+																to: activeEmail,
+																subject: "Your turn!",
+																text: "There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com"
+															}, function(err, res) {
+																if(err) {
+																	console.log('e-mail failed: ' + err);
+																}
+															});
+														}
+														// send twitter notification if we have a valid twitter handle and the user has the option enabled
+														if(activeUser.twitter.username && activeUser.twitter_notifications) {
+															twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com?' + Math.floor(Math.random()*1000000) }, function(err, data, response) {
+																if(err) {
+																	console.log('twitter failed: ' + err);
+																}
+															});
+														}
+													}
+													// get distinct list of user IDs in the game
+													var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+														return self.indexOf(value) === index;
+													});
+													// if players are active send them the new gamestate
+													for(var i = 0; i < distinctUserIDs.length; i++) {
+														var socketArray = userToSocket[distinctUserIDs[i]];
+														if(socketArray) {
+															for(var k = 0; k < socketArray.length; k++) {
+																socketArray[k].emit('sending gamestate', gamestate, false);
 															}
-														});
-													}
-													// send twitter notification if we have a valid twitter handle and the user has the option enabled
-													if(activeUser.twitter.username && activeUser.twitter_notifications) {
-														twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com?' + Math.floor(Math.random()*1000000) }, function(err, data, response) {
-															if(err) {
-																console.log('twitter failed: ' + err);
-															}
-														});
-													}
-												}
-												// get distinct list of user IDs in the game
-												var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
-													return self.indexOf(value) === index;
-												});
-												// if players are active send them the new gamestate
-												for(var i = 0; i < distinctUserIDs.length; i++) {
-													var socketArray = userToSocket[distinctUserIDs[i]];
-													if(socketArray) {
-														for(var k = 0; k < socketArray.length; k++) {
-															socketArray[k].emit('sending gamestate', gamestate, false);
 														}
 													}
 												}
 											}
-										}
-									);
-								}
-							}, autocomplete);
-						}
-					});
-				});
-				socket.on('add friend', function(username) {
-					User.findOne({ username: username }, function(err, user) {
-						if(user) {
-							var friendID = user._id;
-							if(currentUser.friends.indexOf(user._id) === -1) {
-								User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err, user) {
-									if(!err && user) {
-										socket.emit('friend added', username, friendID);
-										currentUser = user;
+										);
 									}
-								});
+								}, autocomplete);
 							}
-						} else {
-							socket.emit('friend not found');
-						}
+						});
 					});
-					
-				});
-				socket.on('remove friend', function(userID) {
-					User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
-				});
-				socket.on('sending message', function(message, gameID) {
-					Gamestate.findById(gameID, function(err, gamestate) {
-						if(err) { console.log('message find err: ' + err); }
-						if(gamestate && gamestate.userIsInGame(currentUser)) {
-							// add the message to the gamestate, trimming to 200 characters and limiting message array length to 500
-							message = message.substr(0,200);
-							Gamestate.findByIdAndUpdate(gameID, { $push: { messages: { $each: [{ username: currentUser.username, message: message}], $slice: -500 }}}, function(err, gamestate) {
-								gamestate.populate('players.user', function(err, gamestate) {
-									// get distinct list of user IDs in the game
-									var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
-										return self.indexOf(value) === index;
+					socket.on('add friend', function(username) {
+						User.findOne({ username: username }, function(err, user) {
+							if(user) {
+								var friendID = user._id;
+								if(currentUser.friends.indexOf(user._id) === -1) {
+									User.findByIdAndUpdate(currentUser._id, { $addToSet: { friends: user._id }}, function(err, user) {
+										if(!err && user) {
+											socket.emit('friend added', username, friendID);
+											currentUser = user;
+										}
 									});
-									// if players are active send them the new message
-									for(var i = 0; i < distinctUserIDs.length; i++) {
-										var socketArray = userToSocket[distinctUserIDs[i]];
-										if(socketArray) {
-											for(var k = 0; k < socketArray.length; k++) {
-												socketArray[k].emit('message sent', message, currentUser.username, gamestate._id);
+								}
+							} else {
+								socket.emit('friend not found');
+							}
+						});
+						
+					});
+					socket.on('remove friend', function(userID) {
+						User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
+					});
+					socket.on('sending message', function(message, gameID) {
+						Gamestate.findById(gameID, function(err, gamestate) {
+							if(err) { console.log('message find err: ' + err); }
+							if(gamestate && gamestate.userIsInGame(currentUser)) {
+								// add the message to the gamestate, trimming to 200 characters and limiting message array length to 500
+								message = message.substr(0,200);
+								Gamestate.findByIdAndUpdate(gameID, { $push: { messages: { $each: [{ username: currentUser.username, message: message}], $slice: -500 }}}, function(err, gamestate) {
+									gamestate.populate('players.user', function(err, gamestate) {
+										// get distinct list of user IDs in the game
+										var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
+											return self.indexOf(value) === index;
+										});
+										// if players are active send them the new message
+										for(var i = 0; i < distinctUserIDs.length; i++) {
+											var socketArray = userToSocket[distinctUserIDs[i]];
+											if(socketArray) {
+												for(var k = 0; k < socketArray.length; k++) {
+													socketArray[k].emit('message sent', message, currentUser.username, gamestate._id);
+												}
 											}
 										}
-									}
+									});
 								});
-							});
-						}
+							}
+						});
 					});
-				});
-				socket.on('email notification', function(enabled) {
-					User.findByIdAndUpdate(currentUser._id, { $set: { email_notifications: enabled }} , function(err, user) {
-						if(!err && user) {
-							currentUser = user;
-						}
+					socket.on('email notification', function(enabled) {
+						User.findByIdAndUpdate(currentUser._id, { $set: { email_notifications: enabled }} , function(err, user) {
+							if(!err && user) {
+								currentUser = user;
+							}
+						});
 					});
-				});
-				socket.on('twitter notification', function(enabled) {
-					User.findByIdAndUpdate(currentUser._id, { $set: { twitter_notifications: enabled }} , function(err, user) {
-						if(!err && user) {
-							currentUser = user;
-						}
+					socket.on('twitter notification', function(enabled) {
+						User.findByIdAndUpdate(currentUser._id, { $set: { twitter_notifications: enabled }} , function(err, user) {
+							if(!err && user) {
+								currentUser = user;
+							}
+						});
 					});
-				});
+				}
 			});
 		});
 	});
