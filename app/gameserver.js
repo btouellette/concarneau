@@ -17,12 +17,12 @@ var User = require('./models/user');
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
 var userToSocket = {};
 
-var smtpTransport = nodemailer.createTransport("SMTP",{
-    service: "Gmail",
-    auth: {
-        user: "concarneau.game@gmail.com",
-        pass: process.env.EMAIL_PASSWORD
-    }
+var smtpTransport = nodemailer.createTransport('SMTP',{
+	service: 'Gmail',
+	auth: {
+		user: 'concarneau.game@gmail.com',
+		pass: process.env.EMAIL_PASSWORD
+	}
 });
 var twitter = new twit({
 	consumer_key: auth.twitterAuth.consumerKey,
@@ -86,9 +86,9 @@ module.exports = function(server, sessionStore) {
 			}
 			User.findById(session.passport.user, function(err, currentUser) {
 				if(err) {
-					console.log("user retrieval failed - error: " + err);
+					console.log('user retrieval failed - error: ' + err);
 				} else if(currentUser === null) {
-					console.log("current user null - session user: " + session.passport.user);
+					console.log('current user null - session user: ' + session.passport.user);
 				} else {
 					if(userToSocket[currentUser._id]) {
 						userToSocket[currentUser._id].push(socket);
@@ -135,7 +135,7 @@ module.exports = function(server, sessionStore) {
 						Gamestate.findById(gameID, function(err, gamestate) {
 							if(err) { console.log('load find err: ' + err); }
 							if(gamestate && gamestate.userIsInGame(currentUser)) {
-								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user', 
+								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
 								                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL username',
 									function(err, gamestate) {
 										if(err) { console.log('load populate err: ' + err); }
@@ -147,32 +147,32 @@ module.exports = function(server, sessionStore) {
 					});
 					socket.on('remove game', function(gameID) {
 						Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
-							if(err || !gamestate) { 
+							if(err || !gamestate) {
 								console.log('remove game err: ' + err);
 							} else {
 								gamestate.populate('players.user', function(err, gamestate) {
 									for(var i = 0; i < gamestate.players.length; i++) {
 										User.findByIdAndUpdate(gamestate.players[i].user, { $pull: { activeGames: gamestate._id }}).exec();
-									}	
+									}
 								});
 							}
 						});
 					});
 					socket.on('sending move', function(gameID, move, autocomplete) {
 						Gamestate.findById(gameID, function(err, gamestate) {
-							if(err || !gamestate) { 
-								console.log('load find err: ' + err); 
+							if(err || !gamestate) {
+								console.log('load find err: ' + err);
 							} else if(move && gamestate.userIsActive(currentUser)) {
 								gamestate.placeTile(move, function(err, gamestate) {
 									if(err || !gamestate) {
-										console.log('place tile err: ' + err); 
+										console.log('place tile err: ' + err);
 									} else {
 										gamestate.markModified('unusedTiles');
 										gamestate.markModified('activeTile.tile');
 										gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
 										                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL email_notifications twitter_notifications username local.email facebook.email google.email twitter.username',
 											function(err, gamestate) {
-												if(err) { 
+												if(err) {
 													console.log('send move populate err: ' + err);
 												} else {
 													var activeUser, previousUser;
@@ -189,10 +189,10 @@ module.exports = function(server, sessionStore) {
 														// send e-mail notification if we have a valid e-mail and the user has the option enabled
 														if(activeEmail && activeUser.email_notifications) {
 															smtpTransport.sendMail({
-																from: "Concarneau <concarneau.game@gmail.com",
+																from: 'Concarneau <concarneau.game@gmail.com',
 																to: activeEmail,
-																subject: "Your turn!",
-																text: "There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com"
+																subject: 'Your turn!',
+																text: 'There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com'
 															}, function(err, res) {
 																if(err) {
 																	console.log('e-mail failed: ' + err);
@@ -201,7 +201,7 @@ module.exports = function(server, sessionStore) {
 														}
 														// send twitter notification if we have a valid twitter handle and the user has the option enabled
 														if(activeUser.twitter.username && activeUser.twitter_notifications) {
-															twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com?' + Math.floor(Math.random()*1000000) }, function(err, data, response) {
+															twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com?' + Math.floor(Math.random()*1000000) }, function(err) {
 																if(err) {
 																	console.log('twitter failed: ' + err);
 																}
@@ -245,7 +245,6 @@ module.exports = function(server, sessionStore) {
 								socket.emit('friend not found');
 							}
 						});
-						
 					});
 					socket.on('remove friend', function(userID) {
 						User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
