@@ -22,7 +22,8 @@ var smtpTransport = nodemailer.createTransport('SMTP',{
 	auth: {
 		user: 'concarneau.game@gmail.com',
 		pass: process.env.EMAIL_PASSWORD
-	}
+	},
+	secure: true // use SSL
 });
 var twitter = new twit({
 	consumer_key: auth.twitterAuth.consumerKey,
