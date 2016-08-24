@@ -2,6 +2,7 @@
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 var nodemailer = require('nodemailer');
+var smtp = require('nodemailer-smtp-transport');
 var xoauth2 = require('xoauth2');
 var twit = require('twit');
 var auth = require('../config/auth');
@@ -19,7 +20,7 @@ var User = require('./models/user');
 //TODO: send e-mail on game start not just on turn start (to active player if not current user)
 var userToSocket = {};
 
-var smtpTransport = nodemailer.createTransport({
+var smtpTransport = nodemailer.createTransport(smtp({
 	service: 'gmail',
 	auth: {
 		xoauth2: xoauth2.createXOAuth2Generator({ 
@@ -29,7 +30,7 @@ var smtpTransport = nodemailer.createTransport({
 			refreshToken: auth.googleAuth.refreshToken
 		})
 	}
-});
+}));
 var twitter = new twit({
 	consumer_key: auth.twitterAuth.consumerKey,
 	consumer_secret: auth.twitterAuth.consumerSecret,
