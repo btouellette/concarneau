@@ -2,6 +2,7 @@
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 var nodemailer = require('nodemailer');
+var xoauth2 = require('xoauth2');
 var twit = require('twit');
 var auth = require('../config/auth');
 
@@ -20,8 +21,12 @@ var userToSocket = {};
 var smtpTransport = nodemailer.createTransport('SMTP',{
 	service: 'Gmail',
 	auth: {
-		user: 'concarneau.game@gmail.com',
-		pass: process.env.EMAIL_PASSWORD
+		xoauth2: xoauth2.createXOAuth2Generator({ 
+			user: 'concarneau.game@gmail.com',
+			clientID : '859053446273-1e5ln4ca5gco80tl88a0kefj35id3eik.apps.googleusercontent.com',
+			clientSecret: process.env.GOOGLE_SECRET,
+			refreshToken: process.env.GOOGLE_REFRESH_TOKEN
+		})
 	},
 	secure: true // use SSL
 });
