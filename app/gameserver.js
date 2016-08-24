@@ -23,7 +23,7 @@ var smtpTransport = nodemailer.createTransport('SMTP',{
 	auth: {
 		xoauth2: xoauth2.createXOAuth2Generator({ 
 			user: 'concarneau.game@gmail.com',
-			clientID : '859053446273-1e5ln4ca5gco80tl88a0kefj35id3eik.apps.googleusercontent.com',
+			clientId : '859053446273-1e5ln4ca5gco80tl88a0kefj35id3eik.apps.googleusercontent.com',
 			clientSecret: process.env.GOOGLE_SECRET,
 			refreshToken: process.env.GOOGLE_REFRESH_TOKEN
 		})
