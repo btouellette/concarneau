@@ -16,19 +16,19 @@ var User = require('./models/user');
 //TODO: send update when players see game finish, when all have seen delete from db
 //TODO: send error messages back to client if failure and report them back
 //TODO: make sure that all items (current game, friends, etc) are kept in sync, consider just sending user and updating every time the user changes
+//TODO: send e-mail on game start not just on turn start (to active player if not current user)
 var userToSocket = {};
 
-var smtpTransport = nodemailer.createTransport('SMTP',{
-	service: 'Gmail',
+var smtpTransport = nodemailer.createTransport({
+	service: 'gmail',
 	auth: {
 		xoauth2: xoauth2.createXOAuth2Generator({ 
 			user: 'concarneau.game@gmail.com',
 			clientId : '859053446273-1e5ln4ca5gco80tl88a0kefj35id3eik.apps.googleusercontent.com',
-			clientSecret: process.env.GOOGLE_SECRET,
-			refreshToken: process.env.GOOGLE_REFRESH_TOKEN
+			clientSecret: auth.googleAuth.clientSecret,
+			refreshToken: auth.googleAuth.refreshToken
 		})
-	},
-	secure: true // use SSL
+	}
 });
 var twitter = new twit({
 	consumer_key: auth.twitterAuth.consumerKey,

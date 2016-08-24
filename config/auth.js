@@ -20,6 +20,7 @@ module.exports = {
 	'googleAuth' : {
 		'clientID' 		: '859053446273-1e5ln4ca5gco80tl88a0kefj35id3eik.apps.googleusercontent.com',
 		'clientSecret' 	: process.env.GOOGLE_SECRET,
+		'refreshToken'  : process.env.GOOGLE_REFRESH_TOKEN,
 		'callbackURL' 	: process.env.GOOGLE_CALLBACK || 'http://localhost:' + (process.env.PORT || 8080) + '/auth/google/callback'
 	}
 
