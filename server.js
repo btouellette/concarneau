@@ -4,6 +4,9 @@
 
 // set up ======================================================================
 
+//TODO: detect if mongo is not running (or was killed and needs repair) and issue repair and start c9 commands
+//      ./mongod_c9 --repair
+//      ./mongod_c9 &
 // if this is a c9 project using argv rather than environment variable run configurations configure appropriately
 if(process.env.C9_PROJECT && !process.env.MONGOLAB_URI) {
     require('./config/c9');
