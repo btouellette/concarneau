@@ -306,7 +306,7 @@ function resetActiveTile(withTransition) {
 	$('#meeple-placements').attr('visibility', 'hidden');
 	$('#meeple-placements image').attr('visibility', 'hidden');
 	// hide the tower placements
-	$('.tower-outline,.placed-tower').attr('visibility', 'hidden');
+	$('.tower-outline,.placed-tower,.tower-capture-outline').attr('visibility', 'hidden');
 	// change back to default meeple placement mode
 	changeMeepleMode();
 	// show the meeples in the score area as they are no longer placed
@@ -1171,18 +1171,21 @@ $(document).ready(function() {
 
         function towerOutlineClicked(d, i) {
 			// hide any placed meeples
-			$('.placed-tower,.placed-meeple').attr('visibility', 'hidden');
+			$('.placed-tower,.placed-meeple,.tower-capture-outline').attr('visibility', 'hidden');
 			// show all meeples from the score area
 			$('.score-group image').removeAttr('visibility');
 			// show the placed tower
 			$(this).siblings('.placed-tower').removeAttr('visibility');
+			// show the meeple capture outline
+			//TODO: only show this if there is actually a meeple to capture
+			$(this).siblings('.tower-capture-outline').removeAttr('visibility');
 			delete selectedMove.meeple;
         	selectedMove.tower = {
         		tileIndex: d.tileIndex
         	};
         }
 
-        // then draw outlines for tower placement
+        // draw outlines for tower placement
         var placedTileTowerOutlines = tileGroup.selectAll('image.tower-outline').data(function(d, i) {
         	if(!d.tile.tower || d.tower.completed) {
         		return [];
@@ -1210,8 +1213,34 @@ $(document).ready(function() {
 			}
         });
         placedTileTowerOutlines.exit().remove();
+        
+        // draw outline which indicates range of meeple capture from tower placement
+        var placedTileTowerCaptureOutlines = tileGroup.selectAll('image.tower-capture-outline').data(function(d, i) {
+        	if(!d.tile.tower || d.tower.completed) {
+        		return [];
+        	}
+    		return [{
+    			tileIndex: i,
+    			towerHeight: d.tower.height + 1
+    		}];
+        });
+        placedTileTowerCaptureOutlines.enter().append('path').attr({
+        	class: 'tower-capture-outline',
+        	visibility: 'hidden',
+        	stroke: 'black',
+        	'stroke-width': 4,
+        	'stroke-linejoin': 'round',
+        	fill: 'none',
+        	d: function(d) { 
+        		return 'M0 0 V ' + -tileSize * d.towerHeight + ' H ' + tileSize + ' V 0' + 
+	        		       ' H ' + tileSize * (d.towerHeight + 1) + ' V ' + tileSize + ' H ' + tileSize + 
+	        		       ' V ' + tileSize * (d.towerHeight + 1) + ' H 0' + ' V ' + tileSize +
+	        		       ' H ' + -tileSize * d.towerHeight + ' V 0 Z';
+        	}
+        });
+        placedTileTowerCaptureOutlines.exit().remove();
 
-        // then draw tower icons which will appear over the outline if selected
+        // draw tower icons which will appear over the outline if selected
         var placedTileTowerPlacements = tileGroup.selectAll('image.placed-tower').data(function(d, i) {
         	if(!d.tile.tower || d.tower.completed) {
         		return [];
@@ -1310,6 +1339,32 @@ $(document).ready(function() {
         	visibility: 'hidden'
         });
         activeTileTowerPlacement.exit().remove();
+        
+        // draw outline which indicates range of meeple capture from tower placement on active tile
+        var activeTileTowerCaptureOutline = activeTileImageContainer.selectAll('image.tower-capture-outline').data(function(d, i) {
+        	if(!gamestate.activeTile.tile || !gamestate.activeTile.tile.tower) {
+        		return [];
+        	}
+    		return [{
+    			towerHeight: 1
+    		}];
+        });
+        activeTileTowerCaptureOutline.enter().append('path').attr({
+        	class: 'tower-capture-outline',
+        	visibility: 'hidden',
+        	stroke: 'black',
+        	'stroke-width': 4,
+        	'stroke-linejoin': 'round',
+        	fill: 'none',
+        	d: function(d) { 
+        		return 'M' + -tileSize / 2 + ' ' + -tileSize / 2 +
+        		      ' V ' + -tileSize * 3 / 2 + ' H ' + tileSize / 2 + ' V ' + -tileSize / 2 +
+        		      ' H ' + tileSize * 3 / 2 + ' V ' + tileSize / 2 + ' H ' + tileSize / 2 +
+        		      ' V ' + tileSize * 3 / 2 + ' H ' + -tileSize / 2 + ' V ' + tileSize / 2 +
+        		      ' H ' + -tileSize * 3 / 2 + ' V ' + -tileSize / 2 + ' Z';
+        	}
+        });
+        activeTileTowerCaptureOutline.exit().remove();
 
 		// draw the places where the active tile can be placed
 		var validPlacements = placements.selectAll('image.tile-placements').data(userIsActive ? gamestate.activeTile.validPlacements : []);
@@ -1422,8 +1477,8 @@ $(document).ready(function() {
 			$(this).siblings('.placed-meeple').first().removeAttr('visibility');
 			// hide the appropriate meeple from the score area
 			$('#score-group-' + meepleColor + ' image.' + meeplePlacementMode + '-meeple').first().attr('visibility', 'hidden');
-			// hide any placed towers
-			$('.placed-tower').attr('visibility', 'hidden');
+			// hide any placed towers and their meeple capture outlines
+			$('.placed-tower,.tower-capture-outline').attr('visibility', 'hidden');
 			delete selectedMove.tower;
 			selectedMove.meeple = {
 				locationType: d.locationType,
