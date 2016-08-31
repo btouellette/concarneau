@@ -190,8 +190,14 @@
 //TODO: add welcome popup explaining buttons and linking to rules if 0 games and 0 friends, allow to view again from settings
 //TODO: scoreboard/game record
 //TODO: You win! or You lost! alert when game is finished (with rematch button)
-//TODO: if there is a choice about which meeple to exchange from tower captures prompt the user to choose and populate meeple.tower.capture.exchangeType
 //TODO: keep win/loss stats
+//TODO: if start game popup is already present add newly added friends with + (not person icon) and allow to add into game without cancelling and starting over
+//TODO: the-tower: allow tower closure via meeple placement on existing tower
+//TODO: the-tower: display overlay for meeple capture
+//TODO: the-tower: allow meeple capture
+//TODO: the-tower: show captured meeples in score area
+//TODO: the-tower: allow meeple ransom
+//TODO: the-tower: if there is a choice about which meeple to exchange from tower captures prompt the user to choose and populate meeple.tower.capture.exchangeType
 
 var userGames = <%- JSON.stringify(user.activeGames) %>;
 var userFriends = <%- JSON.stringify(user.friends) %>;
@@ -521,17 +527,17 @@ $(document).ready(function() {
 			      '</div>' +
 			      '<button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button>' +
 			      '<button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>' +
-			      <% if (/*['gatskee','crmack','novamute','mom','werxes','greatgatskee','blakestock','evan'].indexOf(user.username) !== -1*/ true) { %>
+			      <% if (/*['gatskee','crmack','novamute','mom','werxes','greatgatskee','blakestock','evan'].indexOf(user.username) !== -1*/ true) { %> // beta users
 			      '<div id="expansion-header">Expansions:</div>' +
 			      '<div><label class="expansion-label">' +
-			        '<input type="checkbox" id="inns-and-cathedrals-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp1.pdf">Inns and Cathedrals</a>' +
+			        '<input type="checkbox" id="inns-and-cathedrals-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://www.zmangames.com/uploads/4/7/1/7/47170931/en-carcassonnne-ii-ext1-rules.pdf">Inns and Cathedrals</a>' +
 			      '</label></div>' +
 			      '<div><label class="expansion-label">' +
-			        '<input type="checkbox" id="traders-and-builders-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp2.pdf">Traders and Builders</a>' +
+			        '<input type="checkbox" id="traders-and-builders-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://www.zmangames.com/uploads/4/7/1/7/47170931/en-carcassonnne-ii-ext2-rules.pdf">Traders and Builders</a>' +
 			      '</label></div>' +
-			      //'<div><label class="expansion-label">' +
-			      //  '<input type="checkbox" id="the-tower-checkbox" class="expansion-checkbox"> <a target="_blank" href="http://zmangames.com/rulebooks/Carcassonne_Exp4.pdf">The Tower</a>' +
-			      //'</label></div>' +
+			      '<div><label class="expansion-label">' +
+			        '<input type="checkbox" id="the-tower-checkbox" class="expansion-checkbox"> <a target="_blank" href="https://upsilon.cc/~zack/teaching/1011/gla/carcassonne/tower.pdf">The Tower</a>' +
+			      '</label></div>' +
 			      <% } %>
 			      ''
 		},
