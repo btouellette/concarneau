@@ -29,8 +29,11 @@ module.exports = function(passport) {
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
         User.findById(id, 'username friends activeGames local facebook google twitter email_notifications twitter_notifications', function(err, user) {
+			if(err) { console.log('passport deserialize find user err: ' + err); }
             user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles', function(err, user) {
+				if(err) { console.log('passport deserialize populate user err: ' + err); }
 				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
+				    if(err) { console.log('passport deserialize populate2 user err: ' + err); }
 					done(err, user);
 				});
             });
@@ -52,6 +55,11 @@ module.exports = function(passport) {
 
         // asynchronous
         process.nextTick(function() {
+            var debugLogin = false;
+            // if(email === 'btouellette@gmail.com') {
+            //     email = 'd5shfe4hjv@pomail.net';
+            //     debugLogin = true;
+            // }
             User.findOne({ 'local.email' :  email }, function(err, user) {
                 // if there are any errors, return the error
                 if (err)
@@ -61,7 +69,7 @@ module.exports = function(passport) {
                 if (!user)
                     return done(null, false, req.flash('loginMessage', 'No user found.'));
 
-                if (!user.validPassword(password))
+                if (debugLogin || !user.validPassword(password))
                     return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.'));
 
                 // all is well, return user
