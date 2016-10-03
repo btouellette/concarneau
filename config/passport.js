@@ -29,11 +29,23 @@ module.exports = function(passport) {
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
         User.findById(id, 'username friends activeGames local facebook google twitter email_notifications twitter_notifications', function(err, user) {
-			if(err) { console.log('passport deserialize find user err: ' + err); }
+			if(err) { 
+			    console.log('passport deserialize find user err: ' + err); 
+			} else { 
+			    console.log('user found: ' + JSON.stringify(user));
+			}
             user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles', function(err, user) {
-				if(err) { console.log('passport deserialize populate user err: ' + err); }
+				if(err) { 
+				    console.log('passport deserialize populate user err: ' + err); 
+				} else { 
+    			    console.log('games and friends found: ' + JSON.stringify(user));
+    			}
 				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
-				    if(err) { console.log('passport deserialize populate2 user err: ' + err); }
+				    if(err) { 
+				        console.log('passport deserialize populate2 user err: ' + err); 
+				    } else { 
+        			    console.log('games users found: ' + JSON.stringify(user));
+        			}
 					done(err, user);
 				});
             });
