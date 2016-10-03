@@ -25,6 +25,7 @@
     "passport-local": "~1.0.0",
     "passport-twitter": "~1.0.2",
     "q": "~1.0.1",
+    "raven": "^0.12.1",
     "socket.io": "~1.0.6",
     "spm-agent-nodejs": "^1.30.2",
     "tunnel": "0.0.3",

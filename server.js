@@ -46,6 +46,14 @@ var flash        = require('connect-flash');
 var configDB     = require('./config/database');
 var MongoStore   = require('connect-mongo')(session);
 
+// add Sentry handler first if configured
+if(process.env.SENTRY_DSN) {
+	var raven = require('raven');
+	var client = new raven.Client(process.env.SENTRY_DSN);
+	client.patchGlobal();
+	app.use(raven.middleware.express.requestHandler(process.env.SENTRY_DSN));
+}
+
 // configuration ===============================================================
 //TODO: having issues if web connections come in before this is established
 //      https://github.com/kcbanner/connect-mongo/issues/80
@@ -99,7 +107,17 @@ process.on('uncaughtException', function (err) {
 });
 
 // routes ======================================================================
-require('./app/routes')(app, passport, mongoose); // load our routes and pass in our app and fully configured passport
+require('./app/routes')(app, passport, client); // load our routes and pass in our app and fully configured passport
+
+if(process.env.SENTRY_DSN) {
+	app.use(raven.middleware.express.errorHandler(process.env.SENTRY_DSN));
+	app.use(function onError(err, req, res, next) {
+	    // The error id is attached to `res.sentry` to be returned
+	    // and optionally displayed to the user for support.
+	    res.statusCode = 500;
+	    res.end(res.sentry+'\n');
+	});
+}
 
 // launch ======================================================================
 var server = app.listen(port);
