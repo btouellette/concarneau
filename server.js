@@ -9,9 +9,12 @@ if(process.env.C9_PROJECT && !process.env.MONGOLAB_URI) {
     require('./config/c9');
 }
 
-// if configured to use nodetime or newrelic connect to it
+// if configured to use nodetime, spm, or newrelic connect to it
 if(process.env.NEW_RELIC_LICENSE_KEY) {
-	require('newrelic')
+	require('newrelic');
+}
+if(process.env.SPM_TOKEN) {
+	require ('spm-agent-nodejs');
 }
 if(process.env.NODETIME_ACCOUNT_KEY) {
   require('nodetime').profile({
@@ -89,6 +92,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
+
+// error handling ==============================================================
+process.on('uncaughtException', function (err) {
+  console.log(err);
+});
 
 // routes ======================================================================
 require('./app/routes')(app, passport, mongoose); // load our routes and pass in our app and fully configured passport
