@@ -55,6 +55,9 @@ if(process.env.SENTRY_DSN) {
 }
 
 // configuration ===============================================================
+if(process.env.MONGOOSE_DEBUG) {
+	mongoose.set('debug', process.env.MONGOOSE_DEBUG);
+}
 //TODO: having issues if web connections come in before this is established
 //      https://github.com/kcbanner/connect-mongo/issues/80
 var sessionStore = new MongoStore({
