@@ -9,7 +9,10 @@ if(process.env.C9_PROJECT && !process.env.MONGOLAB_URI) {
     require('./config/c9');
 }
 
-// if configured to use nodetime, spm, or newrelic connect to it
+// if configured to use trace, nodetime, spm, or newrelic connect to it
+if(process.env.TRACE_SERVICE_NAME) {
+	require('@risingstack/trace');
+}
 if(process.env.NEW_RELIC_LICENSE_KEY) {
 	require('newrelic');
 }
@@ -21,9 +24,6 @@ if(process.env.NODETIME_ACCOUNT_KEY) {
     accountKey: process.env.NODETIME_ACCOUNT_KEY,
     appName: 'Concarneau'
   });
-}
-if(process.env.TRACE_SERVICE_NAME) {
-	require('@risingstack/trace');
 }
 
 var port = process.env.PORT || 8080;
