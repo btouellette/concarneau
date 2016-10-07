@@ -9,7 +9,7 @@ module.exports = function(app, passport, client) {
 	// show the home page (will also have our login links)
 	app.get('/', function(req, res) {
 		if(req.isAuthenticated()) {
-			client.setUserContext({ user: req.user});
+			if(process.env.SENTRY_DSN) { client.setUserContext({ user: req.user}); }
 			res.redirect('/game');
 		} else {
 			res.render('index.ejs');
@@ -65,7 +65,7 @@ module.exports = function(app, passport, client) {
 	});
 
 	app.get('/game', [isLoggedIn, hasUsername], function(req, res) {
-		client.setUserContext({ user: req.user});
+		if(process.env.SENTRY_DSN) { client.setUserContext({ user: req.user}); }
 		res.render('game.ejs', {
 			user : req.user
 		});
