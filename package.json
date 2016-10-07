@@ -2,6 +2,7 @@
   "name": "concarneau",
   "main": "server.js",
   "dependencies": {
+    "@risingstack/trace": "^2.23.4",
     "bcrypt-nodejs": "latest",
     "body-parser": "~1.4.3",
     "compression": "~1.0.8",

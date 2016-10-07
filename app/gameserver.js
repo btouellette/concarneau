@@ -79,7 +79,11 @@ module.exports = function(server, sessionStore) {
 				next(new Error('Error parsing session cookie'));
 			}
 		} else {
-			next(new Error('No cookie transmitted'));
+			if(handshakeData.query['sid']) {
+				handshakeData.sessionID = handshakeData.query['sid'];
+			} else {
+				next(new Error('No cookie and no parameter transmitted'));
+			}
 		}
 		next();
 	});

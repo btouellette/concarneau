@@ -22,6 +22,9 @@ if(process.env.NODETIME_ACCOUNT_KEY) {
     appName: 'Concarneau'
   });
 }
+if(process.env.TRACE_SERVICE_NAME) {
+	require('@risingstack/trace');
+}
 
 var port = process.env.PORT || 8080;
 
