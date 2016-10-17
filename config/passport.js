@@ -32,19 +32,19 @@ module.exports = function(passport) {
 			if(err) { 
 			    console.log('passport deserialize find user err: ' + err); 
 			} else { 
-			    console.log('user found: ' + JSON.stringify(user));
+			    console.log('user found: ' + user.username);
 			}
             user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles', function(err, user) {
 				if(err) { 
 				    console.log('passport deserialize populate user err: ' + err); 
 				} else { 
-    			    console.log('games and friends found: ' + JSON.stringify(user));
+    			    console.log('games and friends found: ' + user.username);
     			}
 				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
 				    if(err) { 
 				        console.log('passport deserialize populate2 user err: ' + err); 
 				    } else { 
-        			    console.log('games users found: ' + JSON.stringify(user));
+        			    console.log('games users found: ' + user.username);
         			}
 					done(err, user);
 				});
