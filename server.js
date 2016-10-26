@@ -37,7 +37,6 @@ if(process.env.HTTP_PROXY) {
 }
 
 // get all the tools we need
-require('long-stack-traces');
 var express      = require('express');
 var app          = express();
 var cookieParser = require('cookie-parser');
