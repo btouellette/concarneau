@@ -6,7 +6,7 @@
 
 // if this is a c9 project using argv rather than environment variable run configurations configure appropriately
 if(process.env.C9_PROJECT/* && !process.env.MONGOLAB_URI*/) {
-    require('./config/c9');
+	require('./config/c9');
 }
 
 // if configured to use trace, nodetime, spm, or newrelic connect to it
@@ -98,10 +98,12 @@ app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 /
 // required for passport
 process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET || 'ilovescotchscotchyscotchscotch';
 app.use(session({
-    secret: process.env.EXPRESS_SESSION_SECRET,
-    cookie: { maxAge: 31536000 },
-    key: 'express.sid',
-    store: sessionStore
+	secret: process.env.EXPRESS_SESSION_SECRET,
+	cookie: { maxAge: 31536000 },
+	key: 'express.sid',
+	store: sessionStore,
+	resave: false,
+	saveUnitilialized: false
 })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
@@ -109,7 +111,7 @@ app.use(flash()); // use connect-flash for flash messages stored in session
 
 // error handling ==============================================================
 process.on('uncaughtException', function (err) {
-  console.log(err);
+	console.log(err);
 });
 
 // routes ======================================================================
@@ -120,8 +122,8 @@ if(process.env.SENTRY_DSN) {
 	app.use(function onError(err, req, res, next) {
 	    // The error id is attached to `res.sentry` to be returned
 	    // and optionally displayed to the user for support.
-	    res.statusCode = 500;
-	    res.end(res.sentry+'\n');
+		res.statusCode = 500;
+		res.end(res.sentry+'\n');
 	});
 }
 
