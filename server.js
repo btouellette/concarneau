@@ -5,7 +5,7 @@
 // set up ======================================================================
 
 // if this is a c9 project using argv rather than environment variable run configurations configure appropriately
-if(process.env.C9_PROJECT && !process.env.MONGOLAB_URI) {
+if(process.env.C9_PROJECT/* && !process.env.MONGOLAB_URI*/) {
     require('./config/c9');
 }
 
@@ -20,10 +20,10 @@ if(process.env.SPM_TOKEN) {
 	require ('spm-agent-nodejs');
 }
 if(process.env.NODETIME_ACCOUNT_KEY) {
-  require('nodetime').profile({
-    accountKey: process.env.NODETIME_ACCOUNT_KEY,
-    appName: 'Concarneau'
-  });
+	require('nodetime').profile({
+		accountKey: process.env.NODETIME_ACCOUNT_KEY,
+		appName: 'Concarneau'
+	});
 }
 
 var port = process.env.PORT || 8080;
@@ -37,6 +37,7 @@ if(process.env.HTTP_PROXY) {
 }
 
 // get all the tools we need
+require('long-stack-traces');
 var express      = require('express');
 var app          = express();
 var cookieParser = require('cookie-parser');
