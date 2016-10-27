@@ -101,12 +101,14 @@ module.exports = function(server, sessionStore) {
 				} else if(currentUser === null) {
 					console.log('current user null - session user: ' + session.passport.user);
 				} else {
+					console.log('user connected: ' + currentUser.username);
 					if(userToSocket[currentUser._id]) {
 						userToSocket[currentUser._id].push(socket);
 					} else {
 						userToSocket[currentUser._id] = [socket];
 					}
 					socket.on('disconnect', function() {
+						console.log('user disconnected: ' + currentUser.username);
 						// on disconnect remove update subscriptions
 						if(userToSocket[currentUser._id].length === 1) {
 							delete userToSocket[currentUser._id];
