@@ -103,7 +103,7 @@ app.use(session({
 	key: 'express.sid',
 	store: sessionStore,
 	resave: false,
-	saveUnitilialized: false
+	saveUninitialized: false
 })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
