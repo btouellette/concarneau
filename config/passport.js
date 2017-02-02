@@ -174,8 +174,10 @@ module.exports = function(passport) {
             if (!req.user) {
 
                 User.findOne({ 'facebook.id' : profile.id }, function(err, user) {
-                    if (err)
+                    if (err) {
+                        console.log('fb auth err: user find error');
                         return done(err);
+                    }
 
                     if (user) {
 
@@ -186,8 +188,10 @@ module.exports = function(passport) {
                             user.facebook.email = (profile.emails[0].value || '').toLowerCase();
 
                             user.save(function(err) {
-                                if (err)
+                                if (err) {
+                                    console.log('fb auth err: user found, no token');
                                     throw err;
+                                }
                                 return done(null, user);
                             });
                         }
@@ -203,8 +207,10 @@ module.exports = function(passport) {
                         newUser.facebook.email = (profile.emails[0].value || '').toLowerCase();
 
                         newUser.save(function(err) {
-                            if (err)
+                            if (err) {
+                                console.log('fb auth err: no user found, error on save');
                                 throw err;
+                            }
                             return done(null, newUser);
                         });
                     }
@@ -220,8 +226,10 @@ module.exports = function(passport) {
                 user.facebook.email = (profile.emails[0].value || '').toLowerCase();
 
                 user.save(function(err) {
-                    if (err)
+                    if (err) {
+                        console.log('fb auth err: user not logged in');
                         throw err;
+                    }
                     return done(null, user);
                 });
 
