@@ -25,21 +25,21 @@ var mongoose = require('mongoose');
 
 // define the schema for our game model
 var tileSchema = mongoose.Schema({
-    northEdge: String, // edges are 'road', 'city', or 'field'
-    southEdge: String,
-    westEdge: String,
-    eastEdge: String,
-    roads: [{ directions: [String], meepleOffset: { x: Number, y: Number }, inn: Boolean }], // features are arrays of directions, example of curved road or triangle city ['S','W']
-    cities: [{ directions: [String], meepleOffset: { x: Number, y: Number }, goods: String }], // goods are 'wine', 'wheat', and 'fabric' (from Traders and Builders expansion)
-    farms: [{ directions: [String], meepleOffset: { x: Number, y: Number }, adjacentCityIndices: [Number]}],
-    cloister: { meepleOffset: { x: Number, y: Number }},
-    doublePoints: mongoose.Schema.Types.Mixed, // true if all cities are double points, false if none, if only one city is double this will be the index of the double city
-    cathedral: Boolean,
-    tower: { offset: { x: Number, y: Number }}, // percentages into the tile for the center of the tower base
-    imageURL: String,
-    expansion: String,
-    count: Number,
-    startingTile: Boolean
+	northEdge: String, // edges are 'road', 'city', or 'field'
+	southEdge: String,
+	westEdge: String,
+	eastEdge: String,
+	roads: [{ directions: [String], meepleOffset: { x: Number, y: Number }, inn: Boolean }], // features are arrays of directions, example of curved road or triangle city ['S','W']
+	cities: [{ directions: [String], meepleOffset: { x: Number, y: Number }, goods: String }], // goods are 'wine', 'wheat', and 'fabric' (from Traders and Builders expansion)
+	farms: [{ directions: [String], meepleOffset: { x: Number, y: Number }, adjacentCityIndices: [Number]}],
+	cloister: { meepleOffset: { x: Number, y: Number }},
+	doublePoints: mongoose.Schema.Types.Mixed, // true if all cities are double points, false if none, if only one city is double this will be the index of the double city
+	cathedral: Boolean,
+	tower: { offset: { x: Number, y: Number }}, // percentages into the tile for the center of the tower base
+	imageURL: String,
+	expansion: String,
+	count: Number,
+	startingTile: Boolean
 });
 
 tileSchema.statics.loadTilesBase = function() {
@@ -483,7 +483,7 @@ tileSchema.statics.loadTilesIAC = function() {
 			        { directions: ['NNW'], meepleOffset: { x: 5/16, y: 1/16 }, adjacentCityIndices: [0]},
 			        { directions: ['SSE'], meepleOffset: { x: 3/4, y: 7/8 }, adjacentCityIndices: [0]},
 			        { directions: ['SSW'], meepleOffset: { x: 1/4, y: 15/16 }, adjacentCityIndices: [0]}],
-		    doublePoints: true,
+			doublePoints: true,
 			imageURL: '/content/images/tiles/inns-and-cathedrals/CRcR+.png',
 			expansion: 'inns-and-cathedrals',
 			count: 1

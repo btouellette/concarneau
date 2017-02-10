@@ -162,7 +162,7 @@ module.exports = function(server, sessionStore) {
 						Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
 							if(err || !gamestate) {
 								console.log('remove game err: ' + err);
-							} else {
+							} else if(gamestate.userIsInGame(currentUser)) {
 								gamestate.populate('players.user', function(err, gamestate) {
 									for(var i = 0; i < gamestate.players.length; i++) {
 										User.findByIdAndUpdate(gamestate.players[i].user, { $pull: { activeGames: gamestate._id }}).exec();
