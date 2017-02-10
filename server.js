@@ -4,7 +4,8 @@
 
 // set up ======================================================================
 
-// if this is a c9 project using argv rather than environment variable run configurations configure appropriately
+// if this is a c9 project using argv rather than environment variable
+// then run configurations configure appropriately
 if(process.env.C9_PROJECT/* && !process.env.MONGOLAB_URI*/) {
 	require('./config/c9');
 }
@@ -38,6 +39,7 @@ if(process.env.HTTP_PROXY) {
 
 // get all the tools we need
 var express      = require('express');
+var helmet       = require('helmet');
 var app          = express();
 var cookieParser = require('cookie-parser');
 var bodyParser   = require('body-parser');
@@ -57,6 +59,7 @@ if(process.env.SENTRY_DSN) {
 	app.use(raven.middleware.express.requestHandler(process.env.SENTRY_DSN));
 }
 
+
 // configuration ===============================================================
 if(process.env.MONGOOSE_DEBUG) {
 	mongoose.set('debug', process.env.MONGOOSE_DEBUG);
@@ -73,6 +76,7 @@ mongoose.connect(configDB.url); // connect to our database
 require('./config/passport')(passport); // pass passport for configuration
 
 // set up our express application
+app.use(helmet()); // set HTTP headers via Helmet
 app.set('view engine', 'ejs'); // set up ejs for templating
 
 if(!process.env.C9_PROJECT) {
@@ -85,18 +89,21 @@ if(!process.env.C9_PROJECT) {
 		next();
 	});
 } else {
-	// temporary for C9 beta which does not correctly set the working directory TODO: remove once bug is fixed
+	// temporary for C9 beta which does not correctly set the working directory
+	// TODO: remove once bug is fixed
 	app.set('views', '/home/ubuntu/workspace/views');
 }
 app.use(compression());
 app.use(cookieParser()); // read cookies (needed for auth)
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true })); // get information from html forms
+app.use(bodyParser.urlencoded({ extended: true })); // get info from html forms
 //TODO: consider using static cache (https://github.com/isaacs/st)
-app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 /* one week caching */ }));
+// set one week caching on static content
+app.use('/content', express.static(__dirname + '/content', { maxAge: 604800000 }));
 
 // required for passport
-process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET || 'ilovescotchscotchyscotchscotch';
+process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET ||
+                                     'ilovescotchscotchyscotchscotch';
 app.use(session({
 	secret: process.env.EXPRESS_SESSION_SECRET,
 	cookie: { maxAge: 31536000 },
@@ -115,13 +122,14 @@ process.on('uncaughtException', function (err) {
 });
 
 // routes ======================================================================
-require('./app/routes')(app, passport, client); // load our routes and pass in our app and fully configured passport
+// load our routes and pass in our app and fully configured passport
+require('./app/routes')(app, passport, client); 
 
 if(process.env.SENTRY_DSN) {
 	app.use(raven.middleware.express.errorHandler(process.env.SENTRY_DSN));
 	app.use(function onError(err, req, res, next) {
-	    // The error id is attached to `res.sentry` to be returned
-	    // and optionally displayed to the user for support.
+		// The error id is attached to `res.sentry` to be returned
+		// and optionally displayed to the user for support.
 		res.statusCode = 500;
 		res.end(res.sentry+'\n');
 	});

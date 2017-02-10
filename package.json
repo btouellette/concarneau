@@ -13,6 +13,7 @@
     "ejs": "^2.5.2",
     "express": "^4.14.0",
     "express-session": "^1.14.1",
+    "helmet": "^3.4.0",
     "mongoose": "^4.6.5",
     "moniker": "~0.1.2",
     "newrelic": "^1.31.0",
@@ -34,7 +35,7 @@
     "yargs": "~1.2.6"
   },
   "devDependencies": {
-    "eslint": "^3.8.1"
+    "eslint": "^3.15.0"
   },
   "scripts": {
     "lint": "eslint app"
