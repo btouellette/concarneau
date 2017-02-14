@@ -184,7 +184,6 @@ function completeGame(gamestate) {
 }
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
-	// console.log('drawing new tile');
 	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		// if we're out of tiles score/complete game
 		if(gamestate.unusedTiles.length === 0 || autocomplete) {
@@ -194,40 +193,39 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 		var potentialPlacements = [], discardedTiles = [];
 		var currentTile, rotatedTile, activeTile;
 		var rotatedPlacements;
-		var rotatedTiles = gamestate.placedTiles.map(function(mappedTile) {
-			return mappedTile.rotation === 0 ?
-				{
-					northEdge: mappedTile.tile.northEdge,
-					eastEdge: mappedTile.tile.eastEdge,
-					southEdge: mappedTile.tile.southEdge,
-					westEdge: mappedTile.tile.westEdge
-				}
-				: mappedTile.rotation === 1 ?
-				{
-					northEdge: mappedTile.tile.westEdge,
-					eastEdge: mappedTile.tile.northEdge,
-					southEdge: mappedTile.tile.eastEdge,
-					westEdge: mappedTile.tile.southEdge
-				}
-				: mappedTile.rotation === 2 ?
-				{
-					northEdge: mappedTile.tile.southEdge,
-					eastEdge: mappedTile.tile.westEdge,
-					southEdge: mappedTile.tile.northEdge,
-					westEdge: mappedTile.tile.eastEdge
-				}
-				:
-				{
-					northEdge: mappedTile.tile.eastEdge,
-					eastEdge: mappedTile.tile.southEdge,
-					southEdge: mappedTile.tile.westEdge,
-					westEdge: mappedTile.tile.northEdge
-				};
+		var rotatedTiles = gamestate.placedTiles.map(function getRotatedTileEdges(gamestateTile) {
+			return gamestateTile.rotation === 0 ?
+			{
+				northEdge: gamestateTile.tile.northEdge,
+				eastEdge: gamestateTile.tile.eastEdge,
+				southEdge: gamestateTile.tile.southEdge,
+				westEdge: gamestateTile.tile.westEdge
+			}
+			: gamestateTile.rotation === 1 ?
+			{
+				northEdge: gamestateTile.tile.westEdge,
+				eastEdge: gamestateTile.tile.northEdge,
+				southEdge: gamestateTile.tile.eastEdge,
+				westEdge: gamestateTile.tile.southEdge
+			}
+			: gamestateTile.rotation === 2 ?
+			{
+				northEdge: gamestateTile.tile.southEdge,
+				eastEdge: gamestateTile.tile.westEdge,
+				southEdge: gamestateTile.tile.northEdge,
+				westEdge: gamestateTile.tile.eastEdge
+			}
+			:
+			{
+				northEdge: gamestateTile.tile.eastEdge,
+				eastEdge: gamestateTile.tile.southEdge,
+				southEdge: gamestateTile.tile.westEdge,
+				westEdge: gamestateTile.tile.northEdge
+			};
 		});
 		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
 			// splice a random unused tile into the active tile
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
-			//activeTile = gamestate.activeTile.tile;
 			// make sure mongoose sees the field as changed to save later
 			gamestate.markModified('unusedTiles');
 			// find out all the places we can place it
@@ -411,21 +409,21 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 						southEdge: activeTile.southEdge,
 						westEdge: activeTile.westEdge
 					}
-					: currentPlacement.rotation === 1 ?
+				: currentPlacement.rotation === 1 ?
 					{
 						northEdge: activeTile.westEdge,
 						eastEdge: activeTile.northEdge,
 						southEdge: activeTile.eastEdge,
 						westEdge: activeTile.southEdge
 					}
-					: currentPlacement.rotation === 2 ?
+				: currentPlacement.rotation === 2 ?
 					{
 						northEdge: activeTile.southEdge,
 						eastEdge: activeTile.westEdge,
 						southEdge: activeTile.northEdge,
 						westEdge: activeTile.eastEdge
 					}
-					:
+				:
 					{
 						northEdge: activeTile.eastEdge,
 						eastEdge: activeTile.southEdge,
@@ -721,7 +719,8 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 		// console.log('==========================');
 		// remove duplicates while storing an array of potential rotations and meeple placements for each position
 		// duplicates are created because the potential placement generation only looks at one adjacent tile each time
-		// meeples for valid placements must be valid for ALL potential placements (x/y/rotation)
+		// meeples for valid placements must be valid for ALL potential placements with same x/y/rotation
+		// otherwise at some point there was a conflict for that meeple placement found
 		var groupedPlacements = {};
 		potentialPlacements.forEach(function(item) {
 			var key = item.x + ',' + item.y;
@@ -802,14 +801,17 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 
 gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expansions, callback) {
 	var newGame = this;
+	// create a random name to identify the game
 	newGame.name = moniker.choose();
+	// record the expansions enabled for this game
+	newGame.expansions = expansions;
 	// add the initial players
 	var allPlayers = friends.concat([initialUser._id]);
 	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
 	// add the game to the users' active games
-	var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, { $push: { activeGames: newGame._id } }, { multi: true }).exec();
-	// record the expansions enabled for this game
-	newGame.expansions = expansions;
+	var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, 
+	                                   { $push: { activeGames: newGame._id }}, 
+	                                   { multi: true }).exec();
 	// grab the starting tile and make it the only placed tile
 	var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
 		newGame.placedTiles.unshift({
@@ -821,23 +823,30 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	});
 	// grab the rest of the tiles and put them in the unplaced list
 	var unusedTilesLoaded = Tile.find({ expansion: { $in: expansions }}).exec(function(err, allTiles) {
-		// load all the unused tiles as per their counts, minus one if we placed it as a starting tile
+		// load a copy of each unused tile based on their counts, don't load the starting tile
 		for(var i = 0; i < allTiles.length; i++) {
-			for(var j = 0; j < (allTiles[i].startingTile ? allTiles[i].count - 1 : allTiles[i].count); j++) {
-				newGame.unusedTiles.push(allTiles[i]._id);
+			if(!allTiles[i].startingTile) {
+				for(var j = 0; j < allTiles[i].count; j++) {
+					newGame.unusedTiles.push(allTiles[i]._id);
+				}
 			}
 		}
 	});
 	Q.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
-		// choose a random player to start
-		var startingPlayer = Math.floor(Math.random()*newGame.players.length);
 		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
+		// only use gray color if there is a 6th player
 		if(newGame.players.length > 5) {
 			colors.push('gray');
 		}
+		// choose a random player to start
+		var startingPlayer = Math.floor(Math.random()*newGame.players.length);
+		// set default attributes for each player
 		for(var i = 0; i < newGame.players.length; i++) {
+			newGame.players[i].active = (i === startingPlayer);
 			newGame.players[i].points = 0;
 			newGame.players[i].remainingMeeples = 7;
+			// choose a random remaining color for this player
+			newGame.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
 			if(expansions.indexOf('inns-and-cathedrals') !== -1) {
 				newGame.players[i].hasLargeMeeple = true;
 			}
@@ -858,12 +867,10 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 				                            newGame.players.length === 5 ? 6 :
 				                                                           5;
 			}
-			newGame.players[i].active = (i === startingPlayer);
-			// choose a random remaining color for this player
-			newGame.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
 		}
+		// start the game by drawing the first tile
 		newGame.drawTile(callback);
-    });
+	});
 };
 
 //TODO: remove all autocomplete
@@ -1229,7 +1236,7 @@ function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, check
 			tilesWithMeeples: [],
 			goods: []
 		};
-		// if we have already examined this feature skip checking and add zere points
+		// if we have already examined this feature skip checking and add zero points
 		if(checked[currentTile] &&
 		   checked[currentTile].features.indexOf(featureIndex) !== -1) {
 			// console.log('seen this tile');
