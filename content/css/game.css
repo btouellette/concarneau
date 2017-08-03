@@ -304,6 +304,54 @@ html, body
     font-size: 16px;
 }
 
+.fa-edit, .fa-plus-square-o
+{
+    top: 4px;
+    position: relative;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+}
+
+#friends-list .fa-plus-square-o
+{
+    top: 2px;
+    width: 14px;
+    height: 14px;
+}
+
+.fa-trash-o
+{
+    position: relative;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.fa-user
+{
+    top: 2px;
+    position: relative;
+    width: 16px;
+    height: 16px;
+}
+
+.fa-times
+{
+    top: 2px;
+    position: relative;
+    width: 28px;
+    height: 28px;
+}
+
+.fa-comments, .fa-chevron-down, .fa-exclamation-triangle
+{
+    top: 2px;
+    position: relative;
+    width: 14px;
+    height: 14px;
+}
+
 .menu-game-listing
 {
     margin-left: 10px;

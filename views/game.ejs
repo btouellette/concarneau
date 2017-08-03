@@ -20,7 +20,6 @@
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/content/css/bootstrap.3.0.2.min.css" type='text/css'>
-    <link rel="stylesheet" href="/content/css/font-awesome.4.0.3.min.css" type='text/css'>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.css" type='text/css'>
     <link rel="stylesheet" href="/content/css/game.css" type='text/css'>
 </head>
@@ -33,12 +32,12 @@
     <span class="icon-bar"></span>
 </label>
 <label id="menu-close" for="menu-checkbox" class="hidden">
-    <i class="fa fa-times"></i>
+    <svg class="fa-times"><use xlink:href="#fa-times"></use></svg>
 </label>
 <label id="menu-overlay" for="menu-checkbox"></label>
 <div id="menus">
 	<div id="game-menu">
-		<span class="menu-header">GAMES <i class="fa fa-edit hidden" onclick="enableGamesEdit(event)"></i> <i class="fa fa-plus-square-o"></i></span>
+		<span class="menu-header">GAMES <svg class="fa-edit" onclick="enableGamesEdit(event)"><use xlink:href="#fa-edit"></use></svg><svg class="fa-plus-square-o"><use xlink:href="#fa-plus-square-o"></use></svg></span>
         <div id="list-games">
             <div id="active-games">
                 <div class="menu-sub-header">Your move:</div>
@@ -55,7 +54,7 @@
         </div>-->
 	</div>
 	<div id="friends-menu">
-		<span class="menu-header">FRIENDS <i class="fa fa-edit hidden" onclick="enableFriendsEdit(event)"></i></span>
+		<span class="menu-header">FRIENDS <svg class="fa-edit hidden" onclick="enableFriendsEdit(event)"><use xlink:href="#fa-edit"></use></svg></span>
 		<form id="add-friend-form">
 			<div class="input-group">
 				<input type="text" class="form-control" id="add-friend-input" placeholder="Username" autocomplete="off">
@@ -146,10 +145,10 @@
 </div>
 <div id="chat-wrapper" class="panel panel-primary hidden">
 	<div id="chat-header" class="panel-heading">
-		<div id="chat-header-label"><i class="fa fa-comments"></i><span> Chat</span></div>
+		<div id="chat-header-label"><svg class="fa-comments" fill="white"><use xlink:href="#fa-comments"></use></svg><span> Chat</span></div>
         <div id="chat-toggle" class="btn-group">
             <a class="btn btn-default btn-xs" onclick="$('#chat-body,#chat-footer').toggle()">
-                <i class="fa fa-chevron-down"></i>
+                <svg class="fa-chevron-down"><use xlink:href="#fa-chevron-down"></use></svg>
             </a>
         </div>
     </div>
@@ -217,11 +216,12 @@ function openMenu() {
 }
 
 function enableFriendsEdit(e) {
-	$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-trash-o').css('cursor', 'pointer').on('click', function () {
+	$('#friends-list .fa-user').attr('class','fa-user hidden');
+	$('#friends-list .fa-trash-o').attr('class','fa-trash-o').css('cursor', 'pointer').on('click', function () {
 		socket.emit('remove friend', this.parentNode.id.substr(7));
 		$(this.parentNode).remove();
 	    if($('.friend-listing').length === 0) {
-	    	$('#friends-menu .fa-edit').addClass('hidden');
+			$('#friends-menu .fa-edit').attr('class','fa-edit hidden');
 	    }
 	});
 	$(window).on('click.friend-edit', function() {
@@ -231,13 +231,15 @@ function enableFriendsEdit(e) {
 }
 
 function disableFriendsEdit() {
-	$('#friends-list .fa-trash-o').removeClass('fa-trash-o').addClass('fa-user').css('cursor', '').off('click');
+	$('#friends-list .fa-trash-o').attr('class','fa-trash-o hidden');
+	$('#friends-list .fa-user').attr('class','fa-user');
 	$(window).off('click.friend-edit');
 }
 
 function enableGamesEdit(e) {
 	$('#game-menu .tile-count').hide();
-	$('#game-menu .fa-trash-o').removeClass('hidden').on('click', function () {
+	// remove hidden element from trash icons
+	$('#game-menu .fa-trash-o').attr('class','fa-trash-o').on('click', function () {
 		var gameID = this.parentNode.parentNode.id.substr(5);
 		socket.emit('remove game', gameID);
 		$(this.parentNode.parentNode).remove();
@@ -251,7 +253,7 @@ function enableGamesEdit(e) {
 		}
 		// if there are no more games hide the edit/delete button
 		if($('.menu-game-listing').length === 0) {
-			$('#game-menu .fa-edit').addClass('hidden');
+			$('#game-menu .fa-edit').attr('class','fa-edit hidden');
 		}
 	});
 	$(window).on('click.games-edit', function() {
@@ -261,7 +263,7 @@ function enableGamesEdit(e) {
 }
 
 function disableGamesEdit() {
-	$('#game-menu .fa-trash-o').addClass('hidden').off('click');
+	$('#game-menu .fa-trash-o').attr('class','fa-trash-o hidden').off('click');
 	$('#game-menu .tile-count').show();
 	$(window).off('click.games-edit');
 }
@@ -517,7 +519,7 @@ $(document).ready(function() {
 		content: {
 			text: '<div id="new-game-popup">' +
 			        '<div>Click friends to add to game:</div>' +
-			        '<div id="solo-notifier"><i class="fa fa-exclamation-triangle"></i> Currently playing solo</div>' +
+			        '<div id="solo-notifier"><svg class="fa-exclamation-triangle"><use xlink:href="#fa-exclamation-triangle"></use></svg> Currently playing solo</div>' +
 			      '</div>' +
 			      '<button type="button" id="new-game-cancel" class="btn btn-default btn-sm">Cancel</button>' +
 			      '<button id="new-game-send" type="button" class="btn btn-default btn-sm">Start</button>' +
@@ -561,7 +563,8 @@ $(document).ready(function() {
 				$('#new-game-popup .friend-listing').remove();
 				$('#friends-menu .fa-edit').hide();
 				$('#friends-menu-selection').click();
-				$('#friends-list .fa-user').removeClass('fa-user').addClass('fa-plus-square-o').css('cursor', 'pointer');
+				$('#friends-list .fa-user').attr('class','fa-user hidden');
+				$('#friends-list .fa-plus-square-o').attr('class','fa-plus-square-o');
 				$('#friends-list .friend-listing').on('click', function() {
 					if($('#new-game-popup .friend-listing').length < 5) {
 						$('#solo-notifier').hide();
@@ -573,7 +576,8 @@ $(document).ready(function() {
 			hide: function() {
 				$('#friends-menu .fa-edit').show();
 				$('#game-menu-selection').click();
-				$('#friends-list .fa-plus-square-o').removeClass('fa-plus-square-o').addClass('fa-user').css('cursor', '');
+				$('#friends-list .fa-plus-square-o').attr('class','fa-plus-square-o hidden');
+				$('#friends-list .fa-user').attr('class','fa-user');
 				$('#friends-list .friend-listing').off('click');
 				$('#solo-notifier').delay(250).show(0);
 			},
@@ -724,7 +728,7 @@ $(document).ready(function() {
 		var gameID = game._id;
 		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
 		// add remaining tiles text
-		element += '<span class="right-side"><span class="tile-count">[' + (game.unusedTiles.length + (game.finished ? 0 : 1)) + ']</span><i class="fa fa-trash-o hidden"></i></span>';
+		element += '<span class="right-side"><span class="tile-count">[' + (game.unusedTiles.length + (game.finished ? 0 : 1)) + ']</span><svg class="fa-trash-o hidden"><use xlink:href="#fa-trash-o"></use></svg></span>';
 		// add sub divs for each user in the game
 		element += game.players.map(function(item) {
    			return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
@@ -738,7 +742,7 @@ $(document).ready(function() {
      	  	currentGameID = gameID;
 		}).appendTo(menuGroup);
 	    // show the game delete/edit button in case it was hidden
-    	$('#game-menu .fa-edit').removeClass('hidden');
+    	$('#game-menu .fa-edit').attr('class','fa-edit');
 	}
 
     // draw the menus
@@ -792,12 +796,12 @@ $(document).ready(function() {
     var $friendsList = $('#friends-menu');
     // show the friends edit button if there are friends to potentially delete
     if(friends.length > 0) {
-    	$friendsList.find('.fa-edit').removeClass('hidden');
+    	$friendsList.find('.fa-edit').attr('class','fa-edit');
     }
     for(var j = 0; j < friends.length; j++) {
     	if($friendsList.has('#friend-' + friends[j]._id).length === 0) {
     		// insert the new friend in alphabetical order by display name
-    		var element = '<div class="friend-listing" id="friend-' + friends[j]._id + '"><i class="fa fa-user"></i> ' + friends[j].username + '</div>';
+    		var element = '<div class="friend-listing" id="friend-' + friends[j]._id + '"><svg class="fa-trash-o hidden"><use xlink:href="#fa-trash-o"></use></svg><svg class="fa-plus-square-o hidden"><use xlink:href="#fa-plus-square-o"></use></svg><svg class="fa-user"><use xlink:href="#fa-user"></use></svg> ' + friends[j].username + '</div>';
     		if(j === 0) {
     			$(element).appendTo("#friends-list");
     		} else {
@@ -955,7 +959,7 @@ $(document).ready(function() {
 		$alert.text('Added!');
 		$alert.removeClass('alert-danger').addClass('alert-success').fadeTo(0, 1).fadeTo(3500, 0);
 		// insert into the friends list alphabetically
-		var element = '<div class="friend-listing" id="friend-' + userID + '"><i class="fa fa-user"></i> ' + username + '</div>';
+		var element = '<div class="friend-listing" id="friend-' + userID + '"><svg class="fa-trash-o hidden"><use xlink:href="#fa-trash-o"></use></svg><svg class="fa-user"><use xlink:href="#fa-user"></use></svg> ' + username + '</div>';
 		var $listings = $('.friend-listing');
 		if($listings.length === 0) {
 			$(element).appendTo('#friends-list');
@@ -969,7 +973,7 @@ $(document).ready(function() {
 			});
 		}
 		// make sure the edit button is shown
-		$('#friends-menu .fa-edit').removeClass('hidden');
+		$('#friends-menu .fa-edit').attr('class','fa-edit');
 	});
 	socket.on('friend not found', function() {
 		// couldn't find a user with this username, flash an error message

@@ -9,7 +9,6 @@
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="/content/css/bootstrap.3.0.2.min.css">
-	<link rel="stylesheet" href="/content/css/font-awesome.4.0.3.min.css">
 	<style>
 		body { padding-top: 40px; }
 		input { text-transform: lowercase; }
@@ -19,12 +18,19 @@
         @media (min-width: 768px) {
             body { padding-top: 80px; }
         }
+        
+		.fa-user {
+		    top: 4px;
+		    position: relative;
+		    width: 30px;
+		    height: 30px;
+	    }
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
 <div class="container">
 <div class="jumbotron">
-	<h3><span class="fa fa-user"></span> Choose a username</h3>
+	<h3><svg class="fa-user"><use xlink:href="/content/images/ui/icons.svg#fa-user"></use></svg> Choose a username</h3>
 	<p>This will be used for other users to find and play with you</p>
 	<p>Must be alphanumeric or underscore and 1-12 characters</p>
 

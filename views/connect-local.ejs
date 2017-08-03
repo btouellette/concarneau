@@ -5,17 +5,22 @@
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="/content/css/bootstrap.3.0.2.min.css">
-	<link rel="stylesheet" href="/content/css/font-awesome.4.0.3.min.css">
 	<style>
 		body { padding-top:80px; }
 		.jumbotron { font-size: 14px; }
 		.jumbotron h1 { font-size: 36px; }
+		.fa-user {
+			top: 4px;
+			position: relative;
+			width: 36px;
+			height: 36px;
+		}
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
 <div class="container">
 <div class="jumbotron">
-	<h1><span class="fa fa-user"></span> Add Local Account</h1>
+	<h1><svg class="fa-user"><use xlink:href="/content/images/ui/icons.svg#fa-user"></use></svg> Add Local Account</h1>
 
 	<% if (message.length > 0) { %>
 		<div class="alert alert-danger"><%= message %></div>

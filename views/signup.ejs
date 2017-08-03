@@ -9,7 +9,6 @@
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="/content/css/bootstrap.3.0.2.min.css">
-	<link rel="stylesheet" href="/content/css/font-awesome.4.0.3.min.css">
 	<style>
 		body { padding-top: 40px; }
 		.jumbotron { font-size: 14px; }
@@ -18,12 +17,19 @@
         @media (min-width: 768px) {
             body { padding-top: 80px; }
         }
+        
+		.fa-sign-in {
+			top: 4px;
+			position: relative;
+			width: 34px;
+			height: 34px;
+		}
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
 <div class="container">
 <div class="jumbotron">
-	<h1><span class="fa fa-sign-in"></span> Signup</h1>
+	<h1><svg class="fa-sign-in"><use xlink:href="/content/images/ui/icons.svg#fa-sign-in"></use></svg> Signup</h1>
 
 	<% if (message.length > 0) { %>
 		<div class="alert alert-danger"><%= message %></div>

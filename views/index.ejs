@@ -9,13 +9,19 @@
     <link rel="shortcut icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/content/images/ui/favicon.ico" type="image/x-icon">
 	<link rel="stylesheet" href="/content/css/bootstrap.3.0.2.min.css">
-	<link rel="stylesheet" href="/content/css/font-awesome.4.0.3.min.css">
 	<style>
         body { padding-top: 40px; }
 
         @media (min-width: 768px) {
             body { padding-top: 80px; }
         }
+		
+		.fa-user, .fa-facebook, .fa-twitter, .fa-google-plus {
+			top: 2px;
+			position: relative;
+			width: 16px;
+			height: 16px;
+	    }
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
@@ -24,11 +30,11 @@
 		<h1>Concarneau</h1>
 		<p>An <a href="http://github.com/btouellette/concarneau">implementation</a> of <a href="https://en.wikipedia.org/wiki/Carcassonne_(board_game)">Carcassonne</a> using <a href="http://d3js.org">D3.js</a> and <a href="http://nodejs.org">Node.js</a> created by <span id="author-name">Brian Ouellette</span></p>
 		<p>Unfamiliar with Carcassonne? You can read the rules <a href="http://riograndegames.com/uploads/Game/Game_48_gameRules.pdf">here</a></p>
-		<a href="/login" class="btn btn-default"><span class="fa fa-user"></span> Local Login</a>
-		<a href="/signup" class="btn btn-default"><span class="fa fa-user"></span> Local Signup</a>
-		<a href="/auth/facebook" class="btn btn-primary"><span class="fa fa-facebook"></span> Facebook</a>
-		<a href="/auth/twitter" class="btn btn-info"><span class="fa fa-twitter"></span> Twitter</a>
-		<a href="/auth/google" class="btn btn-danger"><span class="fa fa-google-plus"></span> Google+</a>
+		<a href="/login" class="btn btn-default"><svg class="fa-user"><use xlink:href="/content/images/ui/icons.svg#fa-user"></use></svg> Local Login</a>
+		<a href="/signup" class="btn btn-default"><svg class="fa-user"><use xlink:href="/content/images/ui/icons.svg#fa-user"></use></svg> Local Signup</a>
+		<a href="/auth/facebook" class="btn btn-primary"><svg class="fa-facebook" fill="white"><use xlink:href="/content/images/ui/icons.svg#fa-facebook"></use></svg> Facebook</a>
+		<a href="/auth/twitter" class="btn btn-info"><svg class="fa-twitter" fill="white"><use xlink:href="/content/images/ui/icons.svg#fa-twitter"></use></svg> Twitter</a>
+		<a href="/auth/google" class="btn btn-danger"><svg class="fa-google-plus" fill="white"><use xlink:href="/content/images/ui/icons.svg#fa-google-plus"></use></svg> Google+</a>
 	</div>
 </div>
 <script src="/content/js/standalone.js"></script>
