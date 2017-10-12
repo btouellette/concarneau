@@ -87,6 +87,14 @@
 			</label>
 			<%- !user.twitter.username ? '(requires Twitter login linked in Profile)' : '' %>
 		</div>
+		<div class="checkbox">
+			<label>
+				<input id="sound-notifications-checkbox"
+				       type="checkbox"
+					   onclick="socket.emit('sound notification', this.checked)"
+					   <%- user.sound_notifications ? 'checked="true"' : '' %>> Sound notifications
+			</label>
+		</div>
 		<a href="/logout">Logout</a>
 	</div>
 </div>
@@ -860,12 +868,16 @@ $(document).ready(function() {
 			}
 		}
 		// update the page title to inform the user there is something new if it is their turn
-		if(gamestate.players[activePlayerIndex].user._id === userID) {
+		if(gamestate.players[activePlayerIndex].user._id === userID && !loadingGame) {
 			document.title = '(!) Concarneau';
 			$('body').on('mousemove', function() {
 				document.title = 'Concarneau';
 				$('body').off('mousemove');
 			});
+			// if the sound notifications are enabled play one
+			if($('#sound-notifications-checkbox').is(':checked')) {
+				new Audio('/content/sounds/church-bell.mp3').play();
+			}
 		}
 		// if this is the first time loading this game clear the chat list and redraw all messages
 		if(loadingGame) {
@@ -951,6 +963,10 @@ $(document).ready(function() {
 				document.title = 'Concarneau';
 				$('body').off('mousemove');
 			});
+			// if the sound notifications are enabled play one
+			if($('#sound-notifications-checkbox').is(':checked')) {
+				new Audio('/content/sounds/church-bell.mp3').play();
+			}
 		}
 	});
 	socket.on('friend added', function(username, userID) {

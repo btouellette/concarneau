@@ -33,7 +33,8 @@ var userSchema = mongoose.Schema({
     friends: [mongoose.Schema.Types.ObjectId],
     username: { type: String, lowercase: true, trim: true, unique: true, sparse: true },
     email_notifications: Boolean,
-    twitter_notifications: Boolean
+    twitter_notifications: Boolean,
+    sound_notifications: Boolean
 
 });
 

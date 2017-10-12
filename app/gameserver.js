@@ -302,6 +302,13 @@ module.exports = function(server, sessionStore) {
 							}
 						});
 					});
+					socket.on('sound notification', function(enabled) {
+						User.findByIdAndUpdate(currentUser._id, { $set: { sound_notifications: enabled }} , function(err, user) {
+							if(!err && user) {
+								currentUser = user;
+							}
+						});
+					});
 				}
 			});
 		});
