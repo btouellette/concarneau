@@ -91,7 +91,7 @@
 			<label>
 				<input id="sound-notifications-checkbox"
 				       type="checkbox"
-					   onclick="socket.emit('sound notification', this.checked)"
+					   onclick="socket.emit('sound notification', this.checked);  if(this.checked) { var bell = new Audio('/content/sounds/church-bell.mp3'); bell.volume = 0; bell.play(); }"
 					   <%- user.sound_notifications ? 'checked="true"' : '' %>> Sound notifications
 			</label>
 		</div>
@@ -622,6 +622,13 @@ $(document).ready(function() {
 		socket.emit('sending message', input.val(), currentGameID);
 		input.val('');
 	});
+	
+	// Play a silent sound so that we can play background audio later if needed
+	if($('#sound-notifications-checkbox').is(':checked')) {
+		var bell = new Audio('/content/sounds/church-bell.mp3'); 
+		bell.volume = 0; 
+		bell.play();
+	}
 
 	// Load in SVG icons
 	var c = new XMLHttpRequest();
