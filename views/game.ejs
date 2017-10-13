@@ -623,6 +623,25 @@ $(document).ready(function() {
 		input.val('');
 	});
 	
+	// Listen for Enter keypresses and trigger move submission
+	jQuery.fn.d3Click = function () {
+		this.each(function (i, e) {
+			var evt = new MouseEvent("click");
+			e.dispatchEvent(evt);
+		});
+	};
+	$(document).keypress(function (event) { 
+		if(event.which == 13 || event.keyCode == 13) {
+			var sendVisible = $('#send-move-button').css('visibility') !== 'hidden';
+			var confirmVisible = $('#confirm-button').css('visibility') !== 'hidden';
+			if(sendVisible) {
+				$('#send-move-button').d3Click();
+			} else if(confirmVisible) {
+				$('#confirm-button').d3Click();
+			}
+		}
+	});
+	
 	// Play a silent sound so that we can play background audio later if needed
 	if($('#sound-notifications-checkbox').is(':checked')) {
 		var bell = new Audio('/content/sounds/church-bell.mp3'); 
