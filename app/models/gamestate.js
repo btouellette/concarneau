@@ -1050,7 +1050,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 									// capture the first meeple we find
 									meepleIndexForExchange = i;
 								} else if(playerBeingCapturedFrom.capturedMeeples[meepleIndexForExchange].meepleType === 'normal' &&
-													playerBeingCapturedFrom.capturedMeeples[i].meepleType === 'large') {
+										  playerBeingCapturedFrom.capturedMeeples[i].meepleType === 'large') {
 									// and if we are currently getting a normal meeple back and find a large one get that instead
 									meepleIndexForExchange = i;
 								}
@@ -1070,6 +1070,13 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 							} else {
 								gamestate.players[returnedMeeple.playerIndex][getMeepleFlagFromType(returnedMeeple.meepleType)] = true;
 							}
+							// add a message about the exchange to the game messages
+							var message = activePlayer.user.username + ' and ' + gamestate.players[capturedMeeple.playerIndex].user.username + ' exchanged captured meeples';
+							gamestate.messages.push({ username: null, message: message });
+							message = activePlayer.user.username + ' got back a ' + returnedMeeple.meepleType + ' meeple';
+							gamestate.messages.push({ username: null, message: message });
+							message = gamestate.players[capturedMeeple.playerIndex].user.username + ' got back a ' + capturedMeeple.meepleType + ' meeple';
+							gamestate.messages.push({ username: null, message: message });
 						} else {
 							activePlayer.capturedMeeples.push({
 								playerIndex: capturedMeeple.playerIndex,
