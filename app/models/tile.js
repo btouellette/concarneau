@@ -450,8 +450,8 @@ tileSchema.statics.loadTilesIAC = function() {
 			eastEdge: 'field',
 			roads: [{ directions: ['S'], meepleOffset: { x: 1/2, y: 5/8 }}],
 			cities: [{ directions: ['N'], meepleOffset: { x: 1/2, y: 1/8 }}],
-			farms: [{ directions: ['ENE','ESE','SSE'], meepleOffset: { x: 1/8, y: 5/8 }, adjacentCityIndices: [0]},
-			        { directions: ['WNW','WSW','SSW'], meepleOffset: { x: 7/8, y: 5/8 }, adjacentCityIndices: [0]}],
+			farms: [{ directions: ['ENE','ESE','SSE'], meepleOffset: { x: 7/8, y: 5/8 }, adjacentCityIndices: [0]},
+			        { directions: ['WNW','WSW','SSW'], meepleOffset: { x: 1/8, y: 5/8 }, adjacentCityIndices: [0]}],
 			imageURL: '/content/images/tiles/inns-and-cathedrals/CFR.png',
 			expansion: 'inns-and-cathedrals',
 			count: 1
