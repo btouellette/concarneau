@@ -823,12 +823,11 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	});
 	// grab the rest of the tiles and put them in the unplaced list
 	var unusedTilesLoaded = Tile.find({ expansion: { $in: expansions }}).exec(function(err, allTiles) {
-		// load a copy of each unused tile based on their counts, don't load the starting tile
+		// load a copy of each unused tile based on their counts, skip one copy of the starting tile
 		for(var i = 0; i < allTiles.length; i++) {
-			if(!allTiles[i].startingTile) {
-				for(var j = 0; j < allTiles[i].count; j++) {
-					newGame.unusedTiles.push(allTiles[i]._id);
-				}
+			var countToAdd = allTiles[i].startingTile ? allTiles[i].count - 1 : allTiles[i].count;
+			for(var j = 0; j < countToAdd; j++) {
+				newGame.unusedTiles.push(allTiles[i]._id);
 			}
 		}
 	});
