@@ -309,6 +309,13 @@ module.exports = function(server, sessionStore) {
 							}
 						});
 					});
+					socket.on('collapsible menu', function(enabled) {
+						User.findByIdAndUpdate(currentUser._id, { $set: { collapsible_menu: enabled }} , function(err, user) {
+							if(!err && user) {
+								currentUser = user;
+							}
+						});
+					});
 				}
 			});
 		});

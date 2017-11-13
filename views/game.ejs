@@ -25,6 +25,7 @@
 </head>
 <body>
 <input type="checkbox" id="menu-checkbox" checked />
+<input type="checkbox" id="collapsible-menu-checkbox-outer" <%- user.collapsible_menu ? 'checked="true"' : '' %> />
 <div id="wrapper">
 <label id="menu-open" for="menu-checkbox" onclick="openMenu()">
 	<span class="icon-bar"></span>
@@ -93,6 +94,14 @@
 				       type="checkbox"
 					   onclick="socket.emit('sound notification', this.checked);  if(this.checked) { var bell = new Audio('/content/sounds/church-bell.mp3'); bell.volume = 0; bell.play(); }"
 					   <%- user.sound_notifications ? 'checked="true"' : '' %>> Sound notifications
+			</label>
+		</div>
+		<div class="checkbox">
+			<label>
+				<input id="collapsible-menu-checkbox"
+				       type="checkbox"
+					   onclick="socket.emit('collapsible menu', this.checked); if(this.checked) { $('#collapsible-menu-checkbox-outer').prop('checked', true); } else { $('#collapsible-menu-checkbox-outer').prop('checked', false); }"
+					   <%- user.collapsible_menu ? 'checked="true"' : '' %>> Always collapse menu
 			</label>
 		</div>
 		<a href="/logout">Logout</a>
@@ -177,7 +186,7 @@
 </div>
 </div>
 <script src="/content/js/standalone.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>

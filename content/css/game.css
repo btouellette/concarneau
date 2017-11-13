@@ -160,7 +160,8 @@ html, body
     display: none;
 }
 
-#menu-checkbox
+#menu-checkbox,
+#collapsible-menu-checkbox-outer
 {
     display: none;
 }
@@ -493,25 +494,26 @@ html, body
 }
 
 @media (min-width: 768px) {
-    #menus,
-    #menu-selection,
-    #author-info
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #menus,
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #menu-selection,
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #author-info
     {
         display: block;
     }
 
-    #menu-open,
-    #menu-overlay
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #menu-open,
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #menu-close,
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #menu-overlay
     {
         display: none !important;
     }
 
-    #svg-wrapper
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #svg-wrapper
     {
         left: 249px;
     }
 
-    #chat-wrapper
+    #collapsible-menu-checkbox-outer:not(:checked) ~ #wrapper #chat-wrapper
     {
         max-width: 300px;
     }
