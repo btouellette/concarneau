@@ -641,7 +641,8 @@ $(document).ready(function() {
 		});
 	};
 	$(document).keypress(function (event) { 
-		if(event.which == 13 || event.keyCode == 13) {
+		// Ignore enter keypress if it is to send a chat message
+		if(event.target.id !== 'chat-message-input'  && (event.which == 13 || event.keyCode == 13)) {
 			var sendVisible = $('#send-move-button').css('visibility') !== 'hidden';
 			var confirmVisible = $('#confirm-button').css('visibility') !== 'hidden';
 			if(sendVisible) {
