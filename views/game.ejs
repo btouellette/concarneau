@@ -211,7 +211,8 @@
 //TODO: add a message to the game chat when a tile is discarded
 
 var userGames = <%- JSON.stringify(user.activeGames) %>;
-userGames.sort(function(a,b) {return (a.lastModified > b.lastModified) ? 1 : ((b.lastModified > a.lastModified) ? -1 : 0);} ); 
+// sort user's games most to least recent
+userGames.sort(function(a,b) { return (a.lastModified < b.lastModified) ? 1 : ((b.lastModified < a.lastModified) ? -1 : 0); }); 
 
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
