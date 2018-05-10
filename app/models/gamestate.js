@@ -85,7 +85,8 @@ var gamestateSchema = mongoose.Schema({
 		x: Number,
 		y: Number,
 		playerIndex: Number // which player placed this tile
-	}]
+	}],
+	lastModified: { type: Date, default: new Date() }
 });
 
 function getMeepleFlagFromType(meepleType) {
@@ -791,6 +792,8 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 		for (var key in groupedPlacements) {
 			gamestate.activeTile.validPlacements.push(groupedPlacements[key]);
 		}
+		gamestate.lastModified = new Date();
+		gamestate.markModified('lastModified');
 		if(autocomplete) {
 			callback(null, gamestate);
 			return;
