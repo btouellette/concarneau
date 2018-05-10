@@ -34,7 +34,7 @@ module.exports = function(passport) {
 			} else { 
 			    console.log('user found: ' + user.username);
 			}
-            user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles', function(err, user) {
+            user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles lastModified', function(err, user) {
 				if(err) { 
 				    console.log('passport deserialize populate user err: ' + err); 
 				} else { 
