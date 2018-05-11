@@ -370,6 +370,17 @@ html, body
     margin-right: 3px;
 }
 
+.menu-game-listing .right-side .tile-count
+{
+    float: right;
+}
+
+.menu-game-listing .right-side .time-since
+{
+    float: right;
+    margin-right: 2px;
+}
+
 .game-player-listing
 {
     margin-left: 5px;

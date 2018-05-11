@@ -774,12 +774,39 @@ $(document).ready(function() {
 		x: $('#svg-wrapper').width() - 5 - tileSize / 2 - 16,
 		y: 5 + tileSize / 2 - 16
 	});
+	
+	function timeSince(date) {
+	  var seconds = Math.floor((new Date() - date) / 1000);
+	  var interval = Math.floor(seconds / 31536000);
+	  if (interval >= 1) {
+	    return interval + "y";
+	  }
+	  interval = Math.floor(seconds / 86400);
+	  if (interval >= 1) {
+	    return interval + "d";
+	  }
+	  interval = Math.floor(seconds / 3600);
+	  if (interval >= 1) {
+	    return interval + "h";
+	  }
+	  interval = Math.floor(seconds / 60);
+	  if (interval >= 1) {
+	    return interval + "m";
+	  }
+	  return Math.floor(seconds) + "s";
+	}
 
 	function addNewGameListing(game, menuGroup) {
 		var gameID = game._id;
 		var element = '<div class="menu-game-listing" id="game-' + gameID + '">';
 		// add remaining tiles text
-		element += '<span class="right-side"><span class="tile-count">[' + (game.unusedTiles.length + (game.finished ? 0 : 1)) + ']</span><svg class="fa-trash-o hidden"><use xlink:href="#fa-trash-o"></use></svg></span>';
+		element += '<span class="right-side">'
+		element += '<div><span class="tile-count">[' + (game.unusedTiles.length + (game.finished ? 0 : 1)) + ']</span></div>';
+		if (game.players.length > 1) {
+			element += '<div><span class="time-since">' + timeSince(new Date(game.lastModified)) + '</span></div>';
+		}
+		element += '<svg class="fa-trash-o hidden"><use xlink:href="#fa-trash-o"></use></svg>'
+		element += '</span>';
 		// add sub divs for each user in the game
 		element += game.players.map(function(item) {
 			return '<div class="game-player-listing">' + (item.active ? '&lt;' + item.user.username+ '&gt;' : item.user.username) + '</div>';
