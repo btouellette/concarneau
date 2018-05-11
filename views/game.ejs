@@ -584,13 +584,16 @@ $(document).ready(function() {
 				$('#new-game-popup .friend-listing').remove();
 				$('#friends-menu .fa-edit').hide();
 				$('#friends-menu-selection').click();
+				// hide user symbols
 				$('#friends-list .fa-user').attr('class','fa-user hidden');
+				// unhide add symbols
 				$('#friends-list .fa-plus-square-o').attr('class','fa-plus-square-o');
 				$('#friends-list .friend-listing').on('click', function() {
 					if($('#new-game-popup .friend-listing').length < 5) {
 						$('#solo-notifier').hide();
 						var element = $(this);
 						element.clone().attr('id', 'add-' + element.attr('id')).css('cursor', 'default').addClass('add-friend-listing').appendTo('#new-game-popup');
+						$('#add-' + element.attr('id') + ' svg').remove();
 					}
 				});
 			},
