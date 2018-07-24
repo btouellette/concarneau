@@ -59,7 +59,6 @@ if(process.env.SENTRY_DSN) {
 	app.use(raven.middleware.express.requestHandler(process.env.SENTRY_DSN));
 }
 
-
 // configuration ===============================================================
 if(process.env.MONGOOSE_DEBUG) {
 	mongoose.set('debug', process.env.MONGOOSE_DEBUG);
@@ -71,6 +70,7 @@ var sessionStore = new MongoStore({
 	autoReconnect: true
 });
 
+mongoose.plugin(schema => { schema.options.usePushEach = true }); // MongoDB 3.6+ deprecates $pushAll, set flag for mongoose to avoid that operator
 mongoose.connect(configDB.url, { useMongoClient: true }); // connect to our database
 
 require('./config/passport')(passport); // pass passport for configuration
