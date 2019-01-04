@@ -104,6 +104,19 @@
 					   <%- user.collapsible_menu ? 'checked="true"' : '' %>> Always collapse menu
 			</label>
 		</div>
+		<div class="dropdown">
+			<label for="preferred-color-select">Preferred color:</label>
+			<select id="preferred-color-select" class="form-control"
+			        onchange="socket.emit('preferred color', this.value)">
+			    <option value="none"   <%- !user.preferred_color || user.preferred_color === 'none'  ? 'selected' : '' %>>No preference</option>
+			    <option value="green"  <%- user.preferred_color === 'green'  ? 'selected' : '' %>>Green</option>
+			    <option value="gray"   <%- user.preferred_color === 'gray'   ? 'selected' : '' %>>Gray</option>
+			    <option value="blue"   <%- user.preferred_color === 'blue'   ? 'selected' : '' %>>Blue</option>
+			    <option value="red"    <%- user.preferred_color === 'red'    ? 'selected' : '' %>>Red</option>
+			    <option value="yellow" <%- user.preferred_color === 'yellow' ? 'selected' : '' %>>Yellow</option>
+			    <option value="purple" <%- user.preferred_color === 'purple' ? 'selected' : '' %>>Purple</option>
+			</select>
+		</div>
 		<a href="/logout">Logout</a>
 	</div>
 </div>

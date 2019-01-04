@@ -835,43 +835,60 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 		}
 	});
 	Q.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
-		var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
-		// only use gray color if there is a 6th player
-		if(newGame.players.length > 5) {
-			colors.push('gray');
-		}
-		// choose a random player to start
-		var startingPlayer = Math.floor(Math.random()*newGame.players.length);
-		// set default attributes for each player
-		for(var i = 0; i < newGame.players.length; i++) {
-			newGame.players[i].active = (i === startingPlayer);
-			newGame.players[i].points = 0;
-			newGame.players[i].remainingMeeples = 7;
-			// choose a random remaining color for this player
-			newGame.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
-			if(expansions.indexOf('inns-and-cathedrals') !== -1) {
-				newGame.players[i].hasLargeMeeple = true;
+		newGame.populate('players.user', 'preferred_color',
+			function(err, newGame) {
+				if(err) {
+					console.log('error pulling preferred colors: ' + err);
+				} else {
+					var colors = ['blue', 'green', 'purple', 'red', 'yellow'];
+					// only use gray color if there is a 6th player
+					if(newGame.players.length > 5) {
+						colors.push('gray');
+					}
+					// choose a random player to start
+					var startingPlayer = Math.floor(Math.random()*newGame.players.length);
+					// set default attributes for each player
+					for(var k = 0; k < newGame.players.length; k++) {
+						// modify the loop index so that players are assigned colors in order
+						var i = (k + startingPlayer) % newGame.players.length;
+						newGame.players[i].active = (i === startingPlayer);
+						newGame.players[i].points = 0;
+						newGame.players[i].remainingMeeples = 7;
+						var preferred_color = newGame.players[i].user.preferred_color;
+						if (!preferred_color || preferred_color === 'none' || colors.indexOf(preferred_color) === -1) {
+							// choose a random remaining color for this player
+							newGame.players[i].color = colors.splice(Math.floor(Math.random()*colors.length), 1)[0];
+						} else {
+							// assign the preferred color and remove it from consideration
+							newGame.players[i].color = preferred_color;
+							colors.splice(colors.indexOf(preferred_color), 1);
+						}
+						if(expansions.indexOf('inns-and-cathedrals') !== -1) {
+							newGame.players[i].hasLargeMeeple = true;
+						}
+						if(expansions.indexOf('traders-and-builders') !== -1) {
+							newGame.players[i].hasPigMeeple = true;
+							newGame.players[i].hasBuilderMeeple = true;
+							newGame.players[i].goods = {
+								fabric: 0,
+								wine: 0,
+								wheat: 0
+							};
+						}
+						if(expansions.indexOf('the-tower') !== -1) {
+							newGame.players[i].towers = newGame.players.length === 1 ? 30 : // if playing solo let them have all the tower pieces
+							                            newGame.players.length === 2 ? 10 :
+							                            newGame.players.length === 3 ? 9 :
+							                            newGame.players.length === 4 ? 7 :
+							                            newGame.players.length === 5 ? 6 :
+							                                                           5;
+						}
+					}
+					// start the game by drawing the first tile
+					newGame.drawTile(callback);
+				}
 			}
-			if(expansions.indexOf('traders-and-builders') !== -1) {
-				newGame.players[i].hasPigMeeple = true;
-				newGame.players[i].hasBuilderMeeple = true;
-				newGame.players[i].goods = {
-					fabric: 0,
-					wine: 0,
-					wheat: 0
-				};
-			}
-			if(expansions.indexOf('the-tower') !== -1) {
-				newGame.players[i].towers = newGame.players.length === 1 ? 30 : // if playing solo let them have all the tower pieces
-				                            newGame.players.length === 2 ? 10 :
-				                            newGame.players.length === 3 ? 9 :
-				                            newGame.players.length === 4 ? 7 :
-				                            newGame.players.length === 5 ? 6 :
-				                                                           5;
-			}
-		}
-		// start the game by drawing the first tile
-		newGame.drawTile(callback);
+		);
 	});
 };
 

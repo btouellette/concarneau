@@ -316,6 +316,15 @@ module.exports = function(server, sessionStore) {
 							}
 						});
 					});
+					socket.on('preferred color', function(color) {
+						if (['blue', 'green', 'purple', 'red', 'yellow', 'gray'].indexOf(color) !== -1) {
+							User.findByIdAndUpdate(currentUser._id, { $set: { preferred_color: color }} , function(err, user) {
+								if(!err && user) {
+									currentUser = user;
+								}
+							});
+						}
+					});
 				}
 			});
 		});

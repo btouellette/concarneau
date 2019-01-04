@@ -28,7 +28,7 @@ module.exports = function(passport) {
 
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
-        User.findById(id, 'username friends activeGames local facebook google twitter email_notifications twitter_notifications sound_notifications collapsible_menu', function(err, user) {
+        User.findById(id, 'username friends activeGames local facebook google twitter email_notifications twitter_notifications sound_notifications collapsible_menu preferred_color', function(err, user) {
 			if(err) { 
 			    console.log('passport deserialize find user err: ' + err); 
 			} else { 

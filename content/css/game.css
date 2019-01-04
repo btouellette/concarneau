@@ -421,14 +421,18 @@ html, body
     padding-top: 3px;
 }
 
-#settings-menu .checkbox
+#settings-menu .checkbox,
+#settings-menu .dropdown
 {
     margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
 }
 
 #settings-menu label
 {
     vertical-align: -2px;
+    font-weight: normal;
 }
 
 #svg-wrapper
