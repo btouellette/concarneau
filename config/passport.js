@@ -318,10 +318,10 @@ module.exports = function(passport) {
     // GOOGLE ==================================================================
     // =========================================================================
     passport.use(new GoogleStrategy({
-
-        clientID        : configAuth.googleAuth.clientID,
-        clientSecret    : configAuth.googleAuth.clientSecret,
-        callbackURL     : configAuth.googleAuth.callbackURL,
+        clientID          : configAuth.googleAuth.clientID,
+        clientSecret      : configAuth.googleAuth.clientSecret,
+        callbackURL       : configAuth.googleAuth.callbackURL,
+        userProfileURL    : 'https://www.googleapis.com/oauth2/v3/userinfo',
         passReqToCallback : true // allows us to pass in the req from our route (lets us check if a user is logged in or not)
 
     },
@@ -329,7 +329,7 @@ module.exports = function(passport) {
 
         // asynchronous
         process.nextTick(function() {
-
+            
             // check if the user is already logged in
             if (!req.user) {
 
