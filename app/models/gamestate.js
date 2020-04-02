@@ -729,7 +729,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				var matched = false;
 				for(var i = 0; i < groupedPlacements[key].rotations.length; i++) {
 					var currentRotation = groupedPlacements[key].rotations[i];
-					// if this rotation has already been placed 
+					// if this rotation has already been placed
 					if(currentRotation.rotation === item.rotation) {
 						matched = true;
 						// since non-normal meeples don't have disqualifying conditions (only qualifying ones aka an existing active meeple) allow all unless they would be duplicates
@@ -812,8 +812,8 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	var allPlayers = friends.concat([initialUser._id]);
 	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
 	// add the game to the users' active games
-	var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, 
-	                                   { $push: { activeGames: newGame._id }}, 
+	var userGamesUpdated = User.update({ _id: { $in: allPlayers }},
+	                                   { $push: { activeGames: newGame._id }},
 	                                   { multi: true }).exec();
 	// grab the starting tile and make it the only placed tile
 	var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
@@ -902,7 +902,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	 *     rotation: Number, // number of clockwise 90° rotations
 	 *     meeple: {
 	 *         meepleType: String, // 'normal', 'large', 'pig', etc
-	 *         locationType: String, 
+	 *         locationType: String,
 	 *         index: Number
 	 *     },
 	 *     tower: {
@@ -1471,7 +1471,8 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 				scoredPoints *= 3;
 			}
 			// if this is a complete city without a cathedral double the points
-			if(featureInfo.complete && featureType === 'city' && !featureInfo.cathedral) {
+			// a completed city with 2 tiles only receives 2 points
+			if(featureinfo.complete && featureType === 'city' && !featureInfo.cathedral && featureInfo.points > 2) {
 				scoredPoints *= 2;
 			}
 			// if this is a complete road with an inn double the points
