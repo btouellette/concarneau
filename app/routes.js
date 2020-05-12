@@ -42,25 +42,37 @@ module.exports = function(app, passport, client) {
 
 	// process the username form
 	app.post('/username', isLoggedIn, function(req, res) {
+		console.log(req.headers['x-request-id'] + ' - selecting new username - ' + JSON.stringify(req));
 		if(!req.user.username) {
 			var username = req.body.username.toLowerCase();
+			console.log(req.headers['x-request-id'] + ' - testing valid');
 			if(/^[a-z0-9_]{1,12}$/.test(username)) {
+				console.log(req.headers['x-request-id'] + ' - setting username');
 				User.findByIdAndUpdate(req.user._id, { $set: { username: username }}, function(err) {
+					console.log(req.headers['x-request-id'] + ' - setting username callback');
 					if(err) {
+						console.log(req.headers['x-request-id'] + ' - username callback error - ' + JSON.stringify(err));
 						if(err.lastErrorObject && err.lastErrorObject.code === 11001) {
+							console.log(req.headers['x-request-id'] + ' - setting username callback error taken');
 							req.flash('usernameMessage', 'Username already taken');
 						} else {
+							console.log(req.headers['x-request-id'] + ' - setting username callback error unknown');
 							req.flash('usernameMessage', err.errmsg);
 						}
+						console.log(req.headers['x-request-id'] + ' - reloading username');
 						res.redirect('/username');
 					} else {
+						console.log(req.headers['x-request-id'] + ' - set user name sending to game');
 						res.redirect('/game');
 					}
 				});
 			} else {
+				console.log(req.headers['x-request-id'] + ' - not valid');
 				req.flash('usernameMessage', username.length > 12 ? 'Username too long' : username.length === 0 ? 'Username too short' : 'Username using invalid characters');
 				res.redirect('/username');
 			}
+		} else {
+			console.log(req.headers['x-request-id'] + ' - already has username');
 		}
 	});
 
