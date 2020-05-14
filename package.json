@@ -13,6 +13,7 @@
     "ejs": "^2.5.7",
     "express": "^4.15.4",
     "express-session": "^1.15.5",
+    "flatted": "^2.0.2",
     "helmet": "^3.8.1",
     "mongoose": "^4.11.6",
     "moniker": "^0.1.2",
@@ -38,6 +39,19 @@
     "eslint": "^3.19.0"
   },
   "scripts": {
-    "lint": "eslint app"
-  }
+    "lint": "eslint app",
+    "start": "node server.js"
+  },
+  "description": "Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/btouellette/concarneau.git"
+  },
+  "author": "Brian Ouellette",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/btouellette/concarneau/issues"
+  },
+  "homepage": "https://github.com/btouellette/concarneau#readme"
 }

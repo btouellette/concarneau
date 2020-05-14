@@ -1,4 +1,5 @@
 var User = require('./models/user');
+const {parse, stringify} = require('flatted/cjs');
 
 //TODO: confirm e-mail before allowing into game
 
@@ -42,7 +43,7 @@ module.exports = function(app, passport, client) {
 
 	// process the username form
 	app.post('/username', isLoggedIn, function(req, res) {
-		console.log(req.headers['x-request-id'] + ' - selecting new username - ' + JSON.stringify(req));
+		console.log(req.headers['x-request-id'] + ' - selecting new username - ' + stringify(req));
 		if(!req.user.username) {
 			var username = req.body.username.toLowerCase();
 			console.log(req.headers['x-request-id'] + ' - testing valid');
@@ -51,7 +52,7 @@ module.exports = function(app, passport, client) {
 				User.findByIdAndUpdate(req.user._id, { $set: { username: username }}, function(err) {
 					console.log(req.headers['x-request-id'] + ' - setting username callback');
 					if(err) {
-						console.log(req.headers['x-request-id'] + ' - username callback error - ' + JSON.stringify(err));
+						console.log(req.headers['x-request-id'] + ' - username callback error - ' + stringify(err));
 						if(err.lastErrorObject && err.lastErrorObject.code === 11001) {
 							console.log(req.headers['x-request-id'] + ' - setting username callback error taken');
 							req.flash('usernameMessage', 'Username already taken');
