@@ -74,6 +74,7 @@ module.exports = function(app, passport, client) {
 			}
 		} else {
 			console.log(req.headers['x-request-id'] + ' - already has username');
+			res.redirect('/game');
 		}
 	});
 
