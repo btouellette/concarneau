@@ -14,7 +14,7 @@
     "express": "^4.15.4",
     "express-session": "^1.15.5",
     "helmet": "^3.8.1",
-    "mongoose": "^4.11.6",
+    "mongoose": "^5.9.24",
     "moniker": "^0.1.2",
     "newrelic": "^2.0.2",
     "nodemailer": "^2.7.2",

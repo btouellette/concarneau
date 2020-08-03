@@ -71,7 +71,7 @@ var sessionStore = new MongoStore({
 });
 
 mongoose.plugin(schema => { schema.options.usePushEach = true }); // MongoDB 3.6+ deprecates $pushAll, set flag for mongoose to avoid that operator
-mongoose.connect(configDB.url, { useMongoClient: true }); // connect to our database
+mongoose.connect(configDB.url); // connect to our database
 
 require('./config/passport')(passport); // pass passport for configuration
 

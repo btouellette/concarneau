@@ -1502,7 +1502,7 @@ function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFini
 			if(scoringPlayers.length > 0 && scoredPoints > 0) {
 				message = scoringPlayers.map(function(player) {
 					return player.user.username + ' (' + player.points + ')';
-				}).join(' and ') + ' scored ' + scoredPoints + ' for ' + (featureType === 'farm' ? ' a ' : gameFinished ? 'an uncomplete ' : 'a completed ') + featureType;
+				}).join(' and ') + ' scored ' + scoredPoints + ' for ' + (featureType === 'farm' ? 'a ' : gameFinished ? 'an uncomplete ' : 'a completed ') + featureType;
 				if(featureInfo.cathedral) {
 					message += ' with a cathedral';
 				} else if(featureInfo.inn) {
