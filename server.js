@@ -10,21 +10,9 @@ if(process.env.C9_PROJECT/* && !process.env.MONGOLAB_URI*/) {
 	require('./config/c9');
 }
 
-// if configured to use trace, nodetime, spm, or newrelic connect to it
-if(process.env.TRACE_SERVICE_NAME) {
-	require('@risingstack/trace');
-}
+// if configured to use newrelic connect to it
 if(process.env.NEW_RELIC_LICENSE_KEY) {
 	require('newrelic');
-}
-if(process.env.SPM_TOKEN) {
-	require ('spm-agent-nodejs');
-}
-if(process.env.NODETIME_ACCOUNT_KEY) {
-	require('nodetime').profile({
-		accountKey: process.env.NODETIME_ACCOUNT_KEY,
-		appName: 'Concarneau'
-	});
 }
 
 var port = process.env.PORT || 8080;
@@ -70,8 +58,11 @@ var sessionStore = new MongoStore({
 	autoReconnect: true
 });
 
+mongoose.set('useCreateIndex', true); // handle deprecations: https://mongoosejs.com/docs/deprecations.html
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useUnifiedTopology', true); 
 mongoose.plugin(schema => { schema.options.usePushEach = true }); // MongoDB 3.6+ deprecates $pushAll, set flag for mongoose to avoid that operator
-mongoose.connect(configDB.url, { useMongoClient: true }); // connect to our database
+mongoose.connect(configDB.url); // connect to our database
 
 require('./config/passport')(passport); // pass passport for configuration
 

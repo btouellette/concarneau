@@ -4,7 +4,7 @@ var cookieParser = require('cookie-parser');
 var nodemailer = require('nodemailer');
 var smtp = require('nodemailer-smtp-transport');
 var xoauth2 = require('xoauth2');
-var twit = require('twit');
+var twit = require('twit'); // TODO: this is not supported any longer, replace with https://github.com/draftbit/twitter-lite
 var auth = require('../config/auth');
 
 // load up the gamestate model
@@ -40,22 +40,22 @@ var twitter = new twit({
 
 module.exports = function(server, sessionStore) {
 	// if the tile db is empty load in the tiles,
-	Tile.count({ expansion: 'base-game' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'base-game' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesBase();
 		}
 	});
-	Tile.count({ expansion: 'inns-and-cathedrals' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'inns-and-cathedrals' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesIAC();
 		}
 	});
-	Tile.count({ expansion: 'traders-and-builders' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'traders-and-builders' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesTAB();
 		}
 	});
-	Tile.count({ expansion: 'the-tower' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'the-tower' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesTT();
 		}
