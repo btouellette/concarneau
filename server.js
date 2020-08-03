@@ -70,6 +70,9 @@ var sessionStore = new MongoStore({
 	autoReconnect: true
 });
 
+mongoose.set('useCreateIndex', true); // handle deprecations: https://mongoosejs.com/docs/deprecations.html
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useUnifiedTopology', true); 
 mongoose.plugin(schema => { schema.options.usePushEach = true }); // MongoDB 3.6+ deprecates $pushAll, set flag for mongoose to avoid that operator
 mongoose.connect(configDB.url); // connect to our database
 

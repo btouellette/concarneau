@@ -40,22 +40,22 @@ var twitter = new twit({
 
 module.exports = function(server, sessionStore) {
 	// if the tile db is empty load in the tiles,
-	Tile.count({ expansion: 'base-game' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'base-game' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesBase();
 		}
 	});
-	Tile.count({ expansion: 'inns-and-cathedrals' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'inns-and-cathedrals' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesIAC();
 		}
 	});
-	Tile.count({ expansion: 'traders-and-builders' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'traders-and-builders' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesTAB();
 		}
 	});
-	Tile.count({ expansion: 'the-tower' }, function(err, count) {
+	Tile.countDocuments({ expansion: 'the-tower' }, function(err, count) {
 		if(!err && count === 0) {
 			Tile.loadTilesTT();
 		}
