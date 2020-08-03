@@ -147,7 +147,7 @@ module.exports = function(server, sessionStore) {
 					socket.on('load game', function(gameID) {
 						Gamestate.findById(gameID, function(err, gamestate) {
 							if(err) { console.log('load find err: ' + err); }
-							if(gamestate/* && gamestate.userIsInGame(currentUser)*/) {
+							if(gamestate && gamestate.userIsInGame(currentUser)) {
 								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
 								                   'cities.meepleOffset farms.meepleOffset roads.meepleOffset cloister tower.offset imageURL username',
 									function(err, gamestate) {
