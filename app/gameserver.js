@@ -4,7 +4,7 @@ var cookieParser = require('cookie-parser');
 var nodemailer = require('nodemailer');
 var smtp = require('nodemailer-smtp-transport');
 var xoauth2 = require('xoauth2');
-var twit = require('twit');
+var twit = require('twit'); // TODO: this is not supported any longer, replace with https://github.com/draftbit/twitter-lite
 var auth = require('../config/auth');
 
 // load up the gamestate model
