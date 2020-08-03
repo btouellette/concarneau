@@ -56,6 +56,7 @@
 	</div>
 	<div id="friends-menu">
 		<span class="menu-header">FRIENDS <svg class="fa-edit hidden" onclick="enableFriendsEdit(event)"><use xlink:href="#fa-edit"></use></svg></span>
+		<div id="username-info">You: <svg class="fa-user"><use xlink:href="#fa-user"></use></svg><%- user.username %></div>
 		<form id="add-friend-form">
 			<div class="input-group">
 				<input type="text" class="form-control" id="add-friend-input" placeholder="Username" autocomplete="off">
@@ -199,7 +200,7 @@
 </div>
 </div>
 <script src="/content/js/standalone.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
