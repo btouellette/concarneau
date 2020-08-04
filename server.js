@@ -6,7 +6,7 @@
 
 // if this is a c9 project using argv rather than environment variable
 // then run configurations configure appropriately
-if(process.env.C9_PROJECT/* && !process.env.MONGOLAB_URI*/) {
+if(process.env.C9_PROJECT) {
 	require('./config/c9');
 }
 
