@@ -43,7 +43,7 @@ module.exports = function(app, passport, client) {
 
 	// process the username form
 	app.post('/username', isLoggedIn, function(req, res) {
-		console.log(req.headers['x-request-id'] + ' - selecting new username - ' + stringify(req));
+		//console.log(req.headers['x-request-id'] + ' - selecting new username - ' + stringify(req));
 		if(!req.user.username) {
 			var username = req.body.username.toLowerCase();
 			console.log(req.headers['x-request-id'] + ' - testing valid');
