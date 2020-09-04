@@ -230,7 +230,14 @@ userGames.sort(function(a,b) { return (a.lastModified < b.lastModified) ? 1 : ((
 
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
-var socket = io.connect('<%- process.env.SOCKET_URL %>');
+
+// Disabling HTTPS/polling transport initially as this is causing H12 errors on Heroku, allow polling on reconnect if initial connection fails
+var socket = io.connect('<%- process.env.SOCKET_URL %>', {
+  transports: ['websocket']
+});
+socket.on('reconnect_attempt', () => {
+  socket.io.opts.transports = ['polling', 'websocket'];
+});
 
 var currentGameID, selectedMove, svgHeight, svgWidth;
 var meeplePlacementMode = 'normal';
