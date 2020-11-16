@@ -26,6 +26,7 @@
 <body>
 <input type="checkbox" id="menu-checkbox" checked />
 <input type="checkbox" id="collapsible-menu-checkbox-outer" <%- user.collapsible_menu ? 'checked="true"' : '' %> />
+<input type="checkbox" id="dark-mode-checkbox-outer" <%- user.dark_mode ? 'checked="true"' : '' %> />
 <div id="wrapper">
 <label id="menu-open" for="menu-checkbox" onclick="openMenu()">
 	<span class="icon-bar"></span>
@@ -105,6 +106,14 @@
 					   <%- user.collapsible_menu ? 'checked="true"' : '' %>> Always collapse menu
 			</label>
 		</div>
+		<div class="checkbox">
+			<label>
+				<input id="dark-mode-checkbox"
+				       type="checkbox"
+					   onclick="socket.emit('dark mode', this.checked); if(this.checked) { $('#dark-mode-checkbox-outer').prop('checked', true); } else { $('#dark-mode-checkbox-outer').prop('checked', false); }"
+					   <%- user.dark_mode ? 'checked="true"' : '' %>> Dark mode
+			</label>
+		</div>
 		<div class="dropdown">
 			<label for="preferred-color-select">Preferred color:</label>
 			<select id="preferred-color-select" class="form-control"
@@ -122,7 +131,7 @@
 	</div>
 </div>
 <div id="menu-selection">
-	<div id="game-menu-selection" class="iconmelon" onclick="menuClick('#game-menu', this)">
+	<div id="game-menu-selection" class="iconmelon menu-selected" onclick="menuClick('#game-menu', this)">
 		<svg viewBox="0 0 32 32">
 			<use xlink:href="#svgicon-templates"></use>
 		</svg>
@@ -141,7 +150,7 @@
 <div id="author-info">
 	<div>
 		Created by <span id="author-name">Brian Ouellette</span>
-		<a href="http://github.com/btouellette/concarneau"><img height="25" width="25" src="/content/images/ui/github_logo.png" /></a>
+		<a href="http://github.com/btouellette/concarneau"><svg class="fa-github"><use xlink:href="#fa-github"></use></svg></a>
 	</div>
 	<div>
 		<span>Buy me a beer?</span>
@@ -167,8 +176,8 @@
 	<svg id="game-svg" width="100%" height="100%">
 		<defs>
 			<pattern id="thin-stripes-pattern" width="5" height="5" patternUnits="userSpaceOnUse">
-				<rect width="5" height="5" fill="#f5f5f5"></rect>
-				<path d="M0 5L5 0ZM6 4L4 6ZM-1 1L1 -1Z" stroke="#e0e0e0"></path>
+				<rect width="5" height="5"></rect>
+				<path d="M0 5L5 0ZM6 4L4 6ZM-1 1L1 -1Z"></path>
 			</pattern>
 		</defs>
 		<rect width="100%" height="100%" fill="url(#thin-stripes-pattern)" id="game-background"></rect>
@@ -190,7 +199,7 @@
 	<div id="chat-footer">
 		<form id="chat-message-form">
 			<div class="input-group">
-				<input id="chat-message-input" type="text" class="form-control input-sm" maxlength="200" placeholder="Type your message here...">
+				<input id="chat-message-input" type="text" class="form-control input-sm" autocomplete="off" maxlength="200" placeholder="Type your message here...">
 				<span class="input-group-btn">
 					<button class="btn btn-sm btn-info" type="submit">Send</button>
 				</span>
@@ -231,13 +240,7 @@ userGames.sort(function(a,b) { return (a.lastModified < b.lastModified) ? 1 : ((
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
 
-// Disabling HTTPS/polling transport initially as this is causing H12 errors on Heroku, allow polling on reconnect if initial connection fails
-var socket = io.connect('<%- process.env.SOCKET_URL %>', {
-  transports: ['websocket']
-});
-socket.on('reconnect_attempt', () => {
-  socket.io.opts.transports = ['polling', 'websocket'];
-});
+var socket = io.connect('<%- process.env.SOCKET_URL %>');
 
 var currentGameID, selectedMove, svgHeight, svgWidth;
 var meeplePlacementMode = 'normal';
@@ -248,9 +251,9 @@ var tileSize = 100;
 
 function menuClick(menuToOpen, button) {
 	$('#menus > div').hide();
+	$('#menu-selection > div').removeClass('menu-selected');
 	$(menuToOpen).show();
-	$('#menu-selection > div').css('fill','#272727');
-	$(button).css('fill','#808080');
+	$(button).addClass('menu-selected');
 }
 
 function openMenu() {

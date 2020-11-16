@@ -35,6 +35,7 @@ var userSchema = mongoose.Schema({
     twitter_notifications: Boolean,
     sound_notifications: Boolean,
     collapsible_menu: Boolean,
+    dark_mode: Boolean,
     preferred_color: String
 });
 
