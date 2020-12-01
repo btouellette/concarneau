@@ -1,6 +1,6 @@
 # Concarneau
 
-Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.
+Multiplayer web game using the same rules as Carcassone. Currently supports the base game along with the Inns and Cathedrals and the Traders and Builders expansion packs.
 
 Running at https://concarneau.herokuapp.com
 
