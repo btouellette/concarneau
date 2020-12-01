@@ -4,6 +4,8 @@ Multiplayer web game using the same rules as Carcassone. Currently supports the 
 
 Running at https://concarneau.herokuapp.com
 
+For a quick demo of capabilities you can start a solo game by logging in, hitting the + icon and selecting start which will start a solo game where you are laying all the tiles and pieces.
+
 ## Instructions
 
 If you would like to download the code and try it for yourself:
