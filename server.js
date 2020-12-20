@@ -60,7 +60,7 @@ var sessionStore = new MongoStore({
 
 mongoose.set('useCreateIndex', true); // handle deprecations: https://mongoosejs.com/docs/deprecations.html
 mongoose.set('useNewUrlParser', true);
-mongoose.set('useUnifiedTopology', true); 
+mongoose.set('useUnifiedTopology', true);
 mongoose.plugin(schema => { schema.options.usePushEach = true }); // MongoDB 3.6+ deprecates $pushAll, set flag for mongoose to avoid that operator
 mongoose.connect(configDB.url); // connect to our database
 
@@ -114,7 +114,7 @@ process.on('uncaughtException', function (err) {
 
 // routes ======================================================================
 // load our routes and pass in our app and fully configured passport
-require('./app/routes')(app, passport, client); 
+require('./app/routes')(app, passport, client);
 
 if(process.env.SENTRY_DSN) {
 	app.use(raven.middleware.express.errorHandler(process.env.SENTRY_DSN));

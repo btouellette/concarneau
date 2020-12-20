@@ -116,6 +116,33 @@ module.exports = function(app, passport, client) {
 		failureFlash : true // allow flash messages
 	}));
 
+	// FORGOT =================================
+	// show the forgot password form
+	app.get('/forgot', function(req, res) {
+		if(req.isAuthenticated()) {
+			if(process.env.SENTRY_DSN) { client.setUserContext({ user: req.user}); }
+			res.redirect('/game');
+		} else {
+			res.render('forgot.ejs', { message: req.flash('forgotPasswordMessage') });
+		}
+	});
+
+	// process the forgot password form
+	app.post('/forgot', function (req, res) {
+		//TODO: record token and expiration, send e-mail, update forgotPasswordMessage and redirect to /forgot
+	});
+
+	// RESET =================================
+	// show the reset password form
+	app.get('/reset', function(req, res) {
+		res.render('reset.ejs', { message: req.flash('resetPasswordMessage') });
+	});
+
+	// process the reset password form
+	app.post('/reset', function(req, res) {
+		//TODO: validate token and expiration, send e-mail, redirect to /login (update loginMessage)
+	});
+
 	// facebook -------------------------------
 
 	// send to facebook to do the authentication

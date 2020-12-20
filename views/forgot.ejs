@@ -29,29 +29,22 @@
 <body background="/content/images/ui/bg.jpg">
 <div class="container">
 <div class="jumbotron">
-	<h1><svg class="fa-sign-in"><use xlink:href="/content/images/ui/icons.svg#fa-sign-in"></use></svg> Login</h1>
+	<h1><svg class="fa-sign-in"><use xlink:href="/content/images/ui/icons.svg#fa-sign-in"></use></svg> Forgot your password?</h1>
 
 	<% if (message.length > 0) { %>
 		<div class="alert alert-danger"><%= message %></div>
 	<% } %>
 
-	<!-- LOGIN FORM -->
-	<form action="/login" method="post">
+	<!-- PASSWORD RESET FORM -->
+	<form action="/forgot" method="post">
 		<div class="form-group">
-			<label>Email</label>
+			<label>Enter email:</label>
 			<input type="email" class="form-control" name="email">
 		</div>
-		<div class="form-group">
-			<label>Password</label>
-			<input type="password" class="form-control" name="password">
-		</div>
-		<button type="submit" class="btn btn-warning btn-lg">Login</button>
+		<button type="submit" class="btn btn-warning btn-lg">Reset</button>
 	</form>
 
 	<hr>
-
-	<p>Need an account? <a href="/signup">Signup</a></p>
-	<p>Forgot your password? <a href="/forgot">Password reset</a></p>
 	<p>Or go <a href="/">home</a>.</p>
 </div>
 </div>
