@@ -56,7 +56,8 @@ module.exports = function(app, passport, client) {
 					console.log(req.headers['x-request-id'] + ' - setting username callback');
 					if(err) {
 						console.log(req.headers['x-request-id'] + ' - username callback error - ' + stringify(err));
-						if(err.lastErrorObject && err.lastErrorObject.code === 11001) {
+						if(err && err.lastErrorObject && err.lastErrorObject.code === 11001 ||
+							 err && err.code === 11000) {
 							console.log(req.headers['x-request-id'] + ' - setting username callback error taken');
 							req.flash('usernameMessage', 'Username already taken');
 						} else {
@@ -172,9 +173,13 @@ module.exports = function(app, passport, client) {
 			'local.passwordResetToken': passwordResetToken,
 			'local.passwordResetExpiration': { $gt: Date.now() }
 		}, {
-			'local.passwordResetToken': null,
-			'local.passwordResetExpiration': null,
-			'local.password': User.generateHash(password)
+			$unset: {
+				'local.passwordResetToken': null,
+				'local.passwordResetExpiration': null
+			},
+			$set: {
+				'local.password': User.generateHash(password)
+			}
 		}, function (err, user) {
 			ejs.renderFile('views/password-reset-success.ejs', { serverURL: process.env.SERVER_URL }, function(err, html) {
 				if (err || !user) {
