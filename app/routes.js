@@ -159,12 +159,43 @@ module.exports = function(app, passport, client) {
 	// RESET =================================
 	// show the reset password form
 	app.get('/reset', function(req, res) {
-		res.render('reset.ejs', { message: req.flash('resetPasswordMessage') });
+		res.render('reset.ejs', { passwordResetToken: req.query.prt, message: req.flash('resetPasswordMessage') });
 	});
 
 	// process the reset password form
 	app.post('/reset', function(req, res) {
 		//TODO: validate token and expiration, send e-mail, redirect to /login (update loginMessage)
+		const email = req.body.email;
+		const password = req.body.password;
+		const passwordResetToken = req.body.prt;
+		User.findOneAndUpdate({
+			'local.email': email.toLowerCase(),
+			'local.passwordResetToken': passwordResetToken,
+			'local.passwordResetExpiration': { $gt: Date.now() }
+		}, {
+			'local.passwordResetToken': null,
+			'local.passwordResetExpiration': null
+		}, function (err, user) {
+			ejs.renderFile('views/password-reset-success.ejs', { serverURL: process.env.SERVER_URL, passwordResetToken: passwordResetToken }, function(err, html) {
+				if (err) {
+					req.flash('resetPasswordMessage', 'Incorrect email or password reset invalid or expired!');
+					res.redirect('/reset');
+				} else if (!err && user) {
+					mailer.sendMail({
+						from: 'Concarneau <concarneau.game@gmail.com>',
+						to: email,
+						subject: 'Your Password Has Been Reset',
+						html: html
+					}, function(err, res) {
+						if(err) {
+							console.log('e-mail failed: ' + err);
+						}
+					});
+					req.flash('loginMessage', 'Your password has been reset!');
+					res.redirect('/login');
+				}
+			});
+		});
 	});
 
 	// facebook -------------------------------
