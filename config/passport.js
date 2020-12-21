@@ -29,21 +29,21 @@ module.exports = function(passport) {
     // used to deserialize the user
     passport.deserializeUser(function(id, done) {
         User.findById(id, 'username friends activeGames local facebook google twitter email_notifications twitter_notifications sound_notifications collapsible_menu dark_mode preferred_color', function(err, user) {
-			if(err) { 
-			    console.log('passport deserialize find user err: ' + err); 
-			} else { 
+			if(err) {
+			    console.log('passport deserialize find user err: ' + err);
+			} else {
 			    console.log('user found: ' + user.username);
 			}
             user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles lastModified', function(err, user) {
-				if(err) { 
-				    console.log('passport deserialize populate user err: ' + err); 
-				} else { 
+				if(err) {
+				    console.log('passport deserialize populate user err: ' + err);
+				} else {
     			    console.log('games and friends found: ' + user.username);
     			}
 				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
-				    if(err) { 
-				        console.log('passport deserialize populate2 user err: ' + err); 
-				    } else { 
+				    if(err) {
+				        console.log('passport deserialize populate2 user err: ' + err);
+				    } else {
         			    console.log('games users found: ' + user.username);
         			}
 					done(err, user);
@@ -51,7 +51,7 @@ module.exports = function(passport) {
             });
         });
     });
-    
+
     // =========================================================================
     // LOCAL LOGIN =============================================================
     // =========================================================================
@@ -123,7 +123,7 @@ module.exports = function(passport) {
                         var newUser            = new User();
 
                         newUser.local.email    = email;
-                        newUser.local.password = newUser.generateHash(password);
+                        newUser.local.password = User.generateHash(password);
 
                         newUser.save(function(err) {
                             if (err)
@@ -139,7 +139,7 @@ module.exports = function(passport) {
                 // ...presumably they're trying to connect a local account
                 var user            = req.user;
                 user.local.email    = email;
-                user.local.password = user.generateHash(password);
+                user.local.password = User.generateHash(password);
                 user.save(function(err) {
                     if (err)
                         throw err;
@@ -329,7 +329,7 @@ module.exports = function(passport) {
 
         // asynchronous
         process.nextTick(function() {
-            
+
             // check if the user is already logged in
             if (!req.user) {
 
@@ -344,7 +344,7 @@ module.exports = function(passport) {
                             user.google.token = token;
                             user.google.name  = profile.displayName;
                             user.google.email = (typeof profile.emails != 'undefined' && profile.emails instanceof Array) ? (profile.emails[0].value || '').toLowerCase() : ''; // pull the first email
-                            
+
                             user.save(function(err) {
                                 if (err)
                                     throw err;

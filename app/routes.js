@@ -164,7 +164,6 @@ module.exports = function(app, passport, client) {
 
 	// process the reset password form
 	app.post('/reset', function(req, res) {
-		//TODO: validate token and expiration, send e-mail, redirect to /login (update loginMessage)
 		const email = req.body.email;
 		const password = req.body.password;
 		const passwordResetToken = req.body.prt;
@@ -174,13 +173,14 @@ module.exports = function(app, passport, client) {
 			'local.passwordResetExpiration': { $gt: Date.now() }
 		}, {
 			'local.passwordResetToken': null,
-			'local.passwordResetExpiration': null
+			'local.passwordResetExpiration': null,
+			'local.password': User.generateHash(password)
 		}, function (err, user) {
-			ejs.renderFile('views/password-reset-success.ejs', { serverURL: process.env.SERVER_URL, passwordResetToken: passwordResetToken }, function(err, html) {
-				if (err) {
+			ejs.renderFile('views/password-reset-success.ejs', { serverURL: process.env.SERVER_URL }, function(err, html) {
+				if (err || !user) {
 					req.flash('resetPasswordMessage', 'Incorrect email or password reset invalid or expired!');
 					res.redirect('/reset');
-				} else if (!err && user) {
+				} else {
 					mailer.sendMail({
 						from: 'Concarneau <concarneau.game@gmail.com>',
 						to: email,
