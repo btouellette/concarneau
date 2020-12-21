@@ -1,5 +1,8 @@
 var User = require('./models/user');
 const {parse, stringify} = require('flatted/cjs');
+var crypto = require('crypto');
+var ejs = require('ejs');
+var mailer = require('./mailer');
 
 //TODO: confirm e-mail before allowing into game
 
@@ -129,7 +132,28 @@ module.exports = function(app, passport, client) {
 
 	// process the forgot password form
 	app.post('/forgot', function (req, res) {
-		//TODO: record token and expiration, send e-mail, update forgotPasswordMessage and redirect to /forgot
+		const email = req.body.email;
+		const passwordResetToken = crypto.randomBytes(20).toString('hex');
+		const passwordResetExpiration = Date.now() + 3600000*12; // expires after 12 hour
+		User.findOneAndUpdate({ 'local.email': email.toLowerCase() }, { 'local.passwordResetToken': passwordResetToken, 'local.passwordResetExpiration': passwordResetExpiration }, function(err, user) {
+			ejs.renderFile('views/password-reset.ejs', { serverURL: process.env.SERVER_URL, passwordResetToken: passwordResetToken }, function(err, html) {
+				if (!err && user) {
+					mailer.sendMail({
+						from: 'Concarneau <concarneau.game@gmail.com>',
+						to: email,
+						subject: 'Resetting Your Password',
+						html: html
+					}, function(err, res) {
+						if(err) {
+							console.log('e-mail failed: ' + err);
+						}
+					});
+				}
+				// send message regardless of what happened to avoid scripted listing of users
+				req.flash('forgotPasswordMessage', 'Password reset sent!');
+				res.redirect('/forgot');
+			});
+		});
 	});
 
 	// RESET =================================

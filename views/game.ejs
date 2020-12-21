@@ -235,12 +235,12 @@
 
 var userGames = <%- JSON.stringify(user.activeGames) %>;
 // sort user's games most to least recent
-userGames.sort(function(a,b) { return (a.lastModified < b.lastModified) ? 1 : ((b.lastModified < a.lastModified) ? -1 : 0); }); 
+userGames.sort(function(a,b) { return (a.lastModified < b.lastModified) ? 1 : ((b.lastModified < a.lastModified) ? -1 : 0); });
 
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
 
-var socket = io.connect('<%- process.env.SOCKET_URL %>');
+var socket = io.connect('<%- process.env.SERVER_URL %>');
 
 var currentGameID, selectedMove, svgHeight, svgWidth;
 var meeplePlacementMode = 'normal';
@@ -662,7 +662,7 @@ $(document).ready(function() {
 		socket.emit('sending message', input.val(), currentGameID);
 		input.val('');
 	});
-	
+
 	// Listen for Enter keypresses and trigger move submission
 	jQuery.fn.d3Click = function () {
 		this.each(function (i, e) {
@@ -670,7 +670,7 @@ $(document).ready(function() {
 			e.dispatchEvent(evt);
 		});
 	};
-	$(document).keypress(function (event) { 
+	$(document).keypress(function (event) {
 		// Ignore enter keypress if it is to send a chat message
 		if(event.target.id !== 'chat-message-input'  && (event.which == 13 || event.keyCode == 13)) {
 			var sendVisible = $('#send-move-button').css('visibility') !== 'hidden';
@@ -682,11 +682,11 @@ $(document).ready(function() {
 			}
 		}
 	});
-	
+
 	// Play a silent sound so that we can play background audio later if needed
 	if($('#sound-notifications-checkbox').is(':checked')) {
-		var bell = new Audio('/content/sounds/church-bell.mp3'); 
-		bell.volume = 0; 
+		var bell = new Audio('/content/sounds/church-bell.mp3');
+		bell.volume = 0;
 		bell.play();
 	}
 
@@ -798,7 +798,7 @@ $(document).ready(function() {
 		x: $('#svg-wrapper').width() - 5 - tileSize / 2 - 16,
 		y: 5 + tileSize / 2 - 16
 	});
-	
+
 	function timeSince(date) {
 	  var seconds = Math.floor((new Date() - date) / 1000);
 	  var interval = Math.floor(seconds / 31536000);

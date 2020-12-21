@@ -12,4 +12,4 @@ process.env.GOOGLE_CALLBACK = 'https://concarneau-c9-btouellette.c9.io/auth/goog
 
 process.env.MONGO_URI = 'mongodb://' + process.env.IP + '/concarneau_db';
 
-process.env.SOCKET_URL = 'https://concarneau-c9-btouellette.c9.io';
+process.env.SERVER_URL = 'https://concarneau-c9-btouellette.c9.io';

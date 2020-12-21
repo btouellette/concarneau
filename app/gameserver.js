@@ -1,11 +1,9 @@
 /* jslint smarttabs:true */
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
-var nodemailer = require('nodemailer');
-var smtp = require('nodemailer-smtp-transport');
-var xoauth2 = require('xoauth2');
 var twit = require('twit'); // TODO: this is not supported any longer, replace with https://github.com/draftbit/twitter-lite
 var auth = require('../config/auth');
+var mailer = require('./mailer');
 
 // load up the gamestate model
 var Tile = require('./models/tile');
@@ -20,17 +18,6 @@ var User = require('./models/user');
 //TODO: send e-mail on game start not just on turn start (to active player if not current user)
 var userToSocket = {};
 
-var smtpTransport = nodemailer.createTransport(smtp({
-	service: 'gmail',
-	auth: {
-		xoauth2: xoauth2.createXOAuth2Generator({ 
-			user: 'concarneau.game@gmail.com',
-			clientId : '859053446273-1e5ln4ca5gco80tl88a0kefj35id3eik.apps.googleusercontent.com',
-			clientSecret: auth.googleAuth.clientSecret,
-			refreshToken: auth.googleAuth.refreshToken
-		})
-	}
-}));
 var twitter = new twit({
 	consumer_key: auth.twitterAuth.consumerKey,
 	consumer_secret: auth.twitterAuth.consumerSecret,
@@ -201,11 +188,11 @@ module.exports = function(server, sessionStore) {
 														var activeEmail = activeUser.local.email || activeUser.google.email || activeUser.facebook.email;
 														// send e-mail notification if we have a valid e-mail and the user has the option enabled
 														if(activeEmail && activeUser.email_notifications) {
-															smtpTransport.sendMail({
-																from: 'Concarneau <concarneau.game@gmail.com',
+															mailer.sendMail({
+																from: 'Concarneau <concarneau.game@gmail.com>',
 																to: activeEmail,
 																subject: 'Your turn!',
-																text: 'There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com'
+																text: 'There is a Concarneau game where it is your turn: ' + process.env.SERVER_URL //TODO: make this HTML
 															}, function(err, res) {
 																if(err) {
 																	console.log('e-mail failed: ' + err);
@@ -214,7 +201,7 @@ module.exports = function(server, sessionStore) {
 														}
 														// send twitter notification if we have a valid twitter handle and the user has the option enabled
 														if(activeUser.twitter.username && activeUser.twitter_notifications) {
-															twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: https://concarneau.herokuapp.com?' + Math.floor(Math.random()*1000000) }, function(err) {
+															twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: ' + process.env.SERVER_URL + '?' + Math.floor(Math.random()*1000000) }, function(err) {
 																if(err) {
 																	console.log('twitter failed: ' + err);
 																}
