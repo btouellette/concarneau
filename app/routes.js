@@ -191,7 +191,7 @@ module.exports = function(app, passport, client) {
 							console.log('e-mail failed: ' + err);
 						}
 					});
-					req.flash('loginMessage', 'Your password has been reset!');
+					req.flash('loginMessage', 'Your password has been reset! Please login again.');
 					res.redirect('/login');
 				}
 			});
