@@ -53,43 +53,79 @@ module.exports = function(server, sessionStore) {
 	var io = new wsServer({
 		server: server,
 		verifyClient: function(info, cb) {
-			// validate session cookie and populate session id if given
+			// validate session cookie and populate session id
 			if (info.req.headers.cookie) {
 				try {
 					var parsedCookie = cookie.parse(decodeURIComponent(info.req.headers.cookie));
 					if(!parsedCookie['express.sid']) {
-						console.log('No session ID in parsed cookie');
-						cb(false);
+						cb(false, 401, 'No session ID in parsed cookie');
 					} else {
 						info.req.sessionID = cookieParser.signedCookie(parsedCookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
 						if (parsedCookie['express.sid'] == info.req.sessionID) {
-							console.log('Cookie is invalid');
-							cb(false);
+							cb(false, 401, 'Cookie is invalid');
 						} else {
 							cb(true);
 						}
 					}
 				} catch (err) {
-					console.log('Error parsing session cookie');
-					cb(false);
+					cb(false, 401, 'Error parsing session cookie');
 				}
 			} else if(info.req.url) {
 				info.req.sessionID = new url.URLSearchParams(info.req.url).get('sid');
 				if (info.req.sessionID) {
 					cb(true);
 				} else {
-					console.log('No cookie and no parameter transmitted');
-					cb(false);
+					cb(false, 401, 'No cookie and no session ID parameter transmitted');
 				}
 			} else {
-				console.log('No cookie and no parameter transmitted');
-				cb(false);
+				cb(false,  401, 'No cookie and no session ID parameter transmitted');
 			}
 		}
 	});
 
 	// for each new connection get the session and set up server callbacks
-	io.on('connection', function (socket, req) {
+	io.on('connection', function (rawSocket, req) {
+		// wrap the raw socket to dispatch specific events
+		var WrappedSocket = function(rawSocket) {
+			var callbacks = {};
+
+			this.on = function(event_name, callback) {
+				if (!callbacks[event_name]) {
+					callbacks[event_name] = [];
+				}
+				callbacks[event_name].push(callback);
+				return this; // chainable
+			};
+
+			this.emit = function(event_name, ...event_args) {
+				var payload = JSON.stringify({ event: event_name, args: event_args});
+				rawSocket.send(payload); // send JSON data to socket
+				return this;
+			};
+
+			// dispatch to the right handlers
+			rawSocket.onmessage = function(event) {
+				var json = JSON.parse(event.data);
+				dispatch(json.event, json.args);
+			};
+
+			rawSocket.onclose = function() { dispatch('disconnect',null); };
+			rawSocket.onopen = function() { dispatch('connect',null); };
+
+			var dispatch = function(event_name, args){
+				if (!callbacks[event_name]) {
+					return; // no callbacks for this event
+				}
+				if (!args) {
+					args = [];
+				}
+				for (var i = 0; i < callbacks[event_name].length; i++) {
+					callbacks[event_name][i](...args);
+				}
+			}
+		};
+		var socket = new WrappedSocket(rawSocket);
+
 		// retrieve user information for user specific actions
 		sessionStore.get(req.sessionID, function(err, session) {
 			if(err || !session) {
