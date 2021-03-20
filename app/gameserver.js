@@ -1,4 +1,5 @@
 /* jslint smarttabs:true */
+var url = require('url');
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 var twit = require('twit'); // TODO: this is not supported any longer, replace with https://github.com/draftbit/twitter-lite
@@ -48,38 +49,51 @@ module.exports = function(server, sessionStore) {
 		}
 	});
 
-	var io = require('socket.io').listen(server);
-	// validate session cookie and populate session id if given
-	io.use(function(socket, next) {
-		var handshakeData = socket.handshake;
-		if(handshakeData.headers.cookie) {
-			try {
-				handshakeData.cookie = cookie.parse(decodeURIComponent(handshakeData.headers.cookie));
-				if(!handshakeData.cookie['express.sid']) {
-					next(new Error('No session ID in parsed cookie'));
+	var wsServer = require('ws').Server;
+	var io = new wsServer({
+		server: server,
+		verifyClient: function(info, cb) {
+			// validate session cookie and populate session id if given
+			if (info.req.headers.cookie) {
+				try {
+					var parsedCookie = cookie.parse(decodeURIComponent(info.req.headers.cookie));
+					if(!parsedCookie['express.sid']) {
+						console.log('No session ID in parsed cookie');
+						cb(false);
+					} else {
+						info.req.sessionID = cookieParser.signedCookie(parsedCookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
+						if (parsedCookie['express.sid'] == info.req.sessionID) {
+							console.log('Cookie is invalid');
+							cb(false);
+						} else {
+							cb(true);
+						}
+					}
+				} catch (err) {
+					console.log('Error parsing session cookie');
+					cb(false);
 				}
-				handshakeData.sessionID = cookieParser.signedCookie(handshakeData.cookie['express.sid'], process.env.EXPRESS_SESSION_SECRET);
-				if (handshakeData.cookie['express.sid'] == handshakeData.sessionID) {
-					next(new Error('Cookie is invalid'));
+			} else if(info.req.url) {
+				info.req.sessionID = new url.URLSearchParams(info.req.url).get('sid');
+				if (info.req.sessionID) {
+					cb(true);
+				} else {
+					console.log('No cookie and no parameter transmitted');
+					cb(false);
 				}
-			} catch (err) {
-				next(new Error('Error parsing session cookie'));
-			}
-		} else {
-			if(handshakeData.query['sid']) {
-				handshakeData.sessionID = handshakeData.query['sid'];
 			} else {
-				next(new Error('No cookie and no parameter transmitted'));
+				console.log('No cookie and no parameter transmitted');
+				cb(false);
 			}
 		}
-		next();
 	});
+
 	// for each new connection get the session and set up server callbacks
-	io.sockets.on('connection', function (socket) {
+	io.on('connection', function (socket, req) {
 		// retrieve user information for user specific actions
-		sessionStore.get(socket.handshake.sessionID, function(err, session) {
+		sessionStore.get(req.sessionID, function(err, session) {
 			if(err || !session) {
-				console.log("couldn't retrieve session - error: " + err + ' - sessionid: ' + socket.handshake.sessionID);
+				console.log("couldn't retrieve session - error: " + err + ' - sessionid: ' + req.sessionID);
 				return;
 			}
 			User.findById(session.passport.user, function(err, currentUser) {
