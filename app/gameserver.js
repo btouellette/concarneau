@@ -88,6 +88,18 @@ module.exports = function(server, sessionStore) {
 		// wrap the raw socket to dispatch specific events
 		var WrappedSocket = function(rawSocket) {
 			var callbacks = {};
+			var currentSocket = rawSocket;
+
+			var init = function() {
+				// dispatch to the right handlers
+				currentSocket.onmessage = function(event) {
+					var json = JSON.parse(event.data);
+					dispatch(json.event, json.args);
+				};
+
+				currentSocket.onclose = function() { dispatch('disconnect', null); };
+				currentSocket.onopen = function() { dispatch('connect', null); };
+			};
 
 			this.on = function(event_name, callback) {
 				if (!callbacks[event_name]) {
@@ -99,20 +111,17 @@ module.exports = function(server, sessionStore) {
 
 			this.emit = function(event_name, ...event_args) {
 				var payload = JSON.stringify({ event: event_name, args: event_args});
-				rawSocket.send(payload); // send JSON data to socket
+				currentSocket.send(payload); // send JSON data to socket
 				return this;
 			};
 
-			// dispatch to the right handlers
-			rawSocket.onmessage = function(event) {
-				var json = JSON.parse(event.data);
-				dispatch(json.event, json.args);
-			};
+			this.setSocket = function(newSocket) {
+				currentSocket.close();
+				currentSocket = newSocket;
+				init();
+			}
 
-			rawSocket.onclose = function() { dispatch('disconnect',null); };
-			rawSocket.onopen = function() { dispatch('connect',null); };
-
-			var dispatch = function(event_name, args){
+			var dispatch = function(event_name, args) {
 				if (!callbacks[event_name]) {
 					return; // no callbacks for this event
 				}
@@ -122,7 +131,9 @@ module.exports = function(server, sessionStore) {
 				for (var i = 0; i < callbacks[event_name].length; i++) {
 					callbacks[event_name][i](...args);
 				}
-			}
+			};
+
+			init();
 		};
 		var socket = new WrappedSocket(rawSocket);
 
