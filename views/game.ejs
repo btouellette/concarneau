@@ -209,7 +209,6 @@
 </div>
 </div>
 <script src="/content/js/standalone.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/jquery.qtip.min.js"></script>
@@ -240,7 +239,58 @@ userGames.sort(function(a,b) { return (a.lastModified < b.lastModified) ? 1 : ((
 var userFriends = <%- JSON.stringify(user.friends) %>;
 var userID = '<%- user._id %>';
 
-var socket = io.connect('<%- process.env.SERVER_URL %>');
+var rawSocket = new WebSocket('<%- process.env.SERVER_URL.replace("https", "wss").replace("http", "ws") %>');
+// wrap the raw socket to dispatch specific events
+var WrappedSocket = function(rawSocket) {
+	var callbacks = {};
+	var currentSocket = rawSocket;
+
+	var init = function() {
+		// dispatch to the right handlers
+		currentSocket.onmessage = function(event) {
+			var json = JSON.parse(event.data);
+			dispatch(json.event, json.args);
+		};
+
+		currentSocket.onclose = function() { dispatch('disconnect', null); };
+		currentSocket.onopen = function() { dispatch('connect', null); };
+	};
+
+	this.on = function(event_name, callback) {
+		if (!callbacks[event_name]) {
+			callbacks[event_name] = [];
+		}
+		callbacks[event_name].push(callback);
+		return this; // chainable
+	};
+
+	this.emit = function(event_name, ...event_args) {
+		var payload = JSON.stringify({ event: event_name, args: event_args});
+		currentSocket.send(payload); // send JSON data to socket
+		return this;
+	};
+
+	this.setSocket = function(newSocket) {
+		currentSocket.close();
+		currentSocket = newSocket;
+		init();
+	}
+
+	var dispatch = function(event_name, args) {
+		if (!callbacks[event_name]) {
+			return; // no callbacks for this event
+		}
+		if (!args) {
+			args = [];
+		}
+		for (var i = 0; i < callbacks[event_name].length; i++) {
+			callbacks[event_name][i](...args);
+		}
+	};
+
+	init();
+};
+var socket = new WrappedSocket(rawSocket);
 
 var currentGameID, selectedMove, svgHeight, svgWidth;
 var meeplePlacementMode = 'normal';
@@ -1096,6 +1146,19 @@ $(document).ready(function() {
 		if(gameID === currentGameID) {
 			addMessageToChat(message, username);
 		}
+	});
+	// attempt to automatically reconnect after 5s if disconnected from the server
+	//TODO: attempt to reconnect X amount of times and then show an error
+	var timeoutHandle;
+	socket.on('disconnect', function() {
+		// clear timeout in case multiple disconnects are reported from the socket
+		clearTimeout(timeoutHandle);
+		timeoutHandle = setTimeout(() => {
+			socket.setSocket(new WebSocket('<%- process.env.SERVER_URL.replace("https", "wss").replace("http", "ws") %>'));
+			if (currentGameID) {
+				socket.emit('load game', currentGameID);
+			}
+		}, 5000);
 	});
 
 	function addMessageToChat(message, username) {
