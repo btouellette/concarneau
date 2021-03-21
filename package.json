@@ -27,7 +27,6 @@
     "passport-twitter": "^1.0.4",
     "q": "^2.0.3",
     "raven": "^0.12.3",
-    "socket.io": "^4.0.0",
     "tunnel": "^0.0.4",
     "twit": "^2.2.9",
     "utf-8-validate": "^5.0.4",
