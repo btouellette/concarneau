@@ -98,7 +98,7 @@ process.env.EXPRESS_SESSION_SECRET = process.env.EXPRESS_SESSION_SECRET ||
                                      'ilovescotchscotchyscotchscotch';
 app.use(session({
 	secret: process.env.EXPRESS_SESSION_SECRET,
-	cookie: { maxAge: 31536000 },
+	cookie: { maxAge: 31536000, sameSite: true, secure: true },
 	key: 'express.sid',
 	store: sessionStore,
 	resave: false,
