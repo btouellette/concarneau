@@ -185,7 +185,9 @@ function completeGame(gamestate) {
 }
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
+	console.log(`[${gamestate.name}] - drawTile entered`);
 	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
+		console.log(`[${gamestate.name}] - drawTile populated`);
 		// if we're out of tiles score/complete game
 		if(gamestate.unusedTiles.length === 0 || autocomplete) {
 			completeGame(gamestate);
@@ -224,6 +226,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				westEdge: gamestateTile.tile.northEdge
 			};
 		});
+		console.log(`[${gamestate.name}] - rotated tiles`);
 		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
 			// splice a random unused tile into the active tile
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
@@ -402,6 +405,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 					}
 				}
 			}
+			console.log(`[${gamestate.name}] - placements calculated`);
 			rotatedPlacements = potentialPlacements.map(function(currentPlacement) {
 				return currentPlacement.rotation === 0 ?
 					{
@@ -432,6 +436,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 						westEdge: activeTile.northEdge
 					};
 			});
+			console.log(`[${gamestate.name}] - placements rotated`);
 			var invalidPlacementIndices = [];
 			// remove placements which conflict with already placed tiles
 			for(var k = 0; k < gamestate.placedTiles.length; k++) {
@@ -458,6 +463,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				// console.log('=======discarded tile=====');
 				discardedTiles.push(activeTile);
 			}
+			console.log(`[${gamestate.name}] - placements validated`);
 		}
 		// calculate valid meeple placements for each valid tile placement
 		for(var index = 0; index < potentialPlacements.length; index++) {
@@ -714,6 +720,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				});
 			}
 		}
+		console.log(`[${gamestate.name}] - meeple placements calculated`);
 		gamestate.activeTile.tile = activeTile;
 		gamestate.activeTile.discarded = discardedTiles;
 		// console.log('ungrouped placements =>' + JSON.stringify(potentialPlacements));
@@ -729,7 +736,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				var matched = false;
 				for(var i = 0; i < groupedPlacements[key].rotations.length; i++) {
 					var currentRotation = groupedPlacements[key].rotations[i];
-					// if this rotation has already been placed 
+					// if this rotation has already been placed
 					if(currentRotation.rotation === item.rotation) {
 						matched = true;
 						// since non-normal meeples don't have disqualifying conditions (only qualifying ones aka an existing active meeple) allow all unless they would be duplicates
@@ -787,6 +794,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				};
 			}
 		});
+		console.log(`[${gamestate.name}] - placements deduplicated`);
 		// place each grouped item into the valid placements for the active tile
 		gamestate.activeTile.validPlacements = [];
 		for (var key in groupedPlacements) {
@@ -798,6 +806,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			callback(null, gamestate);
 			return;
 		}
+		console.log(`[${gamestate.name}] - saving`);
 		gamestate.save(callback);
 	});
 };
@@ -812,8 +821,8 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	var allPlayers = friends.concat([initialUser._id]);
 	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
 	// add the game to the users' active games
-	var userGamesUpdated = User.update({ _id: { $in: allPlayers }}, 
-	                                   { $push: { activeGames: newGame._id }}, 
+	var userGamesUpdated = User.update({ _id: { $in: allPlayers }},
+	                                   { $push: { activeGames: newGame._id }},
 	                                   { multi: true }).exec();
 	// grab the starting tile and make it the only placed tile
 	var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
@@ -902,7 +911,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	 *     rotation: Number, // number of clockwise 90° rotations
 	 *     meeple: {
 	 *         meepleType: String, // 'normal', 'large', 'pig', etc
-	 *         locationType: String, 
+	 *         locationType: String,
 	 *         index: Number
 	 *     },
 	 *     tower: {
@@ -927,6 +936,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 				break;
 			}
 		}
+		console.log(`[${activePlayer.username}:${gamestate.name}] - populated gamestate in placeTile`);
 		// if move is using older move format still (due to cached page) convert it to the new format
 		if(move && move.meeple && !move.meeple.meepleType) {
 			move.meeple.meepleType = move.meeple.large ? 'large' : 'normal';
@@ -961,6 +971,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 				break;
 			}
 		}
+		console.log(`[${activePlayer.username}:${gamestate.name}] - validated placement`);
 		if(validPlacement) {
 			// add tile creating proper north/south/east/west links to the existing placed tiles
 			var newTile = {
@@ -998,6 +1009,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					}
 				}
 			}
+			console.log(`[${activePlayer.username}:${gamestate.name}] - validated meeple`);
 			// set up the base tower with no tokens if this tile has a tower
 			// since mongoose creates the entire schema structure check a primitive for undefined rather than "tile.tower"
 			if(newTile.tile.tower.offset.x) {
@@ -1027,6 +1039,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					}
 				}
 			}
+			console.log(`[${activePlayer.username}:${gamestate.name}] - tile linked`);
 			// and then add it to the placed tiles
 			gamestate.placedTiles.push(newTile);
 			// if the user sent in a move with a tower placement or completion
@@ -1105,7 +1118,9 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					}
 				}
 			}
+			console.log(`[${activePlayer.username}:${gamestate.name}] - tower handled`);
 			gamestate.populate('placedTiles.tile players.user', function(err, gamestate) {
+				console.log(`[${activePlayer.username}:${gamestate.name}] - populated gamestate in placeTile 2`);
 				var builderActivated = false;
 				var featureInfo, meepleIndex, meepleTile;
 				var newlyPlacedTile = gamestate.placedTiles[gamestate.placedTiles.length - 1];
@@ -1127,6 +1142,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					}
 					checkAndFinalizeFeature(newlyPlacedTile, i, 'city', false, gamestate);
 				}
+				console.log(`[${activePlayer.username}:${gamestate.name}] - cities checked`);
 				// console.log('gamestate after cities =>' + JSON.stringify(gamestate));
 				// console.log('==========================');
 				// and check for roads
@@ -1145,6 +1161,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					}
 					checkAndFinalizeFeature(newlyPlacedTile, k, 'road', false, gamestate);
 				}
+				console.log(`[${activePlayer.username}:${gamestate.name}] - roads checked`);
 				// check for any completed cloisters caused by the tile placement both on this tile and on any nearby tiles
 				var northTile, northwestTile, northEastTile, westTile, eastTile, southTile, southwestTile, southeastTile;
 				if(newlyPlacedTile.northTileIndex !== undefined) {
@@ -1198,6 +1215,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 				if(newlyPlacedTile.tile.cloister) {
 					checkAndFinalizeFeature(newlyPlacedTile, 1, 'cloister', false, gamestate);
 				}
+				console.log(`[${activePlayer.username}:${gamestate.name}] - cloisters checked`);
 				// console.log('gamestate after cloisters =>' + JSON.stringify(gamestate));
 				// console.log('==========================');
 				// change the active player if the builder wasn't activated (or if it was and the active player already had an extra turn)
@@ -1205,6 +1223,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					gamestate.players[activePlayerIndex].active = false;
 					gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
 				}
+				console.log(`[${activePlayer.username}:${gamestate.name}] - drawing tile`);
 				gamestate.drawTile(callback, autocomplete);
 			});
 		}
