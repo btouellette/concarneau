@@ -185,7 +185,6 @@ function completeGame(gamestate) {
 }
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
-	console.log(`[${gamestate.name}] - drawTile entered`);
 	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		console.log(`[${gamestate.name}] - drawTile populated`);
 		// if we're out of tiles score/complete game
