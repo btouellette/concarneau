@@ -220,11 +220,14 @@ module.exports = function(server, sessionStore) {
 						});
 					});
 					socket.on('sending move', function(gameID, move, autocomplete) {
+						console.log(`[${currentUser.username}] - got move`);
 						Gamestate.findById(gameID, function(err, gamestate) {
 							if(err || !gamestate) {
 								console.log('load find err: ' + err);
 							} else if(move && gamestate.userIsActive(currentUser)) {
+								console.log(`[${currentUser.username}] - found game`);
 								gamestate.placeTile(move, function(err, gamestate) {
+									console.log(`[${currentUser.username}] - placed tile`);
 									if(err || !gamestate) {
 										console.log('place tile err: ' + err);
 									} else {
@@ -236,6 +239,7 @@ module.exports = function(server, sessionStore) {
 												if(err) {
 													console.log('send move populate err: ' + err);
 												} else {
+													console.log(`[${currentUser.username}] - populated gamestate`);
 													var activeUser, previousUser;
 													for(var j = 0; j < gamestate.players.length; j++) {
 														if(gamestate.players[j].active) {
@@ -244,11 +248,13 @@ module.exports = function(server, sessionStore) {
 															break;
 														}
 													}
+													console.log(`[${currentUser.username}] - sending notifications`);
 													// send notification to user if the user has changed and they are not actively connected
 													if(!userToSocket[activeUser._id] && activeUser.username !== previousUser.username) {
 														var activeEmail = activeUser.local.email || activeUser.google.email || activeUser.facebook.email;
 														// send e-mail notification if we have a valid e-mail and the user has the option enabled
 														if(activeEmail && activeUser.email_notifications) {
+															console.log(`[${currentUser.username}] - mailing`);
 															mailer.sendMail({
 																from: 'Concarneau <concarneau.game@gmail.com>',
 																to: activeEmail,
@@ -262,6 +268,7 @@ module.exports = function(server, sessionStore) {
 														}
 														// send twitter notification if we have a valid twitter handle and the user has the option enabled
 														if(activeUser.twitter.username && activeUser.twitter_notifications) {
+															console.log(`[${currentUser.username}] - tweeting`);
 															twitter.post('statuses/update', { status: '@' + activeUser.twitter.username + ' There is a Concarneau game where it is your turn: ' + process.env.SERVER_URL + '?' + Math.floor(Math.random()*1000000) }, function(err) {
 																if(err) {
 																	console.log('twitter failed: ' + err);
@@ -269,10 +276,12 @@ module.exports = function(server, sessionStore) {
 															});
 														}
 													}
+													console.log(`[${currentUser.username}] - getting users`);
 													// get distinct list of user IDs in the game
 													var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
 														return self.indexOf(value) === index;
 													});
+													console.log(`[${currentUser.username}] - sending games`);
 													// if players are active send them the new gamestate
 													for(var i = 0; i < distinctUserIDs.length; i++) {
 														var socketArray = userToSocket[distinctUserIDs[i]];
@@ -282,6 +291,7 @@ module.exports = function(server, sessionStore) {
 															}
 														}
 													}
+													console.log(`[${currentUser.username}] - done sending games`);
 												}
 											}
 										);
