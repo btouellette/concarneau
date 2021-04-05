@@ -475,6 +475,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			var directions = ['N','E','S','W'];
 			// check each city for valid meeple placements
 			var valid, adjacentIndex, featureInfo, meepleIndex, placedTile;
+			console.log(`[${gamestate.name}] - ${index} checking cities`);
 			for(var index2 = 0; index2 < activeTile.cities.length; index2++) {
 				// assume we can place unless we find that there are other meeples on this feature
 				valid = true;
@@ -511,6 +512,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 					});
 				}
 			}
+			console.log(`[${gamestate.name}] - ${index} checking roads`);
 			// check each road for valid meeple placements
 			for(var index3 = 0; index3 < activeTile.roads.length; index3++) {
 				// assume we can place unless we find that there are other meeples on this feature
@@ -548,6 +550,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 					});
 				}
 			}
+			console.log(`[${gamestate.name}] - ${index} checking farms`);
 			// check each farm for valid meeple placements
 			var farmDirections = ['NNE','ENE','ESE','SSE','SSW','WSW','WNW','NNW'];
 			for(var index4 = 0; index4 < activeTile.farms.length; index4++) {
@@ -1296,7 +1299,7 @@ function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, check
 		}
 		// if looking for farms add three points for each adjacent complete city
 		if(featureType === 'farm') {
-			// console.log('checking farm: ' + featureIndex);
+			console.log('checking farm: ' + featureIndex);
 			// console.log('farm tile: ' + JSON.stringify(currentTile));
 			// find any complete cities adjacent to this field which have not been recorded yet
 			if(currentTile.tile.farms[featureIndex].adjacentCityIndices) {
