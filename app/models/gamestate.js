@@ -487,7 +487,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				// if we find another city in that direction only remain valid if there are no other meeples on it
 				if(rotatedCityDirections.indexOf(currentPlacement.directionToSource) !== -1) {
 					adjacentIndex = getFeatureIndex(adjacentTile, 'city', currentPlacement.directionFromSource);
-					featureInfo = getFeatureInfo(adjacentTile, adjacentIndex, 'city', gamestate);
+					featureInfo = getFeatureMeeples(adjacentTile, adjacentIndex, 'city', gamestate);
 					valid = featureInfo.tilesWithMeeples.length === 0;
 					// if there was a city with meeples already on it and it is this (the active) player's add a valid placement for the builder
 					for(var i1 = 0; i1 < featureInfo.tilesWithMeeples.length; i1++) {
@@ -525,7 +525,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				// if we find another road in that direction only remain valid if there are no other meeples on it
 				if(rotatedRoadDirections.indexOf(currentPlacement.directionToSource) !== -1) {
 					adjacentIndex = getFeatureIndex(adjacentTile, 'road', currentPlacement.directionFromSource);
-					featureInfo = getFeatureInfo(adjacentTile, adjacentIndex, 'road', gamestate);
+					featureInfo = getFeatureMeeples(adjacentTile, adjacentIndex, 'road', gamestate);
 					valid = featureInfo.tilesWithMeeples.length === 0;
 					// if there was a road with meeples already on it and it is this (the active) player's add a valid placement for the builder
 					for(var i2 = 0; i2 < featureInfo.tilesWithMeeples.length; i2++) {
@@ -562,7 +562,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				if(currentPlacement.directionToSource === 'N') {
 					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('NNW') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'SSW'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'SSW'), 'farm', gamestate);
 						for(var iSSW = 0; iSSW < featureInfo.tilesWithMeeples.length; iSSW++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iSSW].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iSSW].placedTile;
@@ -579,7 +579,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 						// console.log('NNW ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('NNE') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'SSE'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'SSE'), 'farm', gamestate);
 						for(var iSSE = 0; iSSE < featureInfo.tilesWithMeeples.length; iSSE++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iSSE].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iSSE].placedTile;
@@ -598,7 +598,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				} else if(currentPlacement.directionToSource === 'E') {
 					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('ENE') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'WNW'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'WNW'), 'farm', gamestate);
 						for(var iWNW = 0; iWNW < featureInfo.tilesWithMeeples.length; iWNW++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iWNW].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iWNW].placedTile;
@@ -615,7 +615,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 						// console.log('ENE ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('ESE') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'WSW'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'WSW'), 'farm', gamestate);
 						for(var iWSW = 0; iWSW < featureInfo.tilesWithMeeples.length; iWSW++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iWSW].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iWSW].placedTile;
@@ -634,7 +634,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				} else if(currentPlacement.directionToSource === 'S') {
 					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('SSW') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'NNW'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'NNW'), 'farm', gamestate);
 						for(var iNNW = 0; iNNW < featureInfo.tilesWithMeeples.length; iNNW++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iNNW].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iNNW].placedTile;
@@ -651,7 +651,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 						// console.log('SSW ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('SSE') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'NNE'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'NNE'), 'farm', gamestate);
 						for(var iNNE = 0; iNNE < featureInfo.tilesWithMeeples.length; iNNE++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iNNE].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iNNE].placedTile;
@@ -670,7 +670,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				} else if(currentPlacement.directionToSource === 'W') {
 					// console.log('looking ' + currentPlacement.directionToSource);
 					if(rotatedFarmDirections.indexOf('WNW') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'ENE'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'ENE'), 'farm', gamestate);
 						for(var iENE = 0; iENE < featureInfo.tilesWithMeeples.length; iENE++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iENE].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iENE].placedTile;
@@ -687,7 +687,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 						// console.log('WNW ' + valid);
 					}
 					if(rotatedFarmDirections.indexOf('WSW') !== -1) {
-						featureInfo = getFeatureInfo(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'ESE'), 'farm', gamestate);
+						featureInfo = getFeatureMeeples(adjacentTile, getFeatureIndex(adjacentTile, 'farm', 'ESE'), 'farm', gamestate);
 						for(var iESE = 0; iESE < featureInfo.tilesWithMeeples.length; iESE++) {
 							meepleIndex = featureInfo.tilesWithMeeples[iESE].meepleIndex;
 							placedTile = featureInfo.tilesWithMeeples[iESE].placedTile;
@@ -1231,6 +1231,104 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 		}
 	});
 };
+
+function getFeatureMeeples(currentTile, featureIndex, featureType, gamestate, checked) {
+	var results;
+	if(featureType === 'cloister') {
+		results = {
+			tilesWithMeeples: []
+		};
+		// grab the potential reference to the cloister meeple
+		for(var ind2 = 0; ind2 < currentTile.meeples.length; ind2++) {
+			if(currentTile.meeples[ind2].placement.locationType === 'cloister') {
+				results.tilesWithMeeples.push({
+					placedTile: currentTile,
+					meepleIndex: ind2
+				});
+				break;
+			}
+		}
+		return results;
+	} else if(featureType === 'road' || featureType === 'city' || featureType === 'farm') {
+		// recursively calculate feature (road or city) completeness, point value
+		// and record tiles with placed meeples for potential removal and scoring
+		var initialCall;
+		if(!checked) {
+			checked = {};
+			if(featureType === 'farm') {
+				checked.cities = {};
+			}
+			initialCall = true;
+		}
+		results = {
+			tilesWithMeeples: []
+		};
+		// if we have already examined this feature skip checking and add zero points
+		if(checked[currentTile] &&
+		   checked[currentTile].features.indexOf(featureIndex) !== -1) {
+			// console.log('seen this tile');
+			return results;
+		}
+		// otherwise record the feature index of the tile as checked
+		if(checked[currentTile]) {
+			checked[currentTile].features.push(featureIndex);
+		} else {
+			checked[currentTile] = {
+				tile: currentTile,
+				features: [featureIndex]
+			};
+		}
+		// record the locations of any meeples on this feature
+		for(var i = 0; i < currentTile.meeples.length; i++) {
+			if(currentTile.meeples[i].placement.locationType === featureType &&
+			   currentTile.meeples[i].placement.index === featureIndex) {
+				results.tilesWithMeeples.push({
+					placedTile: currentTile,
+					meepleIndex: i
+				});
+			}
+		}
+		// grab the definition of the current feature from the tile
+		var pluralType = featureType === 'city' ? 'cities' : featureType + 's';
+		var currentFeature = currentTile.tile[pluralType][featureIndex];
+		// for each side this feature has try and extend to connected tiles searching for
+		// meeples to record
+		for(var j = 0; j < currentFeature.directions.length; j++) {
+			// apply the tiles rotation to the feature definition to determine which tile to check next
+			var direction = currentFeature.directions[j];
+			var connectedTile, flippedDirection;
+			var directions = featureType === 'farm' ?  ['NNE','ENE','ESE','SSE','SSW','WSW','WNW','NNW'] : ['N','E','S','W'];
+			var rotatedDirection = directions[(directions.indexOf(direction) + currentTile.rotation * (featureType === 'farm' ? 2 : 1)) % directions.length];
+			if(rotatedDirection.charAt(0) === 'N') {
+				connectedTile = gamestate.placedTiles[currentTile.northTileIndex];
+				// flip the rotated direction since we are getting the feature index from the perspective of the connected tile
+				flippedDirection = rotatedDirection.replace(/N/g,'S');
+			} else if(rotatedDirection.charAt(0) === 'E') {
+				connectedTile = gamestate.placedTiles[currentTile.eastTileIndex];
+				// flip the rotated direction since we are getting the feature index from the perspective of the connected tile
+				flippedDirection = rotatedDirection.replace(/E/g,'W');
+			} else if(rotatedDirection.charAt(0) === 'S') {
+				connectedTile = gamestate.placedTiles[currentTile.southTileIndex];
+				// flip the rotated direction since we are getting the feature index from the perspective of the connected tile
+				flippedDirection = rotatedDirection.replace(/S/g,'N');
+			} else if(rotatedDirection.charAt(0) === 'W') {
+				connectedTile = gamestate.placedTiles[currentTile.westTileIndex];
+				// flip the rotated direction since we are getting the feature index from the perspective of the connected tile
+				flippedDirection = rotatedDirection.replace(/W/g,'E');
+			}
+			if(!connectedTile) {
+			} else {
+				// traverse over to it summing up inn/cathedral status, completeness, points, and meeples
+				var connectedIndex = getFeatureIndex(connectedTile, featureType, flippedDirection);
+				var neighborResults = getFeatureMeeples(connectedTile, connectedIndex, featureType, gamestate, checked);
+				for(var z = 0; z < neighborResults.tilesWithMeeples.length; z++) {
+					results.tilesWithMeeples.push(neighborResults.tilesWithMeeples[z]);
+				}
+			}
+		}
+		return results;
+	}
+}
 
 function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, checked) {
 	var results;
