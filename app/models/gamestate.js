@@ -5,6 +5,10 @@ var moniker = require('moniker');
 var Q = require('q');
 var Tile = require('../models/tile');
 var User = require('../models/user');
+var FeatureCity = require('../models/featureCity');
+var FeatureCloister = require('../models/featureCloister');
+var FeatureFarm = require('../models/featureFarm');
+var FeatureRoad = require('../models/featureRoad');
 
 // Tile features are defined in terms of the cardinal directions they use
 // Roads and cities potentially connect cardinal directions (N S E W)
@@ -72,6 +76,12 @@ var gamestateSchema = mongoose.Schema({
 			meepleType: String, // 'normal', 'large', 'pig', 'builder', etc for different types of meeples
 			scored: Boolean // whether the meeple has already had score assigned for it (only used at game end, otherwise the meeple is removed when it is scored)
 		}],
+		features: {
+			cities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature - City' }], // indexed by featureIndex on tile.cities
+			roads: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Road' }], // indexed by featureIndex on tile.roads
+			farms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Farm' }], // indexed by featureIndex on tile.farm
+			cloister: { type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Cloister' }, // null if none
+		},
 		tower: {
 			height: Number, // number of tower floors placed on this tower
 			completed: Boolean,
@@ -925,7 +935,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	 *     }
 	 * }
 	 */
-	this.populate('activeTile.tile players.user', function(err, gamestate) {
+	this.populate('activeTile.tile players.user placedTiles.features.cities placedTiles.features.roads placedTiles.features.farms placedTiles.features.cloisters', function(err, gamestate) {
 		var validPlacement = false;
 		// get the active player
 		var activePlayer, activePlayerIndex;
@@ -1230,6 +1240,12 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	});
 };
 
+//TODO: update name
+function getFeatureInfoNew = function(placedTileIndex, featureIndex, featureType, gamestate) {
+	var pluralType = featureType === 'city' ? 'cities' : featureType + 's';
+	return gamestate.placedTiles[placedTileIndex].features[pluralType][featureIndex];
+};
+
 function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, checked) {
 	var results;
 	if(featureType === 'cloister') {
@@ -1426,7 +1442,6 @@ function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, check
 	}
 }
 
-//TODO: instead of recalculating every time store feature info in gamestate and update with each placed tile
 function checkAndFinalizeFeature(placedTile, featureIndex, featureType, gameFinished, gamestate) {
 	// score this feature
 	if((placedTile.tile.cloister && featureType === 'cloister') ||
