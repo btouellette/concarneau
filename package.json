@@ -42,7 +42,11 @@
   },
   "scripts": {
     "lint": "eslint app",
-    "start": "node server.js"
+    "start": "node dist/server.js",
+    "build": "babel --delete-dir-on-start --out-dir dist --copy-files --ignore \"**/__tests__/**,**/__mocks__/**\" --no-copy-ignored src",
+    "start:dev": "nodemon dist/server.js",
+    "build:dev": "tsc --watch --preserveWatchOutput",
+    "dev": "concurrently \"npm:build:dev\" \"npm:start:dev\""
   },
   "description": "Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.",
   "version": "1.0.0",
