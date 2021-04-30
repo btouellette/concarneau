@@ -195,7 +195,7 @@ function completeGame(gamestate) {
 }
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
-	console.log(`[${gamestate.name}] - drawTile entered`);
+	console.log(`[${this.name}] - drawTile entered`);
 	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		console.log(`[${gamestate.name}] - drawTile populated`);
 		// if we're out of tiles score/complete game
@@ -1241,12 +1241,12 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 };
 
 //TODO: update name
-function getFeatureInfoNew = function(placedTileIndex, featureIndex, featureType, gamestate) {
+function getFeatureInfoNew(placedTileIndex, featureIndex, featureType, gamestate) {
 	var pluralType = featureType === 'city' ? 'cities' : featureType + 's';
 	return gamestate.placedTiles[placedTileIndex].features[pluralType][featureIndex];
 };
 
-function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, checked) {
+function getFeatureInfo(currentTile, featureIndex, featureType, gamestate, checked=undefined) {
 	var results;
 	if(featureType === 'cloister') {
 		results = {
