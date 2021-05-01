@@ -1,4 +1,6 @@
 /* jslint smarttabs:true */
+import { GamestateModel } from "./models/gamestate";
+
 var url = require('url');
 var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
@@ -8,7 +10,6 @@ var mailer = require('./mailer');
 
 // load up the gamestate model
 var Tile = require('./models/tile');
-var Gamestate = require('./models/gamestate');
 var User = require('./models/user');
 
 //TODO: matchmaking
@@ -86,7 +87,7 @@ module.exports = function(server, sessionStore) {
 	// for each new connection get the session and set up server callbacks
 	io.on('connection', function (rawSocket, req) {
 		// wrap the raw socket to dispatch specific events
-		var WrappedSocket = function(rawSocket) {
+		var WrappedSocket = function(this: any, rawSocket) {
 			var callbacks = {};
 			var currentSocket = rawSocket;
 
@@ -168,7 +169,7 @@ module.exports = function(server, sessionStore) {
 						// pull the user information from the db again in case it has changed since the socket was established
 						User.findById(currentUser._id, function(err, currentUser) {
 							if(err) { console.log('new game find user err: ' + err); }
-							var gamestate = new Gamestate(); // create a new gamestate
+							var gamestate = new GamestateModel(); // create a new gamestate
 							gamestate.initializeNewGame(currentUser, friends, expansions, function() {
 								gamestate.populate('placedTiles.tile activeTile.tile players.user',
 								                   'cities.meepleOffset cloister farms.meepleOffset roads.meepleOffset tower.offset imageURL username',
@@ -193,7 +194,7 @@ module.exports = function(server, sessionStore) {
 						});
 					});
 					socket.on('load game', function(gameID) {
-						Gamestate.findById(gameID, function(err, gamestate) {
+						GamestateModel.findById(gameID, function(err, gamestate) {
 							if(err) { console.log('load find err: ' + err); }
 							if(gamestate && gamestate.userIsInGame(currentUser)) {
 								gamestate.populate('placedTiles.tile activeTile.tile unusedTiles players.user',
@@ -207,7 +208,7 @@ module.exports = function(server, sessionStore) {
 						});
 					});
 					socket.on('remove game', function(gameID) {
-						Gamestate.findByIdAndRemove(gameID, function(err, gamestate) {
+						GamestateModel.findByIdAndRemove(gameID, null, function(err, gamestate) {
 							if(err || !gamestate) {
 								console.log('remove game err: ' + err);
 							} else if(gamestate.userIsInGame(currentUser)) {
@@ -219,9 +220,9 @@ module.exports = function(server, sessionStore) {
 							}
 						});
 					});
-					socket.on('sending move', function(gameID, move, autocomplete) {
+					socket.on('sending move', function(gameID, move) {
 						console.log(`[${currentUser.username}] - got move`);
-						Gamestate.findById(gameID, function(err, gamestate) {
+						GamestateModel.findById(gameID, function(err, gamestate) {
 							if(err || !gamestate) {
 								console.log('load find err: ' + err);
 							} else if(move && gamestate.userIsActive(currentUser)) {
@@ -296,7 +297,7 @@ module.exports = function(server, sessionStore) {
 											}
 										);
 									}
-								}, autocomplete);
+								});
 							}
 						});
 					});
@@ -321,13 +322,13 @@ module.exports = function(server, sessionStore) {
 						User.findByIdAndUpdate(currentUser._id, { $pull: { friends: userID }}).exec();
 					});
 					socket.on('sending message', function(message, gameID) {
-						Gamestate.findById(gameID, function(err, gamestate) {
+						GamestateModel.findById(gameID, function(err, gamestate) {
 							if(err) { console.log('message find err: ' + err); }
 							if(gamestate && gamestate.userIsInGame(currentUser)) {
 								// add the message to the gamestate, trimming to 200 characters and limiting message array length to 500
 								message = message.substr(0,200);
-								Gamestate.findByIdAndUpdate(gameID, { $set: { lastModified: new Date() }, $push: { messages: { $each: [{ username: currentUser.username, message: message}], $slice: -500 }}}, function(err, gamestate) {
-									gamestate.populate('players.user', function(err, gamestate) {
+								GamestateModel.findByIdAndUpdate(gameID, { $set: { lastModified: new Date() }, $push: { messages: { $each: [{ username: currentUser.username, message: message}], $slice: -500 }}}, function(err, gamestate) {
+									gamestate?.populate('players.user', function(err, gamestate) {
 										// get distinct list of user IDs in the game
 										var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
 											return self.indexOf(value) === index;

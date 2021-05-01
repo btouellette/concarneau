@@ -1,5 +1,11 @@
 // server.js
 
+import express, { NextFunction, Request, Response } from "express";
+import helmet from "helmet";
+import mongoose from "mongoose";
+import * as bodyParser from "body-parser";
+import passport from "passport";
+
 //TODO: consider setting up logging via winston (https://github.com/flatiron/winston)
 
 // set up ======================================================================
@@ -19,33 +25,20 @@ var port = process.env.PORT || 8080;
 
 // if we're behind an http proxy set up all requests to go through it
 if(process.env.HTTP_PROXY) {
-	var parsedURL = require('url').parse(process.env.HTTP_PROXY);
+	var parsedURL = new URL(process.env.HTTP_PROXY);
 	var host = parsedURL && parsedURL.hostname ? parsedURL.hostname : '127.0.0.1';
 	port = parsedURL && parsedURL.port ? parseInt(parsedURL.port, 10) : 8080;
 	require('./config/proxy')(host, port);
 }
 
 // get all the tools we need
-var express      = require('express');
-var helmet       = require('helmet');
 var app          = express();
 var cookieParser = require('cookie-parser');
-var bodyParser   = require('body-parser');
 var session      = require('express-session');
 var compression  = require('compression');
-var mongoose     = require('mongoose');
-var passport     = require('passport');
 var flash        = require('connect-flash');
 var configDB     = require('./config/database');
 var MongoStore   = require('connect-mongo')(session);
-
-// add Sentry handler first if configured
-if(process.env.SENTRY_DSN) {
-	var raven = require('raven');
-	var client = new raven.Client(process.env.SENTRY_DSN);
-	client.patchGlobal();
-	app.use(raven.middleware.express.requestHandler(process.env.SENTRY_DSN));
-}
 
 // configuration ===============================================================
 if(process.env.MONGOOSE_DEBUG) {
@@ -62,7 +55,6 @@ mongoose.set('useCreateIndex', true); // handle deprecations: https://mongoosejs
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useUnifiedTopology', true);
 mongoose.set('useFindAndModify', false);
-mongoose.plugin(schema => { schema.options.usePushEach = true }); // MongoDB 3.6+ deprecates $pushAll, set flag for mongoose to avoid that operator
 mongoose.connect(configDB.url); // connect to our database
 
 require('./config/passport')(passport); // pass passport for configuration
@@ -74,7 +66,7 @@ app.set('view engine', 'ejs'); // set up ejs for templating
 if(!process.env.C9_PROJECT) {
 	// redirect to https if the request isn't secured
 	app.set('trust proxy', true);
-	app.use(function(req, res, next) {
+	app.use(function(req: Request, res: Response, next: NextFunction) {
 		if(!req.secure) {
 			return res.redirect('https://' + req.get('Host') + req.url);
 		}
@@ -115,17 +107,7 @@ process.on('uncaughtException', function (err) {
 
 // routes ======================================================================
 // load our routes and pass in our app and fully configured passport
-require('./app/routes')(app, passport, client);
-
-if(process.env.SENTRY_DSN) {
-	app.use(raven.middleware.express.errorHandler(process.env.SENTRY_DSN));
-	app.use(function onError(err, req, res, next) {
-		// The error id is attached to `res.sentry` to be returned
-		// and optionally displayed to the user for support.
-		res.statusCode = 500;
-		res.end(res.sentry+'\n');
-	});
-}
+require('./app/routes')(app, passport);
 
 // launch ======================================================================
 var server = app.listen(port);

@@ -1,6 +1,6 @@
 {
   "name": "concarneau",
-  "main": "server.js",
+  "main": "dist/server.js",
   "dependencies": {
     "bcrypt-nodejs": "latest",
     "body-parser": "^1.17.2",
@@ -14,7 +14,7 @@
     "express": "^4.15.4",
     "express-session": "^1.15.5",
     "flatted": "^2.0.2",
-    "helmet": "^3.8.1",
+    "helmet": "^4.5.0",
     "mongoose": "^5.9.24",
     "moniker": "^0.1.2",
     "newrelic": "^6.11.0",
@@ -26,7 +26,6 @@
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.4",
     "q": "^2.0.3",
-    "raven": "^0.12.3",
     "tunnel": "^0.0.4",
     "twit": "^2.2.9",
     "utf-8-validate": "^5.0.4",
@@ -36,14 +35,22 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.11",
+    "@types/mongoose": "^5.10.5",
+    "@types/passport": "^1.0.6",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
     "concurrently": "^6.0.2",
-    "eslint": "^3.19.0",
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-prettier": "*",
+    "prettier": "*",
     "typescript": "^4.2.4"
   },
   "scripts": {
-    "lint": "eslint app",
+    "lint": "eslint . --ext .ts",
+    "lint.fix": "eslint . --ext .ts --fix",
     "start": "node dist/server.js",
-    "build": "babel --delete-dir-on-start --out-dir dist --copy-files --ignore \"**/__tests__/**,**/__mocks__/**\" --no-copy-ignored src",
+    "build": "tsc",
     "start:dev": "nodemon dist/server.js",
     "build:dev": "tsc --watch --preserveWatchOutput",
     "dev": "concurrently \"npm:build:dev\" \"npm:start:dev\""

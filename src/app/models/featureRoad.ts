@@ -1,8 +1,18 @@
 /* jslint smarttabs:true */
 // load the things we need
-var mongoose = require('mongoose');
+import mongoose, { Document } from "mongoose";
 
-var featureSchema = mongoose.Schema({
+export type FeatureRoad = {
+  points: number;
+  tilesWithMeeples: [{
+    placedTileIndex: number;
+    meepleIndex: number;
+  }];
+  complete: boolean;
+  inn: boolean;
+} & Document;
+
+var featureSchema = new mongoose.Schema<FeatureRoad>({
   points: Number,
   tilesWithMeeples: [{
     placedTileIndex: Number,
@@ -13,4 +23,4 @@ var featureSchema = mongoose.Schema({
 });
 
 // create the model for features and expose it to our app
-module.exports = mongoose.model('Feature - Road', featureSchema);
+export const FeatureRoadModel = mongoose.model<FeatureRoad>('Feature - Road', featureSchema);

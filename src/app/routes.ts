@@ -1,19 +1,19 @@
+import { randomBytes } from 'crypto';
+
 var User = require('./models/user');
 const {parse, stringify} = require('flatted/cjs');
-var crypto = require('crypto');
 var ejs = require('ejs');
 var mailer = require('./mailer');
 
 //TODO: confirm e-mail before allowing into game
 
-module.exports = function(app, passport, client) {
+module.exports = function(app, passport) {
 
 // normal routes ===============================================================
 
 	// show the home page (will also have our login links)
 	app.get('/', function(req, res) {
 		if(req.isAuthenticated()) {
-			if(process.env.SENTRY_DSN) { client.setUserContext({ user: req.user}); }
 			res.redirect('/game');
 		} else {
 			res.render('index.ejs');
@@ -83,7 +83,6 @@ module.exports = function(app, passport, client) {
 	});
 
 	app.get('/game', [isLoggedIn, hasUsername], function(req, res) {
-		if(process.env.SENTRY_DSN) { client.setUserContext({ user: req.user}); }
 		res.render('game.ejs', {
 			user : req.user
 		});
@@ -124,7 +123,6 @@ module.exports = function(app, passport, client) {
 	// show the forgot password form
 	app.get('/forgot', function(req, res) {
 		if(req.isAuthenticated()) {
-			if(process.env.SENTRY_DSN) { client.setUserContext({ user: req.user}); }
 			res.redirect('/game');
 		} else {
 			res.render('forgot.ejs', { message: req.flash('forgotPasswordMessage') });
@@ -134,7 +132,7 @@ module.exports = function(app, passport, client) {
 	// process the forgot password form
 	app.post('/forgot', function (req, res) {
 		const email = req.body.email;
-		const passwordResetToken = crypto.randomBytes(20).toString('hex');
+		const passwordResetToken = randomBytes(20).toString('hex');
 		const passwordResetExpiration = Date.now() + 3600000*12; // expires after 12 hour
 		User.findOneAndUpdate({ 'local.email': email.toLowerCase() }, { 'local.passwordResetToken': passwordResetToken, 'local.passwordResetExpiration': passwordResetExpiration }, function(err, user) {
 			ejs.renderFile('views/password-reset.ejs', { serverURL: process.env.SERVER_URL, passwordResetToken: passwordResetToken }, function(err, html) {

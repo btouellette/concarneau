@@ -51,9 +51,6 @@
 				<div class="menu-sub-header">Finished:</div>
 			</div>
 		</div>
-		<!--<div>
-			<input type="checkbox" id="test-complete" />
-		</div>-->
 	</div>
 	<div id="friends-menu">
 		<span class="menu-header">FRIENDS <svg class="fa-edit hidden" onclick="enableFriendsEdit(event)"><use xlink:href="#fa-edit"></use></svg></span>
@@ -804,7 +801,7 @@ $(document).ready(function() {
 		visibility: 'hidden'
 	}).on('click', function() {
 		if(selectedMove) {
-			socket.emit('sending move', currentGameID, selectedMove, $('#test-complete').is(':checked'));
+			socket.emit('sending move', currentGameID, selectedMove);
 			// while waiting for the next gamestate hide any tile placements and the send move button
 			d3.selectAll('#send-move-button,.tile-placements').transition().duration(transitionDuration+1500).attr('opacity', 0);
 		}

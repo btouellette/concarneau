@@ -1,14 +1,17 @@
 /* jslint smarttabs:true */
+
+import { Document } from "mongoose";
+import mongoose from "mongoose";
+import { User, UserModel } from "./user";
+import { Tile, TileModel } from "./tile";
+import { FeatureCity } from "./featureCity";
+import { FeatureRoad } from "./featureRoad";
+import { FeatureFarm } from "./featureFarm";
+import { FeatureCloister } from "./featureCloister";
+
 // load the things we need
-var mongoose = require('mongoose');
 var moniker = require('moniker');
 var Q = require('q');
-var Tile = require('../models/tile');
-var User = require('../models/user');
-var FeatureCity = require('../models/featureCity');
-var FeatureCloister = require('../models/featureCloister');
-var FeatureFarm = require('../models/featureFarm');
-var FeatureRoad = require('../models/featureRoad');
 
 // Tile features are defined in terms of the cardinal directions they use
 // Roads and cities potentially connect cardinal directions (N S E W)
@@ -20,8 +23,115 @@ var FeatureRoad = require('../models/featureRoad');
 // WSW         ESE
 // SW SSW S SSE SE
 
+type Expansions = 'inns-and-cathedrals' | 'traders-and-builders' | 'the-tower';
+
+type Message = { 
+	username: string;
+	message: string;
+};
+
+type Player = {
+	user: User['_id'] | User;
+	points: number;
+	remainingMeeples: number;
+	hasLargeMeeple: boolean;
+	hasPigMeeple: boolean;
+	hasBuilderMeeple: boolean;
+	active: boolean;
+	color: string;
+	acknowledgedGameEnd: boolean;
+	goods: {
+		fabric: number;
+		wine: number;
+		wheat: number;
+	};
+	towers: number;
+	capturedMeeples: [{
+		meepleType: string;
+		playerIndex: number;
+	}];
+};
+
+type TileRef = Tile['_id'] | Tile;
+
+type MeeplePlacement = {
+	meepleType: string; // 'normal', 'large', 'pig', 'builder', etc for different types of meeples
+	locationType: string; // 'road', 'city', 'farm', or 'cloister'
+	index: number; // which element of tiles[].roads/cities/farms (external schema)
+};
+
+type TilePlacement = {
+	x: number;
+	y: number;
+	rotation: number;
+	sourceIndex: number;
+	directionToSource: string;
+	directionFromSource: string;	
+	meeples?: MeeplePlacement[];
+};
+
+type PlacedTile = {
+	tile: TileRef;
+		rotation: number; // number of times tile is rotated clockwise
+		meeples: [{
+			playerIndex: number; // references players
+			placement: {
+				locationType: string; // 'road', 'city', 'farm', or 'cloister'
+				index: number; // which element of tiles[].roads/cities/farms (external schema)
+			};
+			meepleType: string; // 'normal', 'large', 'pig', 'builder', etc for different types of meeples
+			scored: boolean; // whether the meeple has already had score assigned for it (only used at game end, otherwise the meeple is removed when it is scored)
+		}];
+		features: {
+			cities: [FeatureCity['_id'] | FeatureCity], // indexed by featureIndex on tile.cities
+			roads: [FeatureRoad['_id'] | FeatureRoad], // indexed by featureIndex on tile.roads
+			farms: [FeatureFarm['_id'] | FeatureFarm], // indexed by featureIndex on tile.farm
+			cloister?: FeatureCloister['_id'] | FeatureCloister, // undefined if none
+		};
+		tower: {
+			height: number; // number of tower floors placed on this tower
+			completed: boolean;
+			meepleType: string; // 'normal' or 'large', only followers can be used to complete a tower
+			playerIndex: number; // which player completed this tower
+		};
+		northTileIndex: number; // references placedTiles
+		southTileIndex: number;
+		westTileIndex: number;
+		eastTileIndex: number;
+		x: number;
+		y: number;
+		playerIndex: number; // which player placed this tile
+};
+
+export type Gamestate = {
+	name: string;
+	expansions: Expansions[];
+	finished: boolean;
+	messages: Message[];
+	players: Player[];
+	unusedTiles: TileRef[];
+	activeTile: {
+		tile: TileRef;
+		validPlacements: [{
+			x: number;
+			y: number;
+			rotations: [{
+				rotation: number;
+				meeples: MeeplePlacement[];
+			}];
+		}];
+		discardedTiles: TileRef[];
+	};
+	placedTiles: PlacedTile[];
+	lastModified: Date;
+
+	userIsInGame(user: User): boolean;
+	initializeNewGame(initialUser, friends, expansions, callback): void;
+	drawTile(callback): void;
+} & Document;
+
 // define the schema for our game model
-var gamestateSchema = mongoose.Schema({
+var gamestateSchema = new mongoose.Schema<Gamestate>({
 	name: String,
 	expansions: [String],
 	finished: { type: Boolean, default: false },
@@ -80,7 +190,7 @@ var gamestateSchema = mongoose.Schema({
 			cities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature - City' }], // indexed by featureIndex on tile.cities
 			roads: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Road' }], // indexed by featureIndex on tile.roads
 			farms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Farm' }], // indexed by featureIndex on tile.farm
-			cloister: { type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Cloister' }, // null if none
+			cloister: { type: mongoose.Schema.Types.ObjectId, ref: 'Feature - Cloister' }, // undefined if none
 		},
 		tower: {
 			height: Number, // number of tower floors placed on this tower
@@ -194,17 +304,17 @@ function completeGame(gamestate) {
 	gamestate.finished = true;
 }
 
-gamestateSchema.methods.drawTile = function(callback, autocomplete) {
+gamestateSchema.methods.drawTile = function(callback) {
 	console.log(`[${this.name}] - drawTile entered`);
 	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		console.log(`[${gamestate.name}] - drawTile populated`);
 		// if we're out of tiles score/complete game
-		if(gamestate.unusedTiles.length === 0 || autocomplete) {
+		if(gamestate.unusedTiles.length === 0) {
 			completeGame(gamestate);
 		}
 		// move one random tile from unused to active
-		var potentialPlacements = [], discardedTiles = [];
-		var currentTile, rotatedTile, activeTile;
+		var potentialPlacements:TilePlacement[] = [], discardedTiles: Tile[] = [];
+		var currentTile, rotatedTile, activeTile: Tile;
 		var rotatedPlacements;
 		var rotatedTiles = gamestate.placedTiles.map(function getRotatedTileEdges(gamestateTile) {
 			return gamestateTile.rotation === 0 ?
@@ -237,7 +347,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			};
 		});
 		console.log(`[${gamestate.name}] - rotated tiles`);
-		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
+		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0) {
 			// splice a random unused tile into the active tile
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
 			// make sure mongoose sees the field as changed to save later
@@ -447,7 +557,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 					};
 			});
 			console.log(`[${gamestate.name}] - placements rotated`);
-			var invalidPlacementIndices = [];
+			var invalidPlacementIndices:number[] = [];
 			// remove placements which conflict with already placed tiles
 			for(var k = 0; k < gamestate.placedTiles.length; k++) {
 				currentTile = gamestate.placedTiles[k];
@@ -486,12 +596,12 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			var directions = ['N','E','S','W'];
 			// check each city for valid meeple placements
 			var valid, adjacentIndex, featureInfo, meepleIndex, placedTile;
-			for(var index2 = 0; index2 < activeTile.cities.length; index2++) {
+			for(var index2 = 0; index2 < activeTile!.cities.length; index2++) {
 				// assume we can place unless we find that there are other meeples on this feature
 				valid = true;
 				featureInfo = null;
 				// check the adjacent tile (in the direction the current tiles city is pointing) for conflicting meeples
-				var rotatedCityDirections = activeTile.cities[index2].directions.map(function(direction) {
+				var rotatedCityDirections = activeTile!.cities[index2].directions.map(function(direction) {
 					return directions[(directions.indexOf(direction) + currentPlacement.rotation) % 4];
 				});
 				// if we find another city in that direction only remain valid if there are no other meeples on it
@@ -523,12 +633,12 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				}
 			}
 			// check each road for valid meeple placements
-			for(var index3 = 0; index3 < activeTile.roads.length; index3++) {
+			for(var index3 = 0; index3 < activeTile!.roads.length; index3++) {
 				// assume we can place unless we find that there are other meeples on this feature
 				valid = true;
 				featureInfo = null;
 				// check the adjacent tile (in the direction the current tiles road is pointing) for conflicting meeples
-				var rotatedRoadDirections = activeTile.roads[index3].directions.map(function(direction) {
+				var rotatedRoadDirections = activeTile!.roads[index3].directions.map(function(direction) {
 					return directions[(directions.indexOf(direction) + currentPlacement.rotation) % 4];
 				});
 				// if we find another road in that direction only remain valid if there are no other meeples on it
@@ -561,10 +671,10 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			}
 			// check each farm for valid meeple placements
 			var farmDirections = ['NNE','ENE','ESE','SSE','SSW','WSW','WNW','NNW'];
-			for(var index4 = 0; index4 < activeTile.farms.length; index4++) {
+			for(var index4 = 0; index4 < activeTile!.farms.length; index4++) {
 				// console.log('checking farm: ' + index4 + ' ' + JSON.stringify(activeTile.farms[index4]));
 				valid = true;
-				var rotatedFarmDirections = activeTile.farms[index4].directions.map(function(direction) {
+				var rotatedFarmDirections = activeTile!.farms[index4].directions.map(function(direction) {
 					return farmDirections[(farmDirections.indexOf(direction) + currentPlacement.rotation * 2) % 8];
 				});
 				if(currentPlacement.directionToSource === 'N') {
@@ -722,7 +832,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 				}
 			}
 			// if there is a cloister on the active tile it will always be valid for any rotation
-			if(activeTile.cloister) {
+			if(activeTile!.cloister) {
 				currentPlacement.meeples.push({
 					meepleType: 'normal',
 					locationType: 'cloister',
@@ -732,7 +842,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 		}
 		console.log(`[${gamestate.name}] - meeple placements calculated`);
 		gamestate.activeTile.tile = activeTile;
-		gamestate.activeTile.discarded = discardedTiles;
+		gamestate.activeTile.discardedTiles = gamestate.activeTile.discardedTiles.concat(discardedTiles);
 		// console.log('ungrouped placements =>' + JSON.stringify(potentialPlacements));
 		// console.log('==========================');
 		// remove duplicates while storing an array of potential rotations and meeple placements for each position
@@ -812,16 +922,12 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 		}
 		gamestate.lastModified = new Date();
 		gamestate.markModified('lastModified');
-		if(autocomplete) {
-			callback(null, gamestate);
-			return;
-		}
 		console.log(`[${gamestate.name}] - saving`);
 		gamestate.save(callback);
 	});
 };
 
-gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expansions, callback) {
+gamestateSchema.methods.initializeNewGame = function(initialUser: User, friends: User['friends'], expansions, callback) {
 	var newGame = this;
 	// create a random name to identify the game
 	newGame.name = moniker.choose();
@@ -831,20 +937,20 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	var allPlayers = friends.concat([initialUser._id]);
 	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
 	// add the game to the users' active games
-	var userGamesUpdated = User.update({ _id: { $in: allPlayers }},
+	var userGamesUpdated = UserModel.update({ _id: { $in: allPlayers }},
 	                                   { $push: { activeGames: newGame._id }},
 	                                   { multi: true }).exec();
 	// grab the starting tile and make it the only placed tile
-	var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
+	var startTilePlaced = TileModel.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
 		newGame.placedTiles.unshift({
-			tile: startTile._id,
+			tile: startTile!._id,
 			rotation: 0,
 			x: 0,
 			y: 0
 		});
 	});
 	// grab the rest of the tiles and put them in the unplaced list
-	var unusedTilesLoaded = Tile.find({ expansion: { $in: expansions }}).exec(function(err, allTiles) {
+	var unusedTilesLoaded = TileModel.find({ expansion: { $in: expansions }}).exec(function(err, allTiles) {
 		// load a copy of each unused tile based on their counts, skip one copy of the starting tile
 		for(var i = 0; i < allTiles.length; i++) {
 			var countToAdd = allTiles[i].startingTile ? allTiles[i].count - 1 : allTiles[i].count;
@@ -911,8 +1017,7 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	});
 };
 
-//TODO: remove all autocomplete
-gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
+gamestateSchema.methods.placeTile = function(move, callback) {
 	/* move: {
 	 *     placement: {    // x and y of where the tile is to be placed
 	 *         x: Number,
@@ -984,8 +1089,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 		console.log(`[${activePlayer.username}:${gamestate.name}] - validated placement`);
 		if(validPlacement) {
 			// add tile creating proper north/south/east/west links to the existing placed tiles
-			var newTile = {
-				_id: mongoose.Types.ObjectId(),
+			var newTile: PlacedTile = {
 				tile: gamestate.activeTile.tile,
 				rotation: move.rotation,
 				x: move.placement.x,
@@ -1234,7 +1338,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 					gamestate.players[(activePlayerIndex + 1) % gamestate.players.length].active = true;
 				}
 				console.log(`[${activePlayer.username}:${gamestate.name}] - drawing tile`);
-				gamestate.drawTile(callback, autocomplete);
+				gamestate.drawTile(callback);
 			});
 		}
 	});
@@ -1622,4 +1726,4 @@ function getFeatureIndex(placedTile, type, direction) {
 }
 
 // create the model for game information and expose it to our app
-module.exports = mongoose.model('Gamestate', gamestateSchema);
+export const GamestateModel = mongoose.model<Gamestate>('Gamestate', gamestateSchema);

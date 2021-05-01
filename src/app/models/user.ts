@@ -1,11 +1,49 @@
+
+import mongoose, { Document } from "mongoose";
+import { Gamestate } from "./gamestate";
+
 // load the things we need
-var mongoose = require('mongoose');
 var bcrypt   = require('bcrypt-nodejs');
 
-//TODO: if linked to fb/twitter/google find friends by contacts
+export type User = {
+    local: {
+        email: string;
+        password: string;
+        passwordResetToken: string;
+        passwordResetExpiration: Date;
+    };
+    facebook: {
+        id: string;
+        token: string;
+        email: string;
+        name: string;
+    };
+    twitter: {
+        id: string;
+        token: string;
+        displayName: string;
+        username: string;
+    };
+    google: {
+        id: string;
+        token: string;
+        email: string;
+        name: string;
+    };
+    activeGames: [Gamestate['_id'] | Gamestate]; // external reference to gamestate objects
+    friends: [User['_id'] | User];
+    username: string;
+    email_notifications: boolean;
+    twitter_notifications: boolean;
+    sound_notifications: boolean;
+    collapsible_menu: boolean;
+    dark_mode: boolean;
+    preferred_color: string;
+} & Document;
 
+//TODO: if linked to fb/twitter/google find friends by contacts
 // define the schema for our user model
-var userSchema = mongoose.Schema({
+var userSchema = new mongoose.Schema<User>({
     local: {
         email: String,
         password: String,
@@ -47,9 +85,9 @@ userSchema.statics.generateHash = function(password) {
 };
 
 // checking if password is valid
-userSchema.methods.validPassword = function(password) {
+userSchema.methods.validPassword = function(password: string) {
     return bcrypt.compareSync(password, this.local.password);
 };
 
 // create the model for users and expose it to our app
-module.exports = mongoose.model('User', userSchema);
+export const UserModel = mongoose.model<User>('User', userSchema);

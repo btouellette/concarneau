@@ -1,6 +1,6 @@
 /* jslint smarttabs:true */
 // load the things we need
-var mongoose = require('mongoose');
+import mongoose, { Document } from "mongoose";
 
 // tile features are defined in terms of the cardinal directions they use
 // roads and cities potentially connect cardinal directions (N S E W)
@@ -23,8 +23,26 @@ var mongoose = require('mongoose');
 
 //TODO: move doublePoints from a tile property to a city property
 
+export type Tile = {
+	northEdge: string; // edges are 'road', 'city', or 'field'
+	southEdge: string;
+	westEdge: string;
+	eastEdge: string;
+	roads: [{ directions: string[], meepleOffset: { x: number; y: number; }, inn: boolean; }], // features are arrays of directions, example of curved road or triangle city ['S','W']
+	cities: [{ directions: string[], meepleOffset: { x: number; y: number; }, goods: string; }], // goods are 'wine', 'wheat', and 'fabric' (from Traders and Builders expansion)
+	farms: [{ directions: string[], meepleOffset: { x: number; y: number; }, adjacentCityIndices: number[]}],
+	cloister: { meepleOffset: { x: number; y: number; }};
+	doublePoints: boolean | number; // true if all cities are double points, false if none, if only one city is double this will be the index of the double city
+	cathedral: boolean;
+	tower: { offset: { x: number; y: number; }}; // percentages into the tile for the center of the tower base
+	imageURL: string;
+	expansion: string;
+	count: number;
+	startingTile: boolean;
+} & Document;
+
 // define the schema for our game model
-var tileSchema = mongoose.Schema({
+var tileSchema = new mongoose.Schema<Tile>({
 	northEdge: String, // edges are 'road', 'city', or 'field'
 	southEdge: String,
 	westEdge: String,
@@ -43,10 +61,10 @@ var tileSchema = mongoose.Schema({
 });
 
 tileSchema.statics.loadTilesBase = function() {
-	var Tile = this;
+	const Tile = this;
 	Tile.remove({ expansion: 'base-game' }, function() {
 		// Load all the base game tiles into the database
-		Tile.create({
+		Tile.create([{
 			northEdge: 'city',
 			southEdge: 'field',
 			westEdge: 'road',
@@ -346,7 +364,7 @@ tileSchema.statics.loadTilesBase = function() {
 			imageURL: '/content/images/tiles/base-game/RrC.png',
 			expansion: 'base-game',
 			count: 3
-		}, function(err) { if(err) { console.log('load tiles err: ' + err); } });
+		}], function(err) { if(err) { console.log('load tiles err: ' + err); } });
 	});
 };
 
@@ -354,7 +372,7 @@ tileSchema.statics.loadTilesIAC = function() {
 	var Tile = this;
 	Tile.remove({ expansion: 'inns-and-cathedrals' }, function() {
 		// Load all the tiles for the Inns and Cathedrals expansion into the database
-		Tile.create({
+		Tile.create([{
 			northEdge: 'city',
 			southEdge: 'field',
 			westEdge: 'field',
@@ -578,7 +596,7 @@ tileSchema.statics.loadTilesIAC = function() {
 			imageURL: '/content/images/tiles/inns-and-cathedrals/RrRr.png',
 			expansion: 'inns-and-cathedrals',
 			count: 1
-		}, function(err) { if(err) { console.log('load tiles err: ' + err); } });
+		}], function(err) { if(err) { console.log('load tiles err: ' + err); } });
 	});
 };
 
@@ -586,7 +604,7 @@ tileSchema.statics.loadTilesTAB = function() {
 	var Tile = this;
 	Tile.remove({ expansion: 'traders-and-builders' }, function() {
 		// Load all the tiles for the Traders and Builders expansion into the database
-		Tile.create({
+		Tile.create([{
 			northEdge: 'city',
 			southEdge: 'field',
 			westEdge: 'city',
@@ -897,7 +915,7 @@ tileSchema.statics.loadTilesTAB = function() {
 			imageURL: '/content/images/tiles/traders-and-builders/RRrr.png',
 			expansion: 'traders-and-builders',
 			count: 1
-		}, function(err) { if(err) { console.log('load tiles err: ' + err); } });
+		}], function(err) { if(err) { console.log('load tiles err: ' + err); } });
 	});
 };
 
@@ -905,7 +923,7 @@ tileSchema.statics.loadTilesTT = function() {
 	var Tile = this;
 	Tile.remove({ expansion: 'the-tower' }, function() {
 		// Load all the tiles for the Tower expansion into the database
-		Tile.create({
+		Tile.create([{
 			northEdge: 'city',
 			southEdge: 'field',
 			westEdge: 'field',
@@ -1140,9 +1158,9 @@ tileSchema.statics.loadTilesTT = function() {
 			imageURL: '/content/images/tiles/the-tower/RrRr.2.png',
 			expansion: 'the-tower',
 			count: 1
-		}, function(err) { if(err) { console.log('load tiles err: ' + err); } });
+		}], function(err) { if(err) { console.log('load tiles err: ' + err); } });
 	});
 };
 
 // create the model for game information and expose it to our app
-module.exports = mongoose.model('Tile', tileSchema);
+export const TileModel = mongoose.model<Tile>('Tile', tileSchema);
