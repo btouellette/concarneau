@@ -25,6 +25,7 @@
     "passport-google-oauth": "^1.0.0",
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.4",
+    "pm2": "^5.2.2",
     "q": "^2.0.3",
     "raven": "^0.12.3",
     "tunnel": "^0.0.4",
@@ -39,7 +40,8 @@
   },
   "scripts": {
     "lint": "eslint app",
-    "start": "node server.js"
+    "start": "node server.js",
+    "pm2": "pm2 start processes.json --no-daemon"
   },
   "description": "Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.",
   "version": "1.0.0",

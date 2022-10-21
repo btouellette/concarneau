@@ -1,0 +1,16 @@
+{
+    "apps": [
+        {
+            "name": "concarneau",
+            "script": "./server.js",
+            "merge_logs": true,
+            "max_restarts": 20,
+            "instances": 1,
+            "max_memory_restart": "2G",
+            "env": {
+                "PORT": 3000,
+                "NODE_ENV": "production"
+            }
+        }
+    ]
+}
