@@ -74,12 +74,15 @@ app.set('view engine', 'ejs'); // set up ejs for templating
 if(!process.env.C9_PROJECT) {
 	// redirect to https if the request isn't secured
 	app.set('trust proxy', true);
-	app.use(function(req, res, next) {
-		if(!req.secure) {
-			return res.redirect('https://' + req.get('Host') + req.url);
-		}
-		next();
-	});
+	// disabled as dns redirect + nginx-proxy is handling https
+	if(process.env.ENFORCE_HTTPS) {
+		app.use(function(req, res, next) {
+			if(!req.secure) {
+				return res.redirect('https://' + req.get('Host') + req.url);
+			}
+			next();
+		});
+	}
 } else {
 	// temporary for C9 beta which does not correctly set the working directory
 	// TODO: remove once bug is fixed
