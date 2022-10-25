@@ -1241,7 +1241,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 };
 
 //TODO: update name
-function getFeatureInfoNew = function(placedTileIndex, featureIndex, featureType, gamestate) {
+function getFeatureInfoNew(placedTileIndex, featureIndex, featureType, gamestate) {
 	var pluralType = featureType === 'city' ? 'cities' : featureType + 's';
 	return gamestate.placedTiles[placedTileIndex].features[pluralType][featureIndex];
 };
