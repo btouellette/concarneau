@@ -55,3 +55,11 @@ To set up authentication via OAuth:
 5. Twitter app settings
  * Settings -> Application Details -> Callback URL
     * http://127.0.0.1:8080/auth/twitter/callback
+
+## Data Retention & Deletion
+
+Game data is saved until any player in the game removes the game from the UI via the trash can icon at which point all game data and messages are deleted permanently
+
+The only user data retained is what is necessary for the functioning of the app, see: https://github.com/btouellette/concarneau/blob/main/app/models/user.js
+
+Games and messages may be manually removed yourself as above and if user account deletion is desired you may email btouellette@gmail.com to have your user account removed
