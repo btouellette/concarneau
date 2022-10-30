@@ -8,7 +8,7 @@
             "instances": 1,
             "max_memory_restart": "2G",
             "env": {
-                "PORT": 8082,
+                "PORT": 8081,
                 "NODE_ENV": "production"
             }
         }

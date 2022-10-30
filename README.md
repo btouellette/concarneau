@@ -2,7 +2,7 @@
 
 Multiplayer web game using the same rules as Carcassone. Currently supports the base game along with the Inns and Cathedrals and the Traders and Builders expansion packs.
 
-Running at https://concarneau.herokuapp.com
+Running at https://www.concarneau.net
 
 For a quick demo of capabilities you can start a solo game by logging in, hitting the + icon and selecting start which will start a solo game where you are laying all the tiles and pieces.
 
@@ -16,6 +16,27 @@ If you would like to download the code and try it for yourself:
 4. If using a local MongoDB ensure the db is launched
 5. Launch: `node server.js`
 6. Visit in your browser at: `http://localhost:8080`
+
+The actual server is Dockerized and sits behind an nginx reverse proxy which handles Let's Encrypt cert issuance and routing traffic to a staging server for testing
+
+```
+# DNSMasq (or your personal preference of resolver) needs to be set up and running on :53
+# ~/src/concarneau should be updated to the absolute path of where you have the repo checked out
+docker run -d --name nginx-proxy -p 80:80 -p 443:443 --network nginx-proxy -v /etc/lets-encrypt:/etc/nginx/certs -v ~/src/concarneau/proxy.conf:/etc/nginx/proxy.conf -v /var/run/docker.sock:/tmp/docker.sock:ro --env "RESOLVERS=127.0.0.1" nginxproxy/nginx-proxy
+
+docker run --detach \
+    --name nginx-proxy-acme \
+    --volumes-from nginx-proxy \
+    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume acme:/etc/acme.sh \
+    --env "DEFAULT_EMAIL=btouellette@gmail.com" \
+    nginxproxy/acme-companion
+
+docker build -f Dockerfile-staging -t concarneau-staging .
+docker run -d --env-file ./env.staging.list --name concarneau-staging -h staging.concarneau.net --net nginx-proxy -p 8081:8081 concarneau-staging
+docker build -t concarneau .
+docker run -d --env-file ./env.production.list --name concarneau -h concarneau.net --net nginx-proxy -p 8082:8082 concarneau
+```
 
 To set up authentication via OAuth:
 

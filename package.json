@@ -41,7 +41,8 @@
   "scripts": {
     "lint": "eslint app",
     "start": "node server.js",
-    "pm2": "pm2 start processes.json --no-daemon"
+    "pm2": "pm2 start processes.json --no-daemon",
+    "pm2-staging": "pm2 start processes-staging.json --no-daemon"
   },
   "description": "Multiplayer web game using the same rules as Carcassone. Currently supports the base game and the Inns and Cathedrals expansion.",
   "version": "1.0.0",

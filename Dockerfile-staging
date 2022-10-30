@@ -9,5 +9,5 @@ COPY . ./
 RUN npm install --save pm2
 RUN chown -R concarneau-user /opt/concarneau
 USER concarneau-user
-EXPOSE 8082
-CMD [ "npm", "run", "pm2" ]
+EXPOSE 8081
+CMD [ "npm", "run", "pm2-staging" ]
