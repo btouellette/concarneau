@@ -22,7 +22,14 @@ The actual server is Dockerized and sits behind an nginx reverse proxy which han
 ```
 # DNSMasq (or your personal preference of resolver) needs to be set up and running on :53
 # ~/src/concarneau should be updated to the absolute path of where you have the repo checked out
-docker run -d --name nginx-proxy -p 80:80 -p 443:443 --network nginx-proxy -v /etc/lets-encrypt:/etc/nginx/certs -v ~/src/concarneau/proxy.conf:/etc/nginx/proxy.conf -v /var/run/docker.sock:/tmp/docker.sock:ro --env "RESOLVERS=127.0.0.1" nginxproxy/nginx-proxy
+docker run -d --name nginx-proxy \
+    -p 80:80 -p 443:443 --network nginx-proxy \
+    -v /etc/lets-encrypt:/etc/nginx/certs \
+    -v ~/src/concarneau/proxy.conf:/etc/nginx/proxy.conf \
+    -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    --env "RESOLVERS=127.0.0.1" \
+    --restart always \
+    nginxproxy/nginx-proxy
 
 docker run --detach \
     --name nginx-proxy-acme \
@@ -30,12 +37,19 @@ docker run --detach \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     --volume acme:/etc/acme.sh \
     --env "DEFAULT_EMAIL=btouellette@gmail.com" \
+    --restart always
     nginxproxy/acme-companion
 
 docker build -f Dockerfile-staging -t concarneau-staging .
-docker run -d --env-file ./env.staging.list --name concarneau-staging -h staging.concarneau.net --net nginx-proxy -p 8081:8081 concarneau-staging
+docker run -d --restart always --env-file ./env.staging.list \
+    --name concarneau-staging -h staging.concarneau.net \
+    --net nginx-proxy -p 8081:8081 \
+    concarneau-staging
 docker build -t concarneau .
-docker run -d --env-file ./env.production.list --name concarneau -h concarneau.net --net nginx-proxy -p 8082:8082 concarneau
+docker run -d --restart always --env-file ./env.production.list \
+    --name concarneau -h concarneau.net \
+    --net nginx-proxy -p 8082:8082 \
+    concarneau
 ```
 
 To set up authentication via OAuth:
