@@ -195,6 +195,7 @@ function completeGame(gamestate) {
 }
 
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
+	var gamestate = this;
 	console.log(`[${gamestate.name}] - drawTile entered`);
 	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		console.log(`[${gamestate.name}] - drawTile populated`);
