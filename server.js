@@ -77,8 +77,8 @@ if(!process.env.C9_PROJECT) {
 	// disabled as dns redirect + nginx-proxy is handling https
 	if(process.env.ENFORCE_HTTPS) {
 		app.use(function(req, res, next) {
-			if(!req.secure) {
-				return res.redirect('https://' + req.get('Host') + req.url);
+			if((!req.secure || !req.host.startsWith('www.')) && !req.url.startsWith('.well-known/acme-challenge/')) {
+				return res.redirect(process.env.SERVER_URL);
 			}
 			next();
 		});
