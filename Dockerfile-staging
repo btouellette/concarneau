@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM node:14
+FROM node:16
 WORKDIR /opt/concarneau
 COPY package*.json ./
 RUN npm install
