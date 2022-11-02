@@ -292,7 +292,7 @@ var WrappedSocket = function(rawSocket) {
 };
 var socket = new WrappedSocket(rawSocket);
 
-var currentGameID, selectedMove, svgHeight, svgWidth;
+var currentGameID, selectedMove, sendingMove, svgHeight, svgWidth;
 var meeplePlacementMode = 'normal';
 var reverseScale = 1;
 var reverseTranslation = [0,0];
@@ -803,7 +803,8 @@ $(document).ready(function() {
 		cursor: 'pointer',
 		visibility: 'hidden'
 	}).on('click', function() {
-		if(selectedMove) {
+		if(selectedMove && !sendingMove) {
+			sendingMove = true;
 			socket.emit('sending move', currentGameID, selectedMove, $('#test-complete').is(':checked'));
 			// while waiting for the next gamestate hide any tile placements and the send move button
 			d3.selectAll('#send-move-button,.tile-placements').transition().duration(transitionDuration+1500).attr('opacity', 0);
@@ -972,6 +973,8 @@ $(document).ready(function() {
 	$(window).on("debouncedresize", function () { if(lastGamestate) { draw(lastGamestate); }});
 	// listen for new gamestate data from the server
 	socket.on('sending gamestate', function(gamestate, loadingGame) {
+		// if we get gamestate data from the server we are not currently sending a move any longer
+		sendingMove = false;
 		// update the tile count in the menu
 		$('#game-' + gamestate._id + ' .tile-count').text('[' + (gamestate.unusedTiles.length + (gamestate.finished ? 0 : 1)) + ']');
 		// put the game listing in the correct place in the menu
