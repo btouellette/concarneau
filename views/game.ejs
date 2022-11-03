@@ -24,6 +24,7 @@
 	<link rel="stylesheet" href="/content/css/game.css" type='text/css'>
 </head>
 <body>
+<%- include ("../content/images/ui/icons.svg") %>
 <input type="checkbox" id="menu-checkbox" checked />
 <input type="checkbox" id="collapsible-menu-checkbox-outer" <%- user.collapsible_menu ? 'checked="true"' : '' %> />
 <input type="checkbox" id="dark-mode-checkbox-outer" <%- user.dark_mode ? 'checked="true"' : '' %> />
@@ -737,24 +738,6 @@ $(document).ready(function() {
 		bell.volume = 0;
 		bell.play();
 	}
-
-	// Load in SVG icons
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', '/content/images/ui/icons.svg', true);
-	xhr.setRequestHeader('Content-Type', 'text/xml');
-	xhr.onload = (e) => {
-		if (xhr.readyState === 4) {
-			if (xhr.status === 200) {
-				document.body.insertBefore(xhr.responseXML.firstChild, document.body.firstChild);
-			} else {
-				console.error(xhr.statusText);
-			}
-		}
-	};
-	xhr.onerror = (e) => {
-		console.error(xhr.statusText);
-	};
-	xhr.send();
 
 	var lastGamestate;
 

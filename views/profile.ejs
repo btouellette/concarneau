@@ -34,10 +34,11 @@
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
+<%- include ("../content/images/ui/icons.svg") %>
 <div class="container">
 <div class="jumbotron">
 	<div class="page-header text-center">
-		<h1><svg class="fa-link"><use xlink:href="/content/images/ui/icons.svg#fa-link"></use></svg> Profile Page</h1>
+		<h1><svg class="fa-link"><use xlink:href="#fa-link"></use></svg> Profile Page</h1>
 		<a href="/logout" class="btn btn-default btn-sm">Logout</a>
 		<a href="/game" class="btn btn-default btn-sm">Games</a>
 	</div>
@@ -45,7 +46,7 @@
 		<!-- LOCAL INFORMATION -->
 		<div class="col-sm-6">
 			<div class="well">
-				<h3><svg class="fa-user"><use xlink:href="/content/images/ui/icons.svg#fa-user"></use></svg> Local</h3>
+				<h3><svg class="fa-user"><use xlink:href="#fa-user"></use></svg> Local</h3>
 
 				<% if (user.local.email) { %>
 					<p>
@@ -63,7 +64,7 @@
 		<!-- FACEBOOK INFORMATION -->
 		<div class="col-sm-6">
 			<div class="well">
-				<h3 class="text-primary"><svg class="fa-facebook" fill="#428bca"><use xlink:href="/content/images/ui/icons.svg#fa-facebook"></use></svg> Facebook</h3>
+				<h3 class="text-primary"><svg class="fa-facebook" fill="#428bca"><use xlink:href="#fa-facebook"></use></svg> Facebook</h3>
 
 				<!-- check if the user has this token (is the user authenticated with this social account) -->
 				<% if (user.facebook.token) { %>
@@ -85,7 +86,7 @@
 		<!-- TWITTER INFORMATION -->
 		<div class="col-sm-6">
 			<div class="well">
-				<h3 class="text-info"><svg class="fa-twitter" fill="#3a87ad"><use xlink:href="/content/images/ui/icons.svg#fa-twitter"></use></svg> Twitter</h3>
+				<h3 class="text-info"><svg class="fa-twitter" fill="#3a87ad"><use xlink:href="#fa-twitter"></use></svg> Twitter</h3>
 
 				<% if (user.twitter.token) { %>
 					<p>
@@ -104,7 +105,7 @@
 		<!-- GOOGLE INFORMATION -->
 		<div class="col-sm-6">
 			<div class="well">
-				<h3 class="text-danger"><svg class="fa-google" fill="#4285F4"><use xlink:href="/content/images/ui/icons.svg#fa-google"></use></svg> Google+</h3>
+				<h3 class="text-danger"><svg class="fa-google" fill="#4285F4"><use xlink:href="#fa-google"></use></svg> Google+</h3>
 
 				<% if (user.google.token) { %>
 					<p>

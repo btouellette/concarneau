@@ -27,9 +27,10 @@
 	</style>
 </head>
 <body background="/content/images/ui/bg.jpg">
+<%- include ("../content/images/ui/icons.svg") %>
 <div class="container">
 <div class="jumbotron">
-	<h1><svg class="fa-sign-in"><use xlink:href="/content/images/ui/icons.svg#fa-sign-in"></use></svg> Login</h1>
+	<h1><svg class="fa-sign-in"><use xlink:href="#fa-sign-in"></use></svg> Login</h1>
 
 	<% if (message.length > 0) { %>
 		<div class="alert alert-danger"><%= message %></div>
