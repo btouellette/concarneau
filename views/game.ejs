@@ -741,11 +741,22 @@ $(document).ready(function() {
 	}
 
 	// Load in SVG icons
-	var c = new XMLHttpRequest();
-	c.open('GET', '/content/images/ui/icons.svg', false);
-	c.setRequestHeader('Content-Type', 'text/xml');
-	c.send();
-	document.body.insertBefore(c.responseXML.firstChild, document.body.firstChild);
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/content/images/ui/icons.svg', true);
+	xhr.setRequestHeader('Content-Type', 'text/xml');
+	xhr.onload = (e) => {
+		if (xhr.readyState === 4) {
+			if (xhr.status === 200) {
+				document.body.insertBefore(xhr.responseXML.firstChild, document.body.firstChild);
+			} else {
+				console.error(xhr.statusText);
+			}
+		}
+	};
+	xhr.onerror = (e) => {
+		console.error(xhr.statusText);
+	};
+	xhr.send();
 
 	var lastGamestate;
 
