@@ -245,6 +245,7 @@ var rawSocket = new WebSocket('<%- process.env.SERVER_URL.replace("https", "wss"
 var WrappedSocket = function(rawSocket) {
 	var callbacks = {};
 	var currentSocket = rawSocket;
+	var queuedPayloads = [];
 
 	var init = function() {
 		// dispatch to the right handlers
@@ -254,7 +255,12 @@ var WrappedSocket = function(rawSocket) {
 		};
 
 		currentSocket.onclose = function() { dispatch('disconnect', null); };
-		currentSocket.onopen = function() { dispatch('connect', null); };
+		currentSocket.onopen = function() {
+			dispatch('connect', null);
+			while (queuedPayloads.length > 0) {
+				currentSocket.send(queuedPayloads.shift());
+			}
+		};
 	};
 
 	this.on = function(event_name, callback) {
@@ -267,7 +273,11 @@ var WrappedSocket = function(rawSocket) {
 
 	this.emit = function(event_name, ...event_args) {
 		var payload = JSON.stringify({ event: event_name, args: event_args});
-		currentSocket.send(payload); // send JSON data to socket
+		if (currentSocket.readyState === WebSocket.OPEN) {
+			currentSocket.send(payload); // send JSON data to socket
+		} else {
+			queuedPayloads.push(payload);
+		}
 		return this;
 	};
 
