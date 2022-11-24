@@ -34,20 +34,26 @@ module.exports = function(passport) {
 			} else {
 			    console.log('user found: ' + user.username);
 			}
-            user.populate('activeGames friends', 'players.user players.active started finished username unusedTiles lastModified', function(err, user) {
+            user.populate([
+                {
+                    path: 'activeGames',
+                    select: 'players.user players.active started finished unusedTiles lastModified',
+                    populate: {
+                        path: 'players.user',
+                        select: 'username'
+                    }
+                },
+                {
+                    path: 'friends',
+                    select: 'username'
+                }
+            ], function(err, user) {
 				if(err) {
 				    console.log('passport deserialize populate user err: ' + err);
 				} else {
     			    console.log('games and friends found: ' + user.username);
     			}
-				user.populate({ path: 'activeGames.players.user', model: 'User', select: 'username'}, function(err, user) {
-				    if(err) {
-				        console.log('passport deserialize populate2 user err: ' + err);
-				    } else {
-        			    console.log('games users found: ' + user.username);
-        			}
-					done(err, user);
-				});
+                done(err, user);
             });
         });
     });

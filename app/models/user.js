@@ -31,7 +31,7 @@ var userSchema = mongoose.Schema({
         name: String
     },
     activeGames: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Gamestate' }], // external reference to gamestate objects
-    friends: [mongoose.Schema.Types.ObjectId],
+    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     username: { type: String, lowercase: true, trim: true, unique: true, sparse: true },
     email_notifications: Boolean,
     twitter_notifications: Boolean,

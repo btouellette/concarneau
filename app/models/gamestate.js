@@ -197,6 +197,7 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 	var gamestate = this;
 	console.log(`[${gamestate.name}] - drawTile entered`);
 	gamestate.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
+		if(err) { console.log('draw tile populate err: ' + err); }
 		console.log(`[${gamestate.name}] - drawTile populated`);
 		// if we're out of tiles score/complete game
 		if(gamestate.unusedTiles.length === 0 || autocomplete) {
@@ -961,7 +962,8 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 	 *     }
 	 * }
 	 */
-	this.populate('activeTile.tile players.user placedTiles.features.cities placedTiles.features.roads placedTiles.features.farms placedTiles.features.cloisters', function(err, gamestate) {
+	this.populate('activeTile.tile players.user placedTiles.features.cities placedTiles.features.roads placedTiles.features.farms placedTiles.features.cloister', function(err, gamestate) {
+		if(err) { console.log('place tile populate err: ' + err); }
 		var validPlacement = false;
 		// get the active player
 		var activePlayer, activePlayerIndex;
@@ -1156,6 +1158,7 @@ gamestateSchema.methods.placeTile = function(move, callback, autocomplete) {
 			}
 			console.log(`[${activePlayer.username}:${gamestate.name}] - tower handled`);
 			gamestate.populate('placedTiles.tile players.user', function(err, gamestate) {
+				if(err) { console.log('place tile 2 populate err: ' + err); }
 				console.log(`[${activePlayer.username}:${gamestate.name}] - populated gamestate in placeTile 2`);
 				var builderActivated = false;
 				var featureInfo, meepleIndex, meepleTile;

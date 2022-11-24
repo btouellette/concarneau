@@ -212,6 +212,7 @@ module.exports = function(server, sessionStore) {
 								console.log('remove game err: ' + err);
 							} else if(gamestate.userIsInGame(currentUser)) {
 								gamestate.populate('players.user', function(err, gamestate) {
+									if(err) { console.log('remove game populate err: ' + err); }
 									for(var i = 0; i < gamestate.players.length; i++) {
 										User.findByIdAndUpdate(gamestate.players[i].user, { $pull: { activeGames: gamestate._id }}).exec();
 									}
@@ -328,6 +329,7 @@ module.exports = function(server, sessionStore) {
 								message = message.substr(0,200);
 								Gamestate.findByIdAndUpdate(gameID, { $set: { lastModified: new Date() }, $push: { messages: { $each: [{ username: currentUser.username, message: message}], $slice: -500 }}}, function(err, gamestate) {
 									gamestate.populate('players.user', function(err, gamestate) {
+										if(err) { console.log('send message populate err: ' + err); }
 										// get distinct list of user IDs in the game
 										var distinctUserIDs = gamestate.players.map(function(player) { return player.user._id; }).filter(function(value, index, self) {
 											return self.indexOf(value) === index;
