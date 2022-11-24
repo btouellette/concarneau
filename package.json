@@ -26,7 +26,6 @@
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.4",
     "pm2": "^5.2.2",
-    "q": "^2.0.3",
     "raven": "^0.12.3",
     "tunnel": "^0.0.4",
     "twit": "^2.2.9",
