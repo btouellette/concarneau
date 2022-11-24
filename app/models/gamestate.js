@@ -2,7 +2,6 @@
 // load the things we need
 var mongoose = require('mongoose');
 var moniker = require('moniker');
-var Q = require('q');
 var Tile = require('../models/tile');
 var User = require('../models/user');
 var FeatureCity = require('../models/featureCity');
@@ -197,7 +196,7 @@ function completeGame(gamestate) {
 gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 	var gamestate = this;
 	console.log(`[${gamestate.name}] - drawTile entered`);
-	this.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
+	gamestate.populate('unusedTiles placedTiles.tile players.user', function(err, gamestate) {
 		console.log(`[${gamestate.name}] - drawTile populated`);
 		// if we're out of tiles score/complete game
 		if(gamestate.unusedTiles.length === 0 || autocomplete) {
@@ -238,15 +237,20 @@ gamestateSchema.methods.drawTile = function(callback, autocomplete) {
 			};
 		});
 		console.log(`[${gamestate.name}] - rotated tiles`);
+		// console.log('gamestate.unusedTiles', gamestate.unusedTiles.length, JSON.stringify(gamestate.unusedTiles));
+		// console.log('gamestate.placedTiles', JSON.stringify(gamestate.placedTiles));
 		while(potentialPlacements.length === 0 && gamestate.unusedTiles.length > 0 && !autocomplete) {
 			// splice a random unused tile into the active tile
 			activeTile = gamestate.unusedTiles.splice(Math.floor(Math.random()*gamestate.unusedTiles.length), 1)[0];
+			// console.log('activeTile', JSON.stringify(activeTile));
 			// make sure mongoose sees the field as changed to save later
 			gamestate.markModified('unusedTiles');
 			// find out all the places we can place it
 			for(var i = 0; i < gamestate.placedTiles.length; i++) {
 				currentTile = gamestate.placedTiles[i];
 				rotatedTile = rotatedTiles[i];
+				// console.log('currentTile', JSON.stringify(activeTile));
+				// console.log('rotatedTile', JSON.stringify(rotatedTile));
 				if(currentTile.northTileIndex === undefined) {
 					if(rotatedTile.northEdge === activeTile.northEdge) {
 						potentialPlacements.push({
@@ -831,30 +835,51 @@ gamestateSchema.methods.initializeNewGame = function(initialUser, friends, expan
 	// add the initial players
 	var allPlayers = friends.concat([initialUser._id]);
 	newGame.players = allPlayers.map(function(userID) { return { user: userID }; });
+
 	// add the game to the users' active games
-	var userGamesUpdated = User.update({ _id: { $in: allPlayers }},
-	                                   { $push: { activeGames: newGame._id }},
-	                                   { multi: true }).exec();
+	var userGamesUpdated = User.updateMany({ _id: { $in: allPlayers }},
+	                                       { $push: { activeGames: newGame._id }},
+	                                       { multi: true }).exec();
+
 	// grab the starting tile and make it the only placed tile
-	var startTilePlaced = Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
-		newGame.placedTiles.unshift({
-			tile: startTile._id,
-			rotation: 0,
-			x: 0,
-			y: 0
+	var startTilePlaced = new Promise((resolve, reject) => {
+		Tile.findOne({ startingTile: true, expansion: 'base-game' }).exec(function(err, startTile) {
+			if (err) {
+				console.error(err);
+				reject(err);
+			} else {
+				newGame.placedTiles.unshift({
+					tile: startTile._id,
+					rotation: 0,
+					x: 0,
+					y: 0
+				});
+				resolve();
+			}
 		});
 	});
+
 	// grab the rest of the tiles and put them in the unplaced list
-	var unusedTilesLoaded = Tile.find({ expansion: { $in: expansions }}).exec(function(err, allTiles) {
-		// load a copy of each unused tile based on their counts, skip one copy of the starting tile
-		for(var i = 0; i < allTiles.length; i++) {
-			var countToAdd = allTiles[i].startingTile ? allTiles[i].count - 1 : allTiles[i].count;
-			for(var j = 0; j < countToAdd; j++) {
-				newGame.unusedTiles.push(allTiles[i]._id);
+	var unusedTilesLoaded = new Promise((resolve, reject) => {
+		Tile.find({ expansion: { $in: expansions }}).exec(function(err, allTiles) {
+			if (err) {
+				console.error(err);
+				reject(err);
+			} else {
+				// load a copy of each unused tile based on their counts, skip one copy of the starting tile
+				for(var i = 0; i < allTiles.length; i++) {
+					var countToAdd = allTiles[i].startingTile ? allTiles[i].count - 1 : allTiles[i].count;
+					for(var j = 0; j < countToAdd; j++) {
+						newGame.unusedTiles.push(allTiles[i]._id);
+					}
+				}
+				console.log('done loading tiles')
+				resolve();
 			}
-		}
+		});
 	});
-	Q.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
+
+	Promise.all([userGamesUpdated, startTilePlaced, unusedTilesLoaded]).then(function() {
 		newGame.populate('players.user', 'preferred_color',
 			function(err, newGame) {
 				if(err) {
