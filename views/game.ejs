@@ -511,10 +511,10 @@ function changeMeepleMode(newMode) {
 		}
 	}
 	meeplePlacementMode = newMode;
-	updateMeeplePlacements(false);
+	updateMeeplePlacements();
 }
 
-function updateMeeplePlacements(withTransition) {
+function updateMeeplePlacements() {
 	// if the active tile isn't laid down on a valid placement don't update the meeple placement information as it will be done when the tile is placed
 	if(!selectedMove) {
 		return;
@@ -522,7 +522,7 @@ function updateMeeplePlacements(withTransition) {
 	// show outlines for any valid meeple placements and rotate them appropriately
 	var validMeeplePlacements = selectedMove.placement.rotations[selectedMove.rotationIndex].meeples;
 	var container = d3.select('#meeple-placements');
-	container.selectAll('image.meeple-outline').transition().duration(withTransition ? transitionDuration : 0).attr({
+	container.selectAll('image.meeple-outline').transition().duration(0).attr({
 		visibility: function(d) {
 			for(var i = 0; i < validMeeplePlacements.length; i++) {
 				if(validMeeplePlacements[i].meepleType === (meeplePlacementMode === 'large' ? 'normal' : meeplePlacementMode) &&
@@ -539,7 +539,7 @@ function updateMeeplePlacements(withTransition) {
 		}
 	});
 	// remove meeple placement from the move and hide placed meeple if old placement is no longer valid
-	container.selectAll('image.placed-meeple').transition().duration(withTransition ? transitionDuration : 0).attr({
+	container.selectAll('image.placed-meeple').transition().duration(0).attr({
 		visibility: function(d) {
 			// keep null visibility attribute if we find this placement in the valid placements
 			for(var i = 0; i < validMeeplePlacements.length; i++) {
@@ -566,7 +566,7 @@ function updateMeeplePlacements(withTransition) {
 		}
 	});
 	// rotate the tower outline on the active tile
-	d3.selectAll('#active-tile image.tower-outline,#active-tile image.placed-tower').transition().duration(withTransition ? transitionDuration : 0).attr({
+	d3.selectAll('#active-tile image.tower-outline,#active-tile image.placed-tower').transition().duration(0).attr({
 		transform: function(d) {
 			return 'translate(' + (d.offset.x - 1/2) * tileSize + ',' + (d.offset.y - 1/2) * tileSize + ') rotate(' + -selectedMove.rotation * 90 + ')';
 		}
@@ -837,6 +837,7 @@ $(document).ready(function() {
 		});
 		d3.select('#meeple-placements').attr('visibility', null);
 		d3.selectAll('.tower-outline').attr('visibility', null);
+		updateMeeplePlacements();
 	});
 	confirmButton.append('circle').attr({
 		cy: 5 + tileSize / 2,
@@ -1510,21 +1511,21 @@ $(document).ready(function() {
 			} else {
 				// if this is a new location reset to the first rotation
 				rotationIndex = 0;
-				// show all the remaining meeples in case one was temporarily placed and is returned to the pool
-				$('#score-area image').removeAttr('visibility');
-				// reset the move
-				selectedMove = {
-					placement: gamestate.activeTile.validPlacements[i]
-				};
-				// and reset the meeple mode if it was set
-				changeMeepleMode();
-				// show the placement confirmation again and hide the send move button, meeple outlines, and any placed meeples
-				d3.selectAll('#meeple-placements,#send-move-button,#meeple-placements .placed-meeple').attr('visibility', 'hidden');
-				d3.selectAll('#confirm-button').attr('visibility', null);
-				d3.selectAll('#confirm-button').transition().duration(transitionDuration).attr('opacity', 1);
 			}
-			selectedMove.rotationIndex = rotationIndex;
-			selectedMove.rotation = d.rotations[rotationIndex].rotation;
+			// show all the remaining meeples in case one was temporarily placed and is returned to the pool
+			$('#score-area image').removeAttr('visibility');
+			// reset the move
+			selectedMove = {
+				placement: gamestate.activeTile.validPlacements[i],
+				rotationIndex: rotationIndex,
+				rotation: d.rotations[rotationIndex].rotation
+			};
+			// and reset the meeple mode if it was set
+			changeMeepleMode();
+			// show the placement confirmation again and hide the send move button, meeple outlines, and any placed meeples
+			d3.selectAll('#meeple-placements,#send-move-button,#meeple-placements .placed-meeple').attr('visibility', 'hidden');
+			d3.selectAll('#confirm-button').attr('visibility', null);
+			d3.selectAll('#confirm-button').transition().duration(transitionDuration).attr('opacity', 1);
 			var rotationDegrees = selectedMove.rotation * 90;
 			// store data about this selection in the active tile
 			$activeTile.data('rotationIndex', rotationIndex);
@@ -1543,11 +1544,6 @@ $(document).ready(function() {
 				opacity: d.rotations.length > 1 ? 0.45 : 0,
 				visibility: null
 			});
-			// check that there are normal meeples to place or that if in a special meeple placement mode that the "has(SpecialType)Meeple" flag is true for this player
-			if((meeplePlacementMode === 'normal' && remainingMeeples > 0) ||
-			   (meeplePlacementMode && reorderedPlayers[0]['has' + meeplePlacementMode.charAt(0).toUpperCase() + meeplePlacementMode.slice(1) + 'Meeple'])) {
-				updateMeeplePlacements(true);
-			}
 		});
 		validPlacements.exit().remove();
 
